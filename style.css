@@ -13,32 +13,33 @@ body {
     overflow-wrap: break-word;
     position: fixed;
     padding-left: 10px;
+    overflow-y: hidden;
+    padding-top: 21px;
 }
 
 .nav .title {
     font-weight: bold;
     font-size: 16px;
+    padding-bottom: 1em;
+}
+
+.def, .thm, .ax, .cnst, .mod_doc {
+    width: 60%;
+    min-width: 510px;
+    max-width: 960px;
+    margin-left: 21%;
+    margin-right: 21%;
+    overflow-y: auto;
+    padding-left: 5px;
 }
 
 .def, .thm, .ax, .cnst {
-    margin:5px 5px 5px 5px;
     padding: 5px 5px 5px 5px;
     border-radius: 8px;
-    width: 60%;
-    min-width: 510px;
-    margin-left: auto;
-    margin-right: auto;
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
 
-
-.mod_doc {
-    width: 60%;
-    min-width: 500px;
-    max-width: 960px;
-    margin-left: 20%;
-    margin-right: 20%;
-
-}
 
 .def {
     background-color: lightgoldenrodyellow;
