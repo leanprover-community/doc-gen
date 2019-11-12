@@ -41,10 +41,10 @@ def library_link(filename, line):
 
 def nav_link(filename):
   tks = filename_core('', filename, '').split('/')
-  links = ['<a href="{0}/index.html">root</a>'.format(site_root)]
+  links = ['<a href="{0}index.html">root</a>'.format(site_root)]
   for i in range(len(tks)-1):
     links.append('<a href="{2}{0}/index.html">{1}</a>'.format('/'.join(tks[:i+1]), tks[i], site_root))
-  return '/'.join(links) + '/<a href="{0}.html">{0}</a>'.format(tks[-1][:-1])
+  return '/<br>'.join(links) + '/<br><a href="{0}.html">{0}</a>'.format(tks[-1][:-1])
 
 def index_nav_link(path):
   tks = path[len(html_root):].split('/')
@@ -123,7 +123,7 @@ def get_doc_string(path):
 def write_html_file(objs, loc_map, filename, out):
   path = filename_core('', filename, '')[:-1].replace('/', '.')
   out.write('<!DOCTYPE html><html lang="en"><head><title>{1}</title><meta charset="UTF-8"><link rel="stylesheet" href="{0}style.css"></head><body>'.format(site_root, path))
-  out.write('<div class="nav">{}</div>'.format(nav_link(filename)))
+  out.write('<div class="nav"><div class="title">mathlib API docs</div>{}</div>'.format(nav_link(filename)))
   ds = get_doc_string(filename_core(local_lean_root, filename, 'lean'))
   module_doc = linkify_markdown(convert_markdown(ds), loc_map)
   out.write('<div class="mod_doc">' + module_doc + '</div>')
