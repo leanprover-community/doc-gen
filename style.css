@@ -53,11 +53,12 @@ code, .decl_name, .decl_args, .decl_type {
 }
 
 code a:link, code a:visited, code a:active,
-.decl_type a:link, .decl_type a:visited, .decl_type a:active {
+.decl_type a:link, .decl_type a:visited, .decl_type a:active,
+.decl_name a:link, .decl_name a:visited, .decl_name a:active {
     color: black;
 }
 
-code a:hover, .decl_type a:hover {
+code a:hover, .decl_type a:hover, .decl_name a:hover {
     color: darkslategray;
 }
 

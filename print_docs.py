@@ -16,7 +16,10 @@ site_root = "https://robertylewis.com/mathlib_docs/"
 #site_root = "/home/rob/lean/mathlib/scripts/html_out/"
 
 # src directory of mathlib. used to scrape module docs.
-lean_root = "/home/rob/lean/mathlib/src/"
+local_lean_root = "/home/rob/lean/mathlib/src/"
+
+mathlib_root = "https://github.com/leanprover-community/mathlib/blob/886b15b5ea473ae51ed90de31b05f23de00be10d/src/"
+lean_root = "https://github.com/leanprover-community/lean/blob/80c1b4d67eec24f1d1e5b4b3ed7082c27851271d/library/"
 
 def filename_core(root, filename, ext):
   if 'lean/library' in filename:
@@ -25,6 +28,13 @@ def filename_core(root, filename, ext):
     return root + filename.split('mathlib/src/', 1)[1][:-4] + ext
   else:
     return root + filename.split('mathlib/scripts/', 1)[1][:-4] + ext
+
+
+def library_link(filename, line):
+  root = lean_root + filename.split('lean/library/', 1)[1] \
+           if 'lean/library' in filename \
+           else mathlib_root + filename.split('mathlib/src/', 1)[1]
+  return root + '#L' + str(line)
 
 def open_outfile(filename, mode):
     if not os.path.exists(os.path.dirname(filename)):
@@ -35,6 +45,8 @@ def separate_results(objs):
   file_map = {}
   loc_map = {}
   for obj in objs:
+    if 'lean/library' not in obj['filename'] and 'mathlib/src' not in obj['filename']:
+      continue
     if obj['filename'] not in file_map:
       file_map[obj['filename']] = [obj]
     else:
@@ -70,13 +82,14 @@ def write_decl_html(obj, loc_map, out):
   args = [linkify_type(s, loc_map) for s in obj['args']]
   args = ['<span class="decl_args">{}</span>'.format(s) for s in args]
   args = ' '.join(args)
+  name = '<a href="{0}">{1}</a>'.format(library_link(obj['filename'], obj['line']), obj['name'])
   attr_string = 'Attributes: ' + ', '.join(obj['attributes']) if len(obj['attributes']) > 0 else ''
   out.write(
     '<div class="{4}"><a id="{0}"></a>\
-      <span class="decl_name">{0}</span> {5} <span class="decl_args">:</span> \
+      <span class="decl_name">{6}</span> {5} <span class="decl_args">:</span> \
       <div class="decl_type">{1}</div>\n<div class="indent">{2} \
       {3}</div>\n</div>'.format(
-      obj['name'], type, doc_string, attr_string, obj['kind'], args)
+      obj['name'], type, doc_string, attr_string, obj['kind'], args, name)
   )
 
 def get_doc_string(path):
@@ -92,7 +105,7 @@ def get_doc_string(path):
 def write_html_file(objs, loc_map, filename, out):
   path = filename_core('', filename, '')[:-1].replace('/', '.')
   out.write('<!DOCTYPE html><html lang="en"><head><title>{1}</title><meta charset="UTF-8"><link rel="stylesheet" href="{0}style.css"></head><body>'.format(site_root, path))
-  ds = get_doc_string(filename_core(lean_root, filename, 'lean'))
+  ds = get_doc_string(filename_core(local_lean_root, filename, 'lean'))
   module_doc = linkify_markdown(markdown2.markdown(ds), loc_map)
   out.write('<div class="mod_doc">' + module_doc + '</div>')
   for o in sorted(objs, key = lambda d: d['line']):
