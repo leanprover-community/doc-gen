@@ -1,5 +1,6 @@
 html {
     overflow-y: scroll;
+    background-color: #efebce;
 }
 
 body {
@@ -42,19 +43,19 @@ body {
 
 
 .def {
-    background-color: lightgoldenrodyellow;
+    background-color: #a3a380;
 }
 
 .thm {
-    background-color: gold;
+    background-color:#d6ce93;
 }
 
 .ax {
-    background-color: lightcoral;
+    background-color: #d8a48f;
 }
 
 .cnst {
-    background-color: pink;
+    background-color: #bb8588;
 }
 
 .decl_name, .decl_args {
