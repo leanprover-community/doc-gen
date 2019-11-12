@@ -12,8 +12,8 @@ import re
 html_root = "/home/rob/lean/mathlib/scripts/html_out/"
 
 # root of the site, for display purposes. use `html_root` for local testing.
-#site_root = "https://robertylewis.com/mathlib_docs/"
-site_root = "/home/rob/lean/mathlib/scripts/html_out/"
+site_root = "https://robertylewis.com/mathlib_docs/"
+#site_root = "/home/rob/lean/mathlib/scripts/html_out/"
 
 # src directory of mathlib. used to scrape module docs.
 lean_root = "/home/rob/lean/mathlib/src/"
@@ -67,12 +67,16 @@ def linkify_markdown(string, loc_map):
 def write_decl_html(obj, loc_map, out):
   doc_string = markdown2.markdown(obj['doc_string'])
   type = linkify_type(obj['type'], loc_map)
+  args = [linkify_type(s, loc_map) for s in obj['args']]
+  args = ['<span class="decl_args">{}</span>'.format(s) for s in args]
+  args = ' '.join(args)
   attr_string = 'Attributes: ' + ', '.join(obj['attributes']) if len(obj['attributes']) > 0 else ''
   out.write(
     '<div class="{4}"><a id="{0}"></a>\
-      <h4>{0}</h4><code>{1}</code>\n<div class="indent">{2} \
+      <span class="decl_name">{0}</span> {5} <span class="decl_args">:</span> \
+      <div class="decl_type">{1}</div>\n<div class="indent">{2} \
       {3}</div>\n</div>'.format(
-      obj['name'], type, doc_string, attr_string, obj['kind'])
+      obj['name'], type, doc_string, attr_string, obj['kind'], args)
   )
 
 def get_doc_string(path):
@@ -113,9 +117,9 @@ def write_html_indices(path):
       write_html_indices(f)
     else:
       files.append(name)
-  for name in dirs:
+  for name in sorted(dirs):
     out.write('<li><a href="{0}/index.html" class="index">{0}</a></li>\n'.format(name))
-  for name in files:
+  for name in sorted(files):
     out.write('<li><a href="{0}" class="file">{0}</a></li>\n'.format(name))
   out.write('</ul></body></html>')
   out.close()

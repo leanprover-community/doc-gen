@@ -1,5 +1,10 @@
+body {
+    width: 960px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 .def, .thm, .ax, .cnst {
-    width:1000px;
     margin:5px 5px 5px 5px;
     padding: 5px 5px 5px 5px;
 }
@@ -20,23 +25,39 @@
     background-color: pink;
 }
 
-code {
+.decl_name, .decl_args {
+    padding: 0px 4px 0px 0px;
+    white-space: nowrap;
+}
+
+.decl_args, .decl_args a:link, .decl_args a:visited, .decl_args a:active {
+    color: darkslategray;
+}
+
+.decl_args a:hover {
+    color: black;
+}
+
+.decl_name, .decl_args {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.decl_type {
+    font-size:16px;
+    padding: 10px 0px 0px 0px;
+}
+
+code, .decl_name, .decl_args, .decl_type {
     font-family: monospace;
 }
 
-code a:link {
+code a:link, code a:visited, code a:active,
+.decl_type a:link, .decl_type a:visited, .decl_type a:active {
     color: black;
 }
 
-code a:visited {
-    color: black;
-}
-
-code a:active {
-    color: black;
-}
-
-code a:hover {
+code a:hover, .decl_type a:hover {
     color: darkslategray;
 }
 
@@ -53,5 +74,5 @@ a.file:link, a.file:visited, a.file:active {
 }
 
 .mod_doc {
-    width:1000px;
+    /* width:1000px; */
 }

@@ -12,6 +12,7 @@ Used to generate a json file for html docs.
 
 The json file is a list of maps, where each map has the structure
 { name: string,
+  args : list string,
   type: string,
   doc_string: string,
   filename: string,
@@ -30,6 +31,7 @@ open tactic io io.fs
 /-- The information collected from each declaration -/
 structure decl_info :=
 (name : name)
+(args : list string)
 (type : string)
 (doc_string : option string)
 (filename : string)
@@ -41,11 +43,45 @@ meta def escape_quotes (s : string) : string :=
 s.fold "" (λ s x, s ++ if x = '"' then '\\'.to_string ++ '"'.to_string else x.to_string)
 
 meta def decl_info.to_format : decl_info → format
-| ⟨name, type, doc_string, filename, line, attributes, kind⟩ :=
+| ⟨name, args, type, doc_string, filename, line, attributes, kind⟩ :=
 let doc_string := doc_string.get_or_else "",
+    args := args.map repr,
     attributes := attributes.map repr in
-"{" ++ format!"\"name\":\"{to_string name}\", \"type\":{repr type}, \"doc_string\":{repr doc_string}, "
+"{" ++ format!"\"name\":\"{to_string name}\", \"args\":{args}, \"type\":{repr type}, \"doc_string\":{repr doc_string}, "
     ++ format!"\"filename\":\"{filename}\",\"line\":{line}, \"attributes\":{attributes}, \"kind\":{repr kind}" ++ "}"
+
+section
+
+open tactic.interactive
+
+private meta def format_binders : list name × binder_info × expr → tactic format
+| (ns, binder_info.default, t) := pformat!"({format_names ns} : {t})"
+| (ns, binder_info.implicit, t) := pformat!"{{{format_names ns} : {t}}"
+| (ns, binder_info.strict_implicit, t) := pformat!"⦃{format_names ns} : {t}⦄"
+| ([n], binder_info.inst_implicit, t) :=
+  if "_".is_prefix_of n.to_string
+    then pformat!"[{t}]"
+    else pformat!"[{format_names [n]} : {t}]"
+| (ns, binder_info.inst_implicit, t) := pformat!"[{format_names ns} : {t}]"
+| (ns, binder_info.aux_decl, t) := pformat!"({format_names ns} : {t})"
+
+meta def get_args_and_type (e : expr) : tactic (list string × string) :=
+prod.fst <$> solve_aux e (
+do intros,
+   cxt ← local_context >>= tactic.interactive.compact_decl,
+   cxt' ← cxt.mmap $ λ t, to_string <$> format_binders t,
+--   cxt'' ← cxt.last'.traverse $ λ x, pformat!"{format_binders x}",
+   --let fmt := string.join (cxt'.intersperse " "), -- ++ [cxt''.get_or_else ""],
+   tgt ← target >>= pp,
+   return (cxt', to_string tgt))
+
+end
+/-
+
+   cxt ← compact_decl cxt,
+   cxt' ← cxt.init.mmap format_binders,
+   cxt'' ← cxt.last'.traverse $ λ x, pformat!"{format_binders x} :",
+-/
 
 /-- The attributes we check for -/
 meta def attribute_list := [`simp, `squash_cast, `move_cast, `elim_cast, `nolint, `ext, `instance]
@@ -68,9 +104,10 @@ do ff ← d.in_current_file | return none,
    some filename ← return (e.decl_olean decl_name) | return none,
    some ⟨line, _⟩ ← return (e.decl_pos decl_name) | return none,
    doc_string ← (some <$> doc_string decl_name) <|> return none,
-   type ← escape_quotes <$> to_string <$> pp d.type,
+   (args, type) ← get_args_and_type d.type,
+--   type ← escape_quotes <$> to_string <$> pp d.type,
    attributes ← attributes_of decl_name,
-   return $ some ⟨decl_name, type, doc_string, filename, line, attributes, d.kind⟩
+   return $ some ⟨decl_name, args, type, doc_string, filename, line, attributes, d.kind⟩
 
 meta def run_on_dcl_list (e : environment) (ens : list name) (handle : handle) (is_first : bool) : io unit :=
 ens.mfoldl  (λ is_first d_name, do
