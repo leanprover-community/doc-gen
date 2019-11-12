@@ -1,6 +1,7 @@
 #!/usr/bin/env/python3
 
 # requires `pip install markdown2`
+# this script is not Windows friendly.
 
 import json
 import os
@@ -21,6 +22,9 @@ local_lean_root = "/home/rob/lean/mathlib/src/"
 mathlib_root = "https://github.com/leanprover-community/mathlib/blob/886b15b5ea473ae51ed90de31b05f23de00be10d/src/"
 lean_root = "https://github.com/leanprover-community/lean/blob/80c1b4d67eec24f1d1e5b4b3ed7082c27851271d/library/"
 
+def convert_markdown(ds):
+  return markdown2.markdown(ds, extras=['code-friendly', 'cuddled-lists'])
+
 def filename_core(root, filename, ext):
   if 'lean/library' in filename:
     return root + 'core/' + filename.split('lean/library/', 1)[1][:-4] + ext
@@ -29,12 +33,26 @@ def filename_core(root, filename, ext):
   else:
     return root + filename.split('mathlib/scripts/', 1)[1][:-4] + ext
 
-
 def library_link(filename, line):
   root = lean_root + filename.split('lean/library/', 1)[1] \
            if 'lean/library' in filename \
            else mathlib_root + filename.split('mathlib/src/', 1)[1]
   return root + '#L' + str(line)
+
+def nav_link(filename):
+  tks = filename_core('', filename, '').split('/')
+  links = ['<a href="{0}/index.html">root</a>'.format(site_root)]
+  for i in range(len(tks)-1):
+    links.append('<a href="{2}{0}/index.html">{1}</a>'.format('/'.join(tks[:i+1]), tks[i], site_root))
+  return '/'.join(links) + '/<a href="{0}.html">{0}</a>'.format(tks[-1][:-1])
+
+def index_nav_link(path):
+  tks = path[len(html_root):].split('/')
+  links = ['<a href="{0}/index.html">root</a>'.format(site_root)]
+  for i in range(len(tks)):
+    links.append('<a href="{2}{0}/index.html">{1}</a>'.format('/'.join(tks[:i+1]), tks[i], site_root))
+  return '/'.join(links)
+
 
 def open_outfile(filename, mode):
     if not os.path.exists(os.path.dirname(filename)):
@@ -77,7 +95,7 @@ def linkify_markdown(string, loc_map):
   return re.sub(r'<code>([\s\S]*?)<\/code>', lambda p: linkify_type(p.group(), loc_map), string)
 
 def write_decl_html(obj, loc_map, out):
-  doc_string = markdown2.markdown(obj['doc_string'])
+  doc_string = markdown2.markdown(obj['doc_string'], extras=["code-friendly"])
   type = linkify_type(obj['type'], loc_map)
   args = [linkify_type(s, loc_map) for s in obj['args']]
   args = ['<span class="decl_args">{}</span>'.format(s) for s in args]
@@ -105,8 +123,9 @@ def get_doc_string(path):
 def write_html_file(objs, loc_map, filename, out):
   path = filename_core('', filename, '')[:-1].replace('/', '.')
   out.write('<!DOCTYPE html><html lang="en"><head><title>{1}</title><meta charset="UTF-8"><link rel="stylesheet" href="{0}style.css"></head><body>'.format(site_root, path))
+  out.write('<div class="nav">{}</div>'.format(nav_link(filename)))
   ds = get_doc_string(filename_core(local_lean_root, filename, 'lean'))
-  module_doc = linkify_markdown(markdown2.markdown(ds), loc_map)
+  module_doc = linkify_markdown(convert_markdown(ds), loc_map)
   out.write('<div class="mod_doc">' + module_doc + '</div>')
   for o in sorted(objs, key = lambda d: d['line']):
     write_decl_html(o, loc_map, out)
@@ -124,7 +143,8 @@ def is_displayable_html(name):
 
 def write_html_indices(path):
   out = open_outfile(path + "/index.html", 'w')
-  out.write('<html><head><title>{1}</title><link rel="stylesheet" href="{0}style.css"></head><body><ul>'.format(site_root, path))
+  out.write('<html><head><title>{1}</title><link rel="stylesheet" href="{0}style.css"></head><body>\
+    <div class="nav">{2}</div><div class="index_body"><ul>'.format(site_root, path, index_nav_link(path)))
   lst = os.listdir(path)
   files, dirs = [], []
   for name in lst:
@@ -138,7 +158,7 @@ def write_html_indices(path):
     out.write('<li><a href="{0}/index.html" class="index">{0}</a></li>\n'.format(name))
   for name in filter(is_displayable_html, sorted(files)):
     out.write('<li><a href="{0}" class="file">{0}</a></li>\n'.format(name))
-  out.write('</ul></body></html>')
+  out.write('</ul></div></body></html>')
   out.close()
 
 file_map, loc_map, _ = load_json()
