@@ -118,6 +118,10 @@ def write_html_files(partition, loc_map):
     write_html_file(partition[filename], loc_map, filename, f)
     f.close()
 
+def is_displayable_html(name):
+  fn, ext = os.path.splitext(name)
+  return fn != 'index' and ext == '.html'
+
 def write_html_indices(path):
   out = open_outfile(path + "/index.html", 'w')
   out.write('<html><head><title>{1}</title><link rel="stylesheet" href="{0}style.css"></head><body><ul>'.format(site_root, path))
@@ -132,7 +136,7 @@ def write_html_indices(path):
       files.append(name)
   for name in sorted(dirs):
     out.write('<li><a href="{0}/index.html" class="index">{0}</a></li>\n'.format(name))
-  for name in sorted(files):
+  for name in filter(is_displayable_html, sorted(files)):
     out.write('<li><a href="{0}" class="file">{0}</a></li>\n'.format(name))
   out.write('</ul></body></html>')
   out.close()

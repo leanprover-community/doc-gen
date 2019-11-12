@@ -2,6 +2,7 @@ body {
     width: 960px;
     margin-left: auto;
     margin-right: auto;
+    font-family: 'Lucida Grande', Arial, sans-serif;
 }
 
 .def, .thm, .ax, .cnst {
@@ -50,6 +51,10 @@ body {
 
 code, .decl_name, .decl_args, .decl_type {
     font-family: monospace;
+}
+
+code {
+    font-size: 15px;
 }
 
 code a:link, code a:visited, code a:active,
