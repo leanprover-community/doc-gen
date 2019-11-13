@@ -6,3 +6,6 @@ path = "src"
 
 [dependencies]
 mathlib = {git = "https://github.com/leanprover-community/mathlib", rev = "lean-3.4.2"}
+
+[html_output]
+site_root = "https://robertylewis.com/mathlib_docs/"

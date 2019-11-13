@@ -12,33 +12,40 @@ import re
 import subprocess
 import toml
 import shutil
+import argparse
+
+root = os.getcwd()
 
 # path to put generated html
-html_root = "/home/rob/lean/doc_gen/html/"
+html_root = root + '/html/'
 
 # root of the site, for display purposes. use `html_root` for local testing.
 #site_root = "https://robertylewis.com/mathlib_docs/"
-site_root = "/home/rob/lean/doc_gen/html/"
+site_root = html_root
 
 # src directory of mathlib. used to scrape module docs.
 # The files here should match the ones used to generate json_export.txt.
-# All files should be committed in git, and HEAD should be a commit that exists
-# on https://github.com/leanprover-community/mathlib .
-local_lean_root = os.getcwd() + '/_target/deps/mathlib/src/' #"/home/rob/lean/mathlib/src/"
+local_lean_root = root + '/_target/deps/mathlib/src/'
+
+parser = argparse.ArgumentParser('Options to print_docs.py')
+parser.add_argument('-w', help = 'Generate docs for web. (Default local)', action = "store_true")
+cl_args = parser.parse_args()
 
 mathlib_commit = 'lean-3.4.2' # default
-mathlib_github_root = "https://github.com/leanprover-community/mathlib" # default
+mathlib_github_root = 'https://github.com/leanprover-community/mathlib' # default
 with open('leanpkg.toml') as f:
   parsed_toml = toml.loads(f.read())
+  f.close()
   ml_data = parsed_toml['dependencies']['mathlib']
   mathlib_commit = ml_data['rev']
   mathlib_github_root = ml_data['git'].strip('/')
-  f.close()
+  if cl_args.w:
+    site_root = parsed_toml['html_output']['site_root'].strip('/') + '/'
 
 mathlib_github_src_root = "{0}/blob/{1}/src/".format(mathlib_github_root, mathlib_commit)
 
-lean_commit = subprocess.check_output(['lean', '--run', 'lean_commit.lean']).decode()
-lean_root = "https://github.com/leanprover-community/lean/blob/{}/library/".format(lean_commit)
+lean_commit = subprocess.check_output(['lean', '--run', 'src/lean_commit.lean']).decode()
+lean_root = 'https://github.com/leanprover-community/lean/blob/{}/library/'.format(lean_commit)
 
 def convert_markdown(ds):
   return markdown2.markdown(ds, extras=['code-friendly', 'cuddled-lists'])
