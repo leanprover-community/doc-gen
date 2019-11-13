@@ -2,12 +2,14 @@
 
 # requires `pip install markdown2`
 # this script is not Windows friendly.
+#
 
 import json
 import os
 import textwrap
 import markdown2
 import re
+import subprocess
 
 # path to put generated html
 html_root = "/home/rob/lean/mathlib/scripts/html_out/"
@@ -17,9 +19,14 @@ html_root = "/home/rob/lean/mathlib/scripts/html_out/"
 site_root = "/home/rob/lean/mathlib/scripts/html_out/"
 
 # src directory of mathlib. used to scrape module docs.
+# The files here should match the ones used to generate json_export.txt.
+# All files should be committed in git, and HEAD should be a commit that exists
+# on https://github.com/leanprover-community/mathlib .
 local_lean_root = "/home/rob/lean/mathlib/src/"
 
-mathlib_root = "https://github.com/leanprover-community/mathlib/blob/886b15b5ea473ae51ed90de31b05f23de00be10d/src/"
+mathlib_commit = subprocess.check_output(['git', 'rev-parse', '--verify', 'master'], cwd=local_lean_root).decode().strip()
+
+mathlib_root = "https://github.com/leanprover-community/mathlib/blob/{}/src/".format(mathlib_commit)
 lean_root = "https://github.com/leanprover-community/lean/blob/80c1b4d67eec24f1d1e5b4b3ed7082c27851271d/library/"
 
 def convert_markdown(ds):
