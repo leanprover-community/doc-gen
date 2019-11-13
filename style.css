@@ -23,7 +23,7 @@ body {
     padding-bottom: 1em;
 }
 
-.def, .thm, .ax, .cnst, .mod_doc {
+.def, .thm, .ax, .cnst, .mod_doc, .index_body {
     width: 60%;
     min-width: 510px;
     max-width: 960px;
@@ -109,4 +109,3 @@ a.index:link, a.index:visited, a.index:active {
 a.file:link, a.file:visited, a.file:active {
     color:darkseagreen;
 }
-

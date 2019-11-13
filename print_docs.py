@@ -13,8 +13,8 @@ import re
 html_root = "/home/rob/lean/mathlib/scripts/html_out/"
 
 # root of the site, for display purposes. use `html_root` for local testing.
-site_root = "https://robertylewis.com/mathlib_docs/"
-#site_root = "/home/rob/lean/mathlib/scripts/html_out/"
+#site_root = "https://robertylewis.com/mathlib_docs/"
+site_root = "/home/rob/lean/mathlib/scripts/html_out/"
 
 # src directory of mathlib. used to scrape module docs.
 local_lean_root = "/home/rob/lean/mathlib/src/"
@@ -51,7 +51,7 @@ def index_nav_link(path):
   links = ['<a href="{0}/index.html">root</a>'.format(site_root)]
   for i in range(len(tks)):
     links.append('<a href="{2}{0}/index.html">{1}</a>'.format('/'.join(tks[:i+1]), tks[i], site_root))
-  return '/'.join(links)
+  return '/<br>'.join(links)
 
 
 def open_outfile(filename, mode):
@@ -144,7 +144,7 @@ def is_displayable_html(name):
 def write_html_indices(path):
   out = open_outfile(path + "/index.html", 'w')
   out.write('<html><head><title>{1}</title><link rel="stylesheet" href="{0}style.css"></head><body>\
-    <div class="nav">{2}</div><div class="index_body"><ul>'.format(site_root, path, index_nav_link(path)))
+    <div class="nav"><div class="title">mathlib API docs</div>{2}</div><div class="index_body"><ul>'.format(site_root, path, index_nav_link(path)))
   lst = os.listdir(path)
   files, dirs = [], []
   for name in lst:
