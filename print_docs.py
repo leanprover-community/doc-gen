@@ -1,6 +1,6 @@
 #!/usr/bin/env/python3
 
-# requires `pip install markdown2`
+# requires `pip install markdown2` and `pip install toml`
 # this script is not Windows friendly.
 #
 
@@ -10,24 +10,35 @@ import textwrap
 import markdown2
 import re
 import subprocess
+import toml
+import shutil
 
 # path to put generated html
-html_root = "/home/rob/lean/mathlib/scripts/html_out/"
+html_root = "/home/rob/lean/doc_gen/html/"
 
 # root of the site, for display purposes. use `html_root` for local testing.
 #site_root = "https://robertylewis.com/mathlib_docs/"
-site_root = "/home/rob/lean/mathlib/scripts/html_out/"
+site_root = "/home/rob/lean/doc_gen/html/"
 
 # src directory of mathlib. used to scrape module docs.
 # The files here should match the ones used to generate json_export.txt.
 # All files should be committed in git, and HEAD should be a commit that exists
 # on https://github.com/leanprover-community/mathlib .
-local_lean_root = "/home/rob/lean/mathlib/src/"
+local_lean_root = os.getcwd() + '/_target/deps/mathlib/src/' #"/home/rob/lean/mathlib/src/"
 
-mathlib_commit = subprocess.check_output(['git', 'rev-parse', '--verify', 'master'], cwd=local_lean_root).decode().strip()
+mathlib_commit = 'lean-3.4.2' # default
+mathlib_github_root = "https://github.com/leanprover-community/mathlib" # default
+with open('leanpkg.toml') as f:
+  parsed_toml = toml.loads(f.read())
+  ml_data = parsed_toml['dependencies']['mathlib']
+  mathlib_commit = ml_data['rev']
+  mathlib_github_root = ml_data['git'].strip('/')
+  f.close()
 
-mathlib_root = "https://github.com/leanprover-community/mathlib/blob/{}/src/".format(mathlib_commit)
-lean_root = "https://github.com/leanprover-community/lean/blob/80c1b4d67eec24f1d1e5b4b3ed7082c27851271d/library/"
+mathlib_github_src_root = "{0}/blob/{1}/src/".format(mathlib_github_root, mathlib_commit)
+
+lean_commit = subprocess.check_output(['lean', '--run', 'lean_commit.lean']).decode()
+lean_root = "https://github.com/leanprover-community/lean/blob/{}/library/".format(lean_commit)
 
 def convert_markdown(ds):
   return markdown2.markdown(ds, extras=['code-friendly', 'cuddled-lists'])
@@ -40,11 +51,11 @@ def filename_core(root, filename, ext):
   else:
     return root + filename.split('mathlib/scripts/', 1)[1][:-4] + ext
 
-def library_link(filename, line):
+def library_link(filename, line=None):
   root = lean_root + filename.split('lean/library/', 1)[1] \
            if 'lean/library' in filename \
-           else mathlib_root + filename.split('mathlib/src/', 1)[1]
-  return root + '#L' + str(line)
+           else mathlib_github_src_root + filename.split('mathlib/src/', 1)[1]
+  return root + ('#L' + str(line) if line is not None else '')
 
 def nav_link(filename):
   tks = filename_core('', filename, '').split('/')
@@ -107,14 +118,19 @@ def write_decl_html(obj, loc_map, out):
   args = [linkify_type(s, loc_map) for s in obj['args']]
   args = ['<span class="decl_args">{}</span>'.format(s) for s in args]
   args = ' '.join(args)
+  sf = ['<div class="structure_field">{0} : {1}</div>'.format(name, linkify_type(tp, loc_map)) for (name, tp) in obj['structure_fields']]
+  sfs = '<div class="structure_fields">\nFields:\n{}\n</div>'.format('\n'.join(sf)) if len(sf) > 0 else ''
+  cstr = ['<div class="structure_field">{0} : {1}</div>'.format(name, linkify_type(tp, loc_map)) for (name, tp) in obj['constructors']]
+  cstrs = '<div class="structure_fields">\nConstructors:\n{}\n</div>'.format('\n'.join(cstr)) if len(cstr) > 0 else ''
+  kind = 'structure' if len(sf) > 0 else 'inductive' if len(cstrs) > 0 else obj['kind']
   name = '<a href="{0}">{1}</a>'.format(library_link(obj['filename'], obj['line']), obj['name'])
   attr_string = 'Attributes: ' + ', '.join(obj['attributes']) if len(obj['attributes']) > 0 else ''
   out.write(
     '<div class="{4}"><a id="{0}"></a>\
       <span class="decl_name">{6}</span> {5} <span class="decl_args">:</span> \
       <div class="decl_type">{1}</div>\n<div class="indent">{2} \
-      {3}</div>\n</div>'.format(
-      obj['name'], type, doc_string, attr_string, obj['kind'], args, name)
+      {7}\n{8}\n{3}</div>\n</div>'.format(
+      obj['name'], type, doc_string, attr_string, kind, args, name, sfs, cstrs)
   )
 
 def get_doc_string(path):
@@ -129,8 +145,10 @@ def get_doc_string(path):
 
 def write_html_file(objs, loc_map, filename, out):
   path = filename_core('', filename, '')[:-1].replace('/', '.')
+  file_source = library_link(filename)
   out.write('<!DOCTYPE html><html lang="en"><head><title>{1}</title><meta charset="UTF-8"><link rel="stylesheet" href="{0}style.css"></head><body>'.format(site_root, path))
-  out.write('<div class="nav"><div class="title">mathlib API docs</div>{}</div>'.format(nav_link(filename)))
+  out.write('<div class="nav"><div class="title">mathlib API docs</div>{0}\
+      <br><br><a href="{1}">View file source</a></div>'.format(nav_link(filename), file_source))
   ds = get_doc_string(filename_core(local_lean_root, filename, 'lean'))
   module_doc = linkify_markdown(convert_markdown(ds), loc_map)
   out.write('<div class="mod_doc">' + module_doc + '</div>')
@@ -168,6 +186,10 @@ def write_html_indices(path):
   out.write('</ul></div></body></html>')
   out.close()
 
+def copy_css(path):
+  shutil.copyfile('style.css', path+'style.css')
+
 file_map, loc_map, _ = load_json()
 write_html_files(file_map, loc_map)
 write_html_indices(html_root)
+copy_css(html_root)

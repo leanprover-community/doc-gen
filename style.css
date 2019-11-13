@@ -24,7 +24,7 @@ body {
     padding-bottom: 1em;
 }
 
-.def, .thm, .ax, .cnst, .mod_doc, .index_body {
+.def, .thm, .ax, .cnst, .structure, .inductive, .mod_doc, .index_body {
     width: 60%;
     min-width: 510px;
     max-width: 960px;
@@ -34,28 +34,55 @@ body {
     padding-left: 5px;
 }
 
-.def, .thm, .ax, .cnst {
+.def, .thm, .ax, .cnst, .structure, .inductive {
     padding: 5px 5px 5px 5px;
     border-radius: 8px;
     margin-top: 10px;
     margin-bottom: 10px;
 }
 
-
 .def {
     background-color: #ebebd9;
+}
+
+.def .decl_name:before {
+    content: "def "
 }
 
 .thm {
     background-color:#f1e9a8;
 }
 
+.thm .decl_name:before {
+    content: "theorem "
+}
+
 .ax {
     background-color: #ffc2a9;
 }
 
+.ax .decl_name:before {
+    content: "axiom "
+}
+
 .cnst {
     background-color: #ffcdd0;
+}
+
+.cnst .decl_name:before {
+    content: "constant "
+}
+
+.structure, .inductive {
+    background-color: #f2c49c;
+}
+
+.structure .decl_name:before {
+    content: "structure "
+}
+
+.inductive .decl_name:before {
+    content: "inductive "
 }
 
 .decl_name, .decl_args {
@@ -81,7 +108,9 @@ body {
     padding: 10px 0px 0px 0px;
 }
 
-code, .decl_name, .decl_args, .decl_type {
+code, .decl_name, .decl_args, .decl_type,
+ .structure .structure_fields .structure_field,
+ .inductive .structure_fields .structure_field {
     font-family: monospace;
 }
 
