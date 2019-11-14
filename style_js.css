@@ -1,0 +1,178 @@
+html {
+    overflow-y: scroll;
+    background-color: white;
+}
+
+body {
+    font-family: 'Lucida Grande', Arial, sans-serif;
+    margin: 0px;
+}
+
+.nav .nav_sect_inner {
+    padding-left: 15px;
+    display: none;
+}
+
+.nav .nav_sect {
+    color: blueviolet;
+    cursor: pointer;
+}
+
+.nav .nav_file {
+    color: green;
+    cursor: pointer;
+}
+
+.nav .nav_file.visible {
+    color: red;
+    cursor: auto;
+}
+
+.nav {
+    float: left;
+    /*position: fixed; */
+}
+
+.content_nav_div  {
+    float: left;
+    /* position: fixed; */
+}
+
+.content_div {
+    float: left;
+    width: 60%
+}
+
+.nav, .content_nav_div  {
+    width: 20%;
+    height: 100vh;
+    min-width: 170px;
+    overflow-wrap: break-word;
+    padding-left: 10px;
+    overflow-y: scroll;
+    padding-top: 21px;
+    overflow-x: hidden;
+    font-size: 14px;
+}
+
+.nav .title {
+    font-weight: bold;
+    font-size: 16px;
+    padding-bottom: 1em;
+}
+
+.def, .thm, .ax, .cnst, .structure, .inductive, .mod_doc, .index_body {
+    width: 60%;/*
+    min-width: 510px;
+    max-width: 960px;/* */
+    margin-left: 21%;
+    margin-right: 21%; */
+    overflow-y: auto;
+    padding-left: 5px;
+}
+
+.def, .thm, .ax, .cnst, .structure, .inductive {
+    padding: 5px 5px 5px 5px;
+    border-radius: 8px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.def {
+    background-color: rgb(250, 232, 232);
+}
+
+.def .decl_name:before {
+    content: "def "
+}
+
+.thm {
+    background-color: rgb(245, 218, 218);
+}
+
+.thm .decl_name:before {
+    content: "theorem "
+}
+
+.ax {
+    background-color: rgb(248, 201, 201);
+}
+
+.ax .decl_name:before {
+    content: "axiom "
+}
+
+.cnst {
+    background-color: rgb(223, 190, 190);
+}
+
+.cnst .decl_name:before {
+    content: "constant "
+}
+
+.structure, .inductive {
+    background-color: rgb(255, 184, 184);
+}
+
+.structure .decl_name:before {
+    content: "structure "
+}
+
+.inductive .decl_name:before {
+    content: "inductive "
+}
+
+.decl_name, .decl_args {
+    padding: 0px 4px 0px 0px;
+    white-space: nowrap;
+}
+
+.decl_args, .decl_args a:link, .decl_args a:visited, .decl_args a:active {
+    color: darkslategray;
+}
+
+.decl_args a:hover {
+    color: black;
+}
+
+.decl_name, .decl_args {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.decl_type {
+    font-size:16px;
+    padding: 10px 0px 0px 0px;
+}
+
+code, .decl_name, .decl_args, .decl_type,
+ .structure .structure_fields .structure_field,
+ .inductive .structure_fields .structure_field {
+    font-family: monospace;
+}
+
+code {
+    font-size: 15px;
+}
+
+code a:link, code a:visited, code a:active,
+.decl_type a:link, .decl_type a:visited, .decl_type a:active,
+.decl_name a:link, .decl_name a:visited, .decl_name a:active {
+    color: black;
+}
+
+code a:hover, .decl_type a:hover, .decl_name a:hover {
+    color: darkslategray;
+}
+
+.indent {
+    padding: 5px;
+}
+
+a.index:link, a.index:visited, a.index:active {
+    color:darkblue;
+}
+
+a.file:link, a.file:visited, a.file:active {
+    color:darkseagreen;
+}

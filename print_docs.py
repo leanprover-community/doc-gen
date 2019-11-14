@@ -150,24 +150,38 @@ def get_doc_string(path):
   except:
     return ''
 
-def write_html_file(objs, loc_map, filename, out):
-  path = filename_core('', filename, '')[:-1].replace('/', '.')
-  file_source = library_link(filename)
-  out.write('<!DOCTYPE html><html lang="en"><head><title>{1}</title><meta charset="UTF-8"><link rel="stylesheet" href="{0}style.css"></head><body>'.format(site_root, path))
-  out.write('<div class="nav"><div class="title">mathlib API docs</div>{0}\
-      <br><br><a href="{1}">View file source</a></div>'.format(nav_link(filename), file_source))
+def write_internal_nav(objs, out):
+  #out.write('<div class="internal_nav">\n') # <div class="internal_nav_float">
+  for o in objs:
+    out.write('<a href="#{0}">{0}</a><br>\n'.format(o['name']))
+  #out.write('</div>') # </div>
+
+
+def write_html_file(objs, loc_map, filename, body_out, nav_out):
+  #path = filename_core('', filename, '')[:-1].replace('/', '.')
+  #file_source = library_link(filename)
+  #out.write('<!DOCTYPE html><html lang="en"><head><title>{1}</title><meta charset="UTF-8"><link rel="stylesheet" href="{0}style.css"></head><body>'.format(site_root, path))
+  #out.write('<div class="nav"><div class="title">mathlib API docs</div>{0}\
+  #    <br><br><a href="{1}">View file source</a></div>'.format(nav_link(filename), file_source))
   ds = get_doc_string(filename_core(local_lean_root, filename, 'lean'))
-  module_doc = linkify_markdown(convert_markdown(ds), loc_map)
-  out.write('<div class="mod_doc">' + module_doc + '</div>')
-  for o in sorted(objs, key = lambda d: d['line']):
-    write_decl_html(o, loc_map, out)
-  out.write('</body></html>')
+  if ds != '':
+    module_doc = linkify_markdown(convert_markdown(ds), loc_map)
+    #out.write('<div class="main">')
+    body_out.write('<div class="mod_doc">' + module_doc + '</div>')
+  objs.sort(key = lambda d: d['line'])
+  for o in objs: #sorted(objs, key = lambda d: d['line']):
+    write_decl_html(o, loc_map, body_out)
+  write_internal_nav(objs, nav_out)
+  #out.write('</div>')
+  #out.write('</body></html>')
 
 def write_html_files(partition, loc_map):
   for filename in partition:
-    f = open_outfile(filename_core(html_root, filename, 'html'), 'w')
-    write_html_file(partition[filename], loc_map, filename, f)
-    f.close()
+    body_out = open_outfile(filename_core(html_root, filename, 'html'), 'w')
+    nav_out = open_outfile(filename_core(html_root, filename, 'html.nav'), 'w')
+    write_html_file(partition[filename], loc_map, filename, body_out, nav_out)
+    body_out.close()
+    nav_out.close()
 
 def is_displayable_html(name):
   fn, ext = os.path.splitext(name)
@@ -198,5 +212,5 @@ def copy_css(path):
 
 file_map, loc_map, _ = load_json()
 write_html_files(file_map, loc_map)
-write_html_indices(html_root)
+#write_html_indices(html_root)
 copy_css(html_root)

@@ -5,7 +5,4 @@ lean_version = "3.4.2"
 path = "src"
 
 [dependencies]
-mathlib = {git = "https://github.com/leanprover-community/mathlib", rev = "dfd25ff4fe93bbe6e376dd2d27f7ef7ee7c8b3f9"}
-
-[html_output]
-site_root = "https://robertylewis.com/mathlib_docs/"
+mathlib = {git = "https://github.com/leanprover-community/mathlib", rev = "6fbf9f77400f3c1dc8f2dc3699d52ca9cdaaec5f"}
