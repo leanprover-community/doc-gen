@@ -30,7 +30,6 @@ body {
 
   .left, .right {
     width: 20vw;
-
     overflow-y: auto;
     overflow-x: hidden;
   }
@@ -64,19 +63,19 @@ body {
 
 .nav .nav_sect {
     width: fit-content;
-    color: blueviolet;
+    color: darkblue;
     cursor: pointer;
 }
 
 .nav .nav_file {
-    color: green;
+    color: blue;
 /*     cursor: pointer; */
     display: inline-block;
 }
 
 .nav .nav_file.visible {
-    color: red;
-    cursor: auto;
+    color: darkred;
+/*     cursor: auto; */
 }
 
 .nav, .internal_nav {
@@ -98,7 +97,7 @@ body {
 }
 
 .def {
-    background-color: rgb(250, 232, 232);
+    background-color: rgb(209, 207, 235);
 }
 
 .def .decl_name:before {
@@ -106,7 +105,7 @@ body {
 }
 
 .thm {
-    background-color: rgb(245, 218, 218);
+    background-color: rgb(185, 233, 255);
 }
 
 .thm .decl_name:before {
@@ -114,7 +113,7 @@ body {
 }
 
 .ax {
-    background-color: rgb(248, 201, 201);
+    background-color: rgb(191, 204, 211);
 }
 
 .ax .decl_name:before {
@@ -122,7 +121,7 @@ body {
 }
 
 .cnst {
-    background-color: rgb(223, 190, 190);
+    background-color: rgb(191, 204, 211);
 }
 
 .cnst .decl_name:before {
@@ -130,7 +129,7 @@ body {
 }
 
 .structure, .inductive {
-    background-color: rgb(255, 184, 184);
+    background-color: rgb(197, 200, 245);
 }
 
 .structure .decl_name:before {
@@ -176,11 +175,12 @@ code {
 
 code a:link, code a:visited, code a:active,
 .decl_type a:link, .decl_type a:visited, .decl_type a:active,
-.decl_name a:link, .decl_name a:visited, .decl_name a:active {
+.decl_name a:link, .decl_name a:visited, .decl_name a:active,
+.structure_field a:link, .structure_field a:visited, .structure_field a:active {
     color: black;
 }
 
-code a:hover, .decl_type a:hover, .decl_name a:hover {
+code a:hover, .decl_type a:hover, .decl_name a:hover, .structure_field a:hover {
     color: darkslategray;
 }
 
@@ -199,4 +199,14 @@ a.file:link, a.file:visited, a.file:active {
 .anchor {
     height: 1px;
     width: 1px;
+}
+
+.internal_nav h1 {
+    font-size: 19px;
+    margin: 0px;
+    padding: 0px;
+}
+
+.internal_nav .gh_link {
+    padding-bottom: 1.5em;
 }
