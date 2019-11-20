@@ -168,7 +168,7 @@ def html_head(title):
         <meta charset="UTF-8">
     </head>
     <body>
-        <div class="row">""".format(site_root, filename_core('', title, '')[:-1].replace('/', '.'))
+        <div class="row">""".format(site_root, title)
 
 html_tail = """
         </div>
@@ -217,10 +217,10 @@ def print_dir_tree(path, active_path, tree):
   return s
 
 def content_nav(dir_list, active_path):
-  return print_dir_tree('', filename_core('', active_path, 'html'), dir_list)
+  return print_dir_tree('', active_path, dir_list)
 
 def write_html_file(content_nav_str, objs, loc_map, filename, mod_docs, out):
-  out.write(html_head(filename))
+  out.write(html_head(filename_core('', filename, '')[:-1].replace('/', '.')))
   out.write('<div class="column left"><div class="nav">\n')
   out.write(content_nav_str)
   out.write('\n</div></div>\n')
@@ -232,14 +232,37 @@ def write_html_file(content_nav_str, objs, loc_map, filename, mod_docs, out):
   out.write('</div></div>\n')
   out.write(html_tail)
 
+index_body = """
+<h1>Lean mathlib documentation</h1>
+
+<p>Navigate through mathlib files using the menu on the left.</p>
+
+<p>Declaration names link to their locations in the mathlib or core Lean source.
+Names inside code snippets link to their locations in this documentation.</p>
+"""
+
 def write_html_files(partition, loc_map, mod_docs):
   dir_list = add_to_dir_tree([filename_core('', filename, 'html').split('/') for filename in partition])
   for filename in partition:
-    content_nav_str = content_nav(dir_list, filename)
+    content_nav_str = content_nav(dir_list, filename_core('', filename, 'html'))
     body_out = open_outfile(filename_core(html_root, filename, 'html'), 'w')
     md = mod_docs[filename] if filename in mod_docs else []
     write_html_file(content_nav_str, partition[filename], loc_map, filename, md, body_out)
     body_out.close()
+  out = open_outfile(html_root + 'index.html', 'w')
+  out.write(html_head('index'))
+  out.write('<div class="column left"><div class="nav">\n')
+  out.write(content_nav(dir_list, 'index.html'))
+  out.write('\n</div></div>\n')
+  out.write('<div class="column middle"><div class="content">\n')
+  out.write(index_body)
+  out.write('\n</div></div>\n')
+  out.write('<div class="column right"><div class="internal_nav">\n' )
+  out.write('</div></div>\n')
+  out.write(html_tail)
+  out.close()
+
+
 
 def copy_css(path):
   shutil.copyfile('style_js_frame.css', path+'style_js_frame.css')
