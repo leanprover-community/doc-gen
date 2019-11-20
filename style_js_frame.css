@@ -31,7 +31,7 @@ body {
   .left, .right {
     width: 20vw;
     overflow-y: auto;
-    overflow-x: hidden;
+    overflow-x: auto;
   }
 
   .middle {
@@ -58,6 +58,10 @@ body {
 
   .nav .nav_sect_inner {
     padding-left: 15px;
+    /* display: none; */
+}
+
+.nav .nav_sect_inner.hidden {
     display: none;
 }
 
@@ -97,7 +101,7 @@ body {
 }
 
 .def {
-    background-color: rgb(209, 207, 235);
+    background-color: #DAE0F2;
 }
 
 .def .decl_name:before {
@@ -105,7 +109,7 @@ body {
 }
 
 .thm {
-    background-color: rgb(185, 233, 255);
+    background-color:#DACEE0;
 }
 
 .thm .decl_name:before {
@@ -113,7 +117,7 @@ body {
 }
 
 .ax {
-    background-color: rgb(191, 204, 211);
+    background-color:#88A0A8;
 }
 
 .ax .decl_name:before {
@@ -121,7 +125,7 @@ body {
 }
 
 .cnst {
-    background-color: rgb(191, 204, 211);
+    background-color: #88A0A8;
 }
 
 .cnst .decl_name:before {
@@ -129,7 +133,7 @@ body {
 }
 
 .structure, .inductive {
-    background-color: rgb(197, 200, 245);
+    background-color: #92AFD7;
 }
 
 .structure .decl_name:before {
@@ -202,6 +206,11 @@ a.file:link, a.file:visited, a.file:active {
 }
 
 .internal_nav h1 {
+    font-size: 22px;
+    margin-top: 0px;
+}
+
+.internal_nav h2 {
     font-size: 19px;
     margin: 0px;
     padding: 0px;

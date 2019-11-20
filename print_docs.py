@@ -49,7 +49,7 @@ lean_commit = subprocess.check_output(['lean', '--run', 'src/lean_commit.lean'])
 lean_root = 'https://github.com/leanprover-community/lean/blob/{}/library/'.format(lean_commit)
 
 def convert_markdown(ds):
-  return markdown2.markdown(ds, extras=['code-friendly', 'cuddled-lists'])
+  return markdown2.markdown(ds, extras=['code-friendly', 'cuddled-lists', 'fenced-code-blocks'])
 
 def filename_core(root, filename, ext):
   if 'lean/library' in filename:
@@ -79,7 +79,6 @@ def index_nav_link(path):
     links.append('<a href="{2}{0}/index.html">{1}</a>'.format('/'.join(tks[:i+1]), tks[i], site_root))
   return '/<br>'.join(links)
 
-
 def open_outfile(filename, mode):
     if not os.path.exists(os.path.dirname(filename)):
         os.makedirs(os.path.dirname(filename))
@@ -102,8 +101,8 @@ def load_json():
   f = open('json_export.txt', 'r', encoding='utf-8')
   decls = json.load(f, strict=False)
   f.close()
-  module_docs = []
-  file_map, loc_map = separate_results(decls)
+  module_docs = decls['mod_docs']
+  file_map, loc_map = separate_results(decls['decls'])
   return file_map, loc_map, module_docs
 
 def linkify(string, file_map):
@@ -141,52 +140,39 @@ def write_decl_html(obj, loc_map, out):
       obj['name'], type, doc_string, attr_string, kind, args, name, sfs, cstrs)
   )
 
-def get_doc_string(path):
-  try:
-    with open(path, 'r', encoding = 'utf-8') as inf:
-      text = inf.read()
-      inf.close()
-      result = re.search(r'\/\-\!([\s\S]*?)\-\/', text)
-      return result.group(1)
-  except:
-    return ''
-
 def write_internal_nav(objs, filename, out):
-  # library_link(filename),
-  out.write('<h1><a href="#top">{0}</a></h1>'.format(filename.split('/')[-1][:-5]))
+  out.write('<h1>Lean <a href="https://leanprover-community.github.io">mathlib</a> docs</h1>')
+  out.write('<h2><a href="#top">{0}</a></h2>'.format(filename.split('/')[-1][:-5]))
   out.write('<div class="gh_link"><a href="{}">(view source on GitHub)</a></div>'.format(library_link(filename)))
-  #out.write('<div class="internal_nav">\n') # <div class="internal_nav_float">
   for o in sorted([o['name'] for o in objs]):
     out.write('<a href="#{0}">{0}</a><br>\n'.format(o))
-  #out.write('</div>') # </div>
+
+def write_mod_doc(obj, loc_map, out):
+  doc = linkify_markdown(convert_markdown(obj['doc']), loc_map)
+  out.write('<div class="mod_doc">\n<a id="top"></a>\n' + doc + '</div>')
 
 
-def write_body_content(objs, loc_map, filename, body_out):
-  ds = get_doc_string(filename_core(local_lean_root, filename, 'lean'))
-  if ds != '':
-    module_doc = linkify_markdown(convert_markdown(ds), loc_map)
-    body_out.write('<div class="mod_doc">\n<a id="top"></a>\n' + module_doc + '</div>')
-  objs.sort(key = lambda d: d['line'])
-  for o in objs: #sorted(objs, key = lambda d: d['line']):
-    write_decl_html(o, loc_map, body_out)
+def write_body_content(objs, loc_map, filename, mod_docs, body_out):
+  for o in sorted(objs + mod_docs, key = lambda d: d['line']):
+    if 'name' in o:
+      write_decl_html(o, loc_map, body_out)
+    else:
+      write_mod_doc(o, loc_map, body_out)
 
-
-html_head = """<!DOCTYPE html>
+def html_head(title):
+  return """<!DOCTYPE html>
 <html lang="en">
     <head>
         <link rel="stylesheet" href="{0}style_js_frame.css">
-        <title>temp title</title>
+        <title>mathlib docs: {1}</title>
         <meta charset="UTF-8">
-        <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/js-cookie@beta/dist/js.cookie.min.js"></script>
     </head>
     <body>
-        <div class="row">""".format(site_root)
+        <div class="row">""".format(site_root, filename_core('', title, '')[:-1].replace('/', '.'))
 
 html_tail = """
         </div>
     </body>
-    <script src="{0}path.js"></script>
     <script src="{0}nav.js"></script>
 </html>
 """.format(site_root)
@@ -194,30 +180,6 @@ html_tail = """
 def is_displayable_html(name):
     fn, ext = os.path.splitext(name)
     return fn != 'index' and ext in ['.html', '.lean']
-
-""" def content_nav(path):
-    s = ''
-    lst = os.listdir(os.path.join(root,path))
-    files, dirs = [], {}
-    for name in lst:
-        f = os.path.join(path, name)
-        if os.path.isdir(os.path.join(root,f)):
-            dirs[name] = content_nav(f)
-        else:
-            files.append(name)
-    for name in sorted(dirs.keys()):
-        s += '<div class="nav_sect">{0}</div>\n<div class="nav_sect_inner" id="{1}">\n{2}\n</div>'.format(
-            name,
-            os.path.join(path, name),
-            dirs[name]
-        )
-    for name in filter(is_displayable_html, sorted(files)):
-        s += '<a class="nav_file" id="{0}" href="{2}{0}">{1}</a>\n'.format(
-            os.path.join(path, name),
-            name,
-            site_root
-        )
-    return s """
 
 def add_to_dir_tree(lst):
   dct, fil = {}, []
@@ -235,79 +197,54 @@ def add_to_dir_tree(lst):
     dct2[key] = add_to_dir_tree(dct[key])
   return {'dirs':dct2, 'files':fil}
 
-def print_dir_tree(path, tree):
+def print_dir_tree(path, active_path, tree):
   s = ''
   for name in sorted(tree['dirs'].keys()):
     new_path = os.path.join(path, name)
     s += '<div class="nav_sect">{0}</div>\n'.format(name)
-    s += '<div class="nav_sect_inner" id="{0}">\n'.format(new_path)
-    s += print_dir_tree(new_path, tree['dirs'][name])
+    s += '<div class="nav_sect_inner{1}" id="{0}">\n'.format(new_path, '' if active_path.startswith(new_path + '/') else ' hidden')
+    s += print_dir_tree(new_path, active_path, tree['dirs'][name])
     s += '\n</div>'
-  for name in sorted(tree['files']): #filter(is_displayable_html, sorted(tree['files'])):
-    s += '<a class="nav_file" id="{0}" href="{2}{0}">{1}</a><br>\n'.format(
-          os.path.join(path, name),
+  for name in sorted(tree['files']):
+    p = os.path.join(path, name)
+    s += '<a class="nav_file{3}" id="{0}" href="{2}{0}">{1}</a><br>\n'.format(
+          p,
           name[:-5],
-          site_root
+          site_root,
+          ' visible' if p == active_path else ''
       )
   s += '\n'
   return s
 
-def content_nav(partition):
-  dir_list = add_to_dir_tree([filename_core('', filename, 'html').split('/') for filename in partition])
-  #print(sorted(dir_list['dirs'].keys()))
-  return print_dir_tree('', dir_list)
+def content_nav(dir_list, active_path):
+  return print_dir_tree('', filename_core('', active_path, 'html'), dir_list)
 
-def write_html_file(content_nav_str, objs, loc_map, filename, out):
-  out.write(html_head)
+def write_html_file(content_nav_str, objs, loc_map, filename, mod_docs, out):
+  out.write(html_head(filename))
   out.write('<div class="column left"><div class="nav">\n')
   out.write(content_nav_str)
   out.write('\n</div></div>\n')
   out.write('<div class="column middle"><div class="content">\n')
-  write_body_content(objs, loc_map, filename, out)
+  write_body_content(objs, loc_map, filename, mod_docs, out)
   out.write('\n</div></div>\n')
   out.write('<div class="column right"><div class="internal_nav">\n' )
   write_internal_nav(objs, filename, out)
   out.write('</div></div>\n')
   out.write(html_tail)
 
-
-def write_html_files(partition, loc_map):
-  content_nav_str = content_nav(partition)
+def write_html_files(partition, loc_map, mod_docs):
+  dir_list = add_to_dir_tree([filename_core('', filename, 'html').split('/') for filename in partition])
   for filename in partition:
+    content_nav_str = content_nav(dir_list, filename)
     body_out = open_outfile(filename_core(html_root, filename, 'html'), 'w')
-#    nav_out = open_outfile(filename_core(html_root, filename, 'html.nav'), 'w')
-    write_html_file(content_nav_str, partition[filename], loc_map, filename, body_out)
+    md = mod_docs[filename] if filename in mod_docs else []
+    write_html_file(content_nav_str, partition[filename], loc_map, filename, md, body_out)
     body_out.close()
-#    nav_out.close()
-
-""" def write_html_indices(path):
-  out = open_outfile(path + "/index.html", 'w')
-  out.write('<html><head><title>{1}</title><link rel="stylesheet" href="{0}style.css"></head><body>\
-    <div class="nav"><div class="title">mathlib API docs</div>{2}</div><div class="index_body"><ul>'.format(site_root, path, index_nav_link(path)))
-  lst = os.listdir(path)
-  files, dirs = [], []
-  for name in lst:
-    f = os.path.join(path, name)
-    if os.path.isdir(f):
-      dirs.append(name)
-      write_html_indices(f)
-    else:
-      files.append(name)
-  for name in sorted(dirs):
-    out.write('<li><a href="{0}/index.html" class="index">{0}</a></li>\n'.format(name))
-  for name in filter(is_displayable_html, sorted(files)):
-    out.write('<li><a href="{0}" class="file">{0}</a></li>\n'.format(name))
-  out.write('</ul></div></body></html>')
-  out.close() """
 
 def copy_css(path):
   shutil.copyfile('style_js_frame.css', path+'style_js_frame.css')
   shutil.copyfile('nav.js', path+'nav.js')
-  with open(os.path.join(path, 'path.js'), 'w') as f:
-    f.write('function siteRoot() {return "' + site_root + '";}')
-    f.close()
 
-file_map, loc_map, _ = load_json()
-#content_nav(file_map)
-write_html_files(file_map, loc_map)
+file_map, loc_map, mod_docs = load_json()
+write_html_files(file_map, loc_map, mod_docs)
 copy_css(html_root)

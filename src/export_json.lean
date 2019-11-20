@@ -45,6 +45,11 @@ structure decl_info :=
 (structure_fields : list (string × string)) -- name and type of fields of a constructor
 (constructors : list (string × string)) -- name and type of constructors of an inductive type
 
+structure module_doc_info :=
+(filename : string)
+(line : ℕ)
+(content : string)
+
 meta def escape_quotes (s : string) : string :=
 s.fold "" (λ s x, s ++ if x = '"' then '\\'.to_string ++ '"'.to_string else x.to_string)
 
@@ -165,18 +170,33 @@ meta def itersplit {α} : list α → ℕ → list (list α)
 | l 1 := let (l1, l2) := l.split in [l1, l2]
 | l (k+2) := let (l1, l2) := l.split in itersplit l1 (k+1) ++ itersplit l2 (k+1)
 
+meta def write_module_doc_pair : pos × string → string
+| (⟨line, _⟩, doc) := "{\"line\":" ++ to_string line ++ ", \"doc\" :" ++ repr doc ++ "}"
+
+meta def write_olean_docs : tactic (list string) :=
+do docs ← olean_doc_strings,
+   return (docs.foldl (λ rest p, match p with
+   | (none, _) := rest
+   | (_, []) := rest
+   | (some filename, l) :=
+     let new := "\"" ++ filename ++ "\":" ++ to_string (l.map write_module_doc_pair)  in
+     new::rest
+   end) [])
+
 /-- Using `environment.mfold` is much cleaner. Unfortunately this led to a segfault, I think because
 of a stack overflow. Converting the environment to a list of declarations and folding over that led
 to "deep recursion detected". Instead, we split that list into 8 smaller lists and process them
 one by one. More investigation is needed. -/
 meta def export_json (filename : string) : io unit :=
 do handle ← mk_file_handle filename mode.write,
-   put_str_ln handle "[",
+   put_str_ln handle "{ \"decls\":[",
    e ← run_tactic get_env,
    let ens := environment.get_decl_names e,
    let enss := itersplit ens 3,
    enss.mfoldl (λ is_first l, do run_on_dcl_list e l handle is_first, return ff) tt,
-   put_str_ln handle "]",
+   put_str_ln handle "],",
+   ods ← run_tactic write_olean_docs,
+   put_str_ln handle $ "\"mod_docs\": {" ++ string.join (ods.intersperse ",\n") ++ "}}",
    close handle
 
 meta def main : io unit :=
