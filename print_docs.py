@@ -120,7 +120,7 @@ def linkify_markdown(string, loc_map):
   return re.sub(r'<code>([\s\S]*?)<\/code>', lambda p: linkify_type(p.group(), loc_map), string)
 
 def write_decl_html(obj, loc_map, out):
-  doc_string = markdown2.markdown(obj['doc_string'], extras=["code-friendly"])
+  doc_string = markdown2.markdown(obj['doc_string'], extras=["code-friendly", 'cuddled-lists', 'fenced-code-blocks'])
   type = linkify_type(obj['type'], loc_map)
   args = [linkify_type(s['arg'], loc_map) for s in obj['args'] if not s['implicit']]
   args = ['<span class="decl_args">{}</span>'.format(s) for s in args]
