@@ -35,7 +35,7 @@ open tactic io io.fs
 /-- The information collected from each declaration -/
 structure decl_info :=
 (name : name)
-(args : list string)
+(args : list (bool × string)) -- tt means implicit
 (type : string)
 (doc_string : option string)
 (filename : string)
@@ -53,10 +53,14 @@ structure module_doc_info :=
 meta def escape_quotes (s : string) : string :=
 s.fold "" (λ s x, s ++ if x = '"' then '\\'.to_string ++ '"'.to_string else x.to_string)
 
+meta def print_arg : bool × string → string
+| (b, s) := let bstr := if b then "true" else "false" in
+"{" ++ (to_string $ format!"\"arg\":{repr s}, \"implicit\":{bstr}") ++ "}"
+
 meta def decl_info.to_format : decl_info → format
 | ⟨name, args, type, doc_string, filename, line, attributes, kind, structure_fields, constructors⟩ :=
 let doc_string := doc_string.get_or_else "",
-    args := args.map repr,
+    args := args.map print_arg,
     attributes := attributes.map repr,
     structure_fields := structure_fields.map (λ ⟨n, t⟩, format!"[\"{to_string n}\", {repr t}]"),
     constructors := constructors.map (λ ⟨n, t⟩, format!"[\"{to_string n}\", {repr t}]") in
@@ -68,22 +72,41 @@ section
 
 open tactic.interactive
 
-private meta def format_binders : list name × binder_info × expr → tactic format
-| (ns, binder_info.default, t) := pformat!"({format_names ns} : {t})"
-| (ns, binder_info.implicit, t) := pformat!"{{{format_names ns} : {t}}"
-| (ns, binder_info.strict_implicit, t) := pformat!"⦃{format_names ns} : {t}⦄"
-| ([n], binder_info.inst_implicit, t) :=
+-- tt means implicit
+private meta def format_binders : list name × binder_info × expr → tactic (bool × format)
+| (ns, binder_info.default, t) := prod.mk ff <$> pformat!"({format_names ns} : {t})"
+| (ns, binder_info.implicit, t) := prod.mk tt <$>  pformat!"{{{format_names ns} : {t}}"
+| (ns, binder_info.strict_implicit, t) := prod.mk tt <$> pformat!"⦃{format_names ns} : {t}⦄"
+| ([n], binder_info.inst_implicit, t) := prod.mk tt <$>
   if "_".is_prefix_of n.to_string
     then pformat!"[{t}]"
     else pformat!"[{format_names [n]} : {t}]"
-| (ns, binder_info.inst_implicit, t) := pformat!"[{format_names ns} : {t}]"
-| (ns, binder_info.aux_decl, t) := pformat!"({format_names ns} : {t})"
+| (ns, binder_info.inst_implicit, t) := prod.mk tt <$> pformat!"[{format_names ns} : {t}]"
+| (ns, binder_info.aux_decl, t) := prod.mk tt <$> pformat!"({format_names ns} : {t})"
 
-meta def get_args_and_type (e : expr) : tactic (list string × string) :=
+meta def binder_info.is_inst_implicit : binder_info → bool
+| binder_info.inst_implicit := tt
+| _ := ff
+
+meta def count_named_intros : expr → tactic ℕ
+| e@(expr.pi _ bi _ _) :=
+  do ([_], b) ← mk_local_pisn e 1,
+     v ← count_named_intros b,
+     return $ if v = 0 ∧ e.is_arrow ∧ ¬ bi.is_inst_implicit then v else v + 1
+| _ := return 0
+
+/- meta def count_named_intros : expr → ℕ
+| e@(expr.pi _ _ _ b) :=
+  let v := count_named_intros b in
+  if v = 0 ∧ e.is_arrow then v else v + 1
+| _ := 0 -/
+
+-- tt means implicit
+meta def get_args_and_type (e : expr) : tactic (list (bool × string) × string) :=
 prod.fst <$> solve_aux e (
-do intros,
+do count_named_intros e >>= intron,
    cxt ← local_context >>= tactic.interactive.compact_decl,
-   cxt' ← cxt.mmap $ λ t, to_string <$> format_binders t,
+   cxt' ← cxt.mmap (λ t, do ft ← format_binders t, return (ft.1, to_string ft.2)),
    tgt ← target >>= pp,
    return (cxt', to_string tgt))
 

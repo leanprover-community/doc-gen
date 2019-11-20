@@ -122,22 +122,25 @@ def linkify_markdown(string, loc_map):
 def write_decl_html(obj, loc_map, out):
   doc_string = markdown2.markdown(obj['doc_string'], extras=["code-friendly"])
   type = linkify_type(obj['type'], loc_map)
-  args = [linkify_type(s, loc_map) for s in obj['args']]
+  args = [linkify_type(s['arg'], loc_map) for s in obj['args'] if not s['implicit']]
   args = ['<span class="decl_args">{}</span>'.format(s) for s in args]
   args = ' '.join(args)
-  sf = ['<div class="structure_field">{0} : {1}</div>'.format(name, linkify_type(tp, loc_map)) for (name, tp) in obj['structure_fields']]
-  sfs = '<div class="structure_fields">\nFields:\n{}\n</div>'.format('\n'.join(sf)) if len(sf) > 0 else ''
-  cstr = ['<div class="structure_field">{0} : {1}</div>'.format(name, linkify_type(tp, loc_map)) for (name, tp) in obj['constructors']]
-  cstrs = '<div class="structure_fields">\nConstructors:\n{}\n</div>'.format('\n'.join(cstr)) if len(cstr) > 0 else ''
+  sf = ['<li><div class="structure_field">{0} : {1}</div></li>'.format(name, linkify_type(tp, loc_map)) for (name, tp) in obj['structure_fields']]
+  sfs = '<li class="structure_fields">\nFields:\n<ul>{}\n</ul></li>'.format('\n'.join(sf)) if len(sf) > 0 else ''
+  cstr = ['<li><div class="structure_field">{0} : {1}</div></li>'.format(name, linkify_type(tp, loc_map)) for (name, tp) in obj['constructors']]
+  cstrs = '<li class="structure_fields">\nConstructors:\n<ul>{}\n</ul></li>'.format('\n'.join(cstr)) if len(cstr) > 0 else ''
   kind = 'structure' if len(sf) > 0 else 'inductive' if len(cstrs) > 0 else obj['kind']
   name = '<a href="{0}">{1}</a>'.format(library_link(obj['filename'], obj['line']), obj['name'])
-  attr_string = 'Attributes: ' + ', '.join(obj['attributes']) if len(obj['attributes']) > 0 else ''
+  attr_string = '<li>Attributes: ' + ', '.join(obj['attributes']) + '</li>' if len(obj['attributes']) > 0 else ''
+  impls = [linkify_type(s['arg'], loc_map) for s in obj['args'] if s['implicit']]
+  impls = ['<span class="impl_arg">{}</span>'.format(s) for s in impls]
+  impl_string = '<li>Implicit arguments: {}</li>'.format(' '.join(impls)) if len(impls) > 0 else ''
   out.write(
     '<div class="{4}"><a id="{0}"></a>\
       <span class="decl_name">{6}</span> {5} <span class="decl_args">:</span> \
-      <div class="decl_type">{1}</div>\n<div class="indent">{2} \
-      {7}\n{8}\n{3}</div>\n</div>'.format(
-      obj['name'], type, doc_string, attr_string, kind, args, name, sfs, cstrs)
+      <div class="decl_type">{1}</div>\n{2} \
+      <ul>\n{9}\n{3}\n{7}\n{8}\n</ul></div>'.format(
+      obj['name'], type, doc_string, attr_string, kind, args, name, sfs, cstrs, impl_string)
   )
 
 def write_internal_nav(objs, filename, out):
@@ -164,6 +167,7 @@ def html_head(title):
 <html lang="en">
     <head>
         <link rel="stylesheet" href="{0}style_js_frame.css">
+        <link rel="shortcut icon" href="https://leanprover-community.github.io/assets/img/lean.ico">
         <title>mathlib docs: {1}</title>
         <meta charset="UTF-8">
     </head>

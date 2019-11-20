@@ -90,11 +90,11 @@ body {
 
 .def, .thm, .ax, .cnst, .structure, .inductive, .mod_doc, .index_body {
     overflow-x: auto;
-    padding-left: 5px;
+    padding-left: 8px;
 }
 
 .def, .thm, .ax, .cnst, .structure, .inductive {
-    padding: 5px 5px 5px 5px;
+    padding: 8px 8px 8px 8px;
     border-radius: 8px;
     /* margin-top: 10px; */
     margin-bottom: 10px;
@@ -157,13 +157,35 @@ body {
     color: black;
 }
 
+.implicits {
+    padding-top: 8px;
+}
+
+.impl_arg {
+    font-family: monospace;
+    font-size: 15px;
+}
+
+ul {
+    padding-inline-start: 25px;
+}
+
+.implicits, .impl_arg, .impl_arg a:link, .impl_arg a:visited, .impl_arg a:active {
+    color: black;
+    white-space: nowrap;
+}
+
+.impl_arg a:hover {
+    color: darkslategray;
+}
+
 .decl_name, .decl_args {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: bold;
 }
 
 .decl_type {
-    font-size:16px;
+    font-size:15px;
     padding: 10px 0px 0px 0px;
 }
 
