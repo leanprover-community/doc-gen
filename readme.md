@@ -1,4 +1,4 @@
-# gen_docs
+# Lean HTML documentation generator
 
 A tool to generate documentation for [mathlib](https://github.com/leanprover-community/mathlib/).
 
