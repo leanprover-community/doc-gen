@@ -4,4 +4,5 @@ bash _target/deps/mathlib/scripts/rm_all.sh
 bash _target/deps/mathlib/scripts/mk_all.sh
 lean --run src/export_json.lean
 bash _target/deps/mathlib/scripts/rm_all.sh
+rm -r ./html/*
 python3 print_docs.py $1

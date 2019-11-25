@@ -21,4 +21,4 @@ Make sure that olean files are generated for mathlib in `_target`, otherwise thi
 
 `./gen_docs` will create a directory `html` with the generated documentation.
 
-The links will point to `./html/` as the root of the site. If you intend to host the site elsewhere, edit `site_root` in `leanpkg.toml` and use `./gen_docs -w`.
+The links will point to `./html/` as the root of the site. If you intend to host the site elsewhere, edit `web_root` in `print_docs.py` and use `./gen_docs -w`.

@@ -1,7 +1,9 @@
 #!/usr/bin/env/python3
 
-# requires `pip install markdown2` and `pip install toml`
-# this script is not Windows friendly.
+# Requires the `markdown2` and `toml` packages:
+#   `pip install markdown2 toml`
+#
+# This script is not Windows friendly.
 #
 
 import json
@@ -19,10 +21,13 @@ root = os.getcwd()
 # path to put generated html
 html_root = root + '/html/'
 
-# root of the site, for display purposes. use `html_root` for local testing.
-#site_root = "https://robertylewis.com/mathlib_docs/"
-site_root = html_root
+# root of the site, for display purposes.
+# for local testing, use `html_root` or the address of a local server.
+# override this setting with the `-w` flag.
 site_root = "http://localhost:8000/"
+
+# web root, used in place of `site_root` if the `-w` flag is used
+web_root = "https://leanprover-community.github.io/mathlib_docs/"
 
 # src directory of mathlib. used to scrape module docs.
 # The files here should match the ones used to generate json_export.txt.
@@ -41,7 +46,7 @@ with open('leanpkg.toml') as f:
   mathlib_commit = ml_data['rev']
   mathlib_github_root = ml_data['git'].strip('/')
   if cl_args.w:
-    site_root = parsed_toml['html_output']['site_root'].strip('/') + '/'
+    site_root = web_root
 
 mathlib_github_src_root = "{0}/blob/{1}/src/".format(mathlib_github_root, mathlib_commit)
 
@@ -143,8 +148,14 @@ def write_decl_html(obj, loc_map, out):
       obj['name'], type, doc_string, attr_string, kind, args, name, sfs, cstrs, impl_string)
   )
 
+search_snippet = """
+<script async src="https://cse.google.com/cse.js?cx=013315010647789779870:7aikx0zd1z9"></script>
+<div class="gcse-search"></div>
+"""
+
 def write_internal_nav(objs, filename, out):
   out.write('<h1>Lean <a href="https://leanprover-community.github.io">mathlib</a> docs</h1>')
+  out.write('<div class="search">{}</div>'.format(search_snippet))
   out.write('<h2><a href="#top">{0}</a></h2>'.format(filename.split('/')[-1][:-5]))
   out.write('<div class="gh_link"><a href="{}">(view source on GitHub)</a></div>'.format(library_link(filename)))
   for o in sorted([o['name'] for o in objs]):
@@ -152,10 +163,11 @@ def write_internal_nav(objs, filename, out):
 
 def write_mod_doc(obj, loc_map, out):
   doc = linkify_markdown(convert_markdown(obj['doc']), loc_map)
-  out.write('<div class="mod_doc">\n<a id="top"></a>\n' + doc + '</div>')
+  out.write('<div class="mod_doc">\n' + doc + '</div>')
 
 
 def write_body_content(objs, loc_map, filename, mod_docs, body_out):
+  body_out.write('<a id="top"></a>')
   for o in sorted(objs + mod_docs, key = lambda d: d['line']):
     if 'name' in o:
       write_decl_html(o, loc_map, body_out)
@@ -221,7 +233,7 @@ def print_dir_tree(path, active_path, tree):
   return s
 
 def content_nav(dir_list, active_path):
-  return print_dir_tree('', active_path, dir_list)
+  return '<a href="{0}">index</a><br><br>\n'.format(site_root) + print_dir_tree('', active_path, dir_list)
 
 def write_html_file(content_nav_str, objs, loc_map, filename, mod_docs, out):
   out.write(html_head(filename_core('', filename, '')[:-1].replace('/', '.')))
@@ -239,11 +251,20 @@ def write_html_file(content_nav_str, objs, loc_map, filename, mod_docs, out):
 index_body = """
 <h1>Lean mathlib documentation</h1>
 
+{4}
+
 <p>Navigate through mathlib files using the menu on the left.</p>
 
 <p>Declaration names link to their locations in the mathlib or core Lean source.
 Names inside code snippets link to their locations in this documentation.</p>
-"""
+
+<p>This documentation has been generated with mathlib commit
+<a href="{1}/tree/{0}">{0}</a> and Lean 3.5c commit <a href="{2}">{3}</a>.</p>
+
+<p>Note: mathlib is still only partially documented, and this HTML display is still
+under development. We welcome pull requests on <a href="{1}">GitHub</a> to update misleading or
+badly formatted doc strings, or to add missing documentation.</p>
+""".format(mathlib_commit, mathlib_github_root, lean_root, lean_commit, search_snippet)
 
 def write_html_files(partition, loc_map, mod_docs):
   dir_list = add_to_dir_tree([filename_core('', filename, 'html').split('/') for filename in partition])
@@ -266,7 +287,11 @@ def write_html_files(partition, loc_map, mod_docs):
   out.write(html_tail)
   out.close()
 
-
+def write_site_map(partition):
+  out = open_outfile(html_root + 'sitemap.txt', 'w')
+  for filename in partition:
+    out.write(filename_core(site_root, filename, 'html') + '\n')
+  out.close()
 
 def copy_css(path):
   shutil.copyfile('style_js_frame.css', path+'style_js_frame.css')
@@ -275,3 +300,4 @@ def copy_css(path):
 file_map, loc_map, mod_docs = load_json()
 write_html_files(file_map, loc_map, mod_docs)
 copy_css(html_root)
+write_site_map(file_map)
