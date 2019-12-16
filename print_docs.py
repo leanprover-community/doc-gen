@@ -150,8 +150,8 @@ def write_decl_html(obj, loc_map, instances, out):
     inst_string = ''
   out.write(
     '<div class="{4}"><a id="{0}"></a>\
-      <span class="decl_name">{6}</span> {5} <span class="decl_args">:</span> \
-      <div class="decl_type">{1}</div>\n{2} \
+      <div class="decl_header"><span class="decl_name">{6}</span> {5} <span class="decl_args">:</span> \
+      <div class="decl_type">{1}</div></div>\n{2} \
       <ul>\n{9}\n{3}\n{7}\n{8}\n{10}\n</ul></div>'.format(
       obj['name'], type, doc_string, attr_string, kind, args, name, sfs, cstrs, impl_string, inst_string)
   )

@@ -97,7 +97,6 @@ body {
 }
 
 .def, .thm, .ax, .cnst, .structure, .inductive {
-    padding-left: 8px;
     padding-right: 8px;
     margin-top: 20px;
     margin-bottom: 20px;
@@ -184,18 +183,20 @@ ul {
     color: darkslategray;
 }
 
-.decl_name, .decl_args {
+.decl_header {
     font-size: 15px;
     font-weight: bold;
+    line-height: 1.5;
+    /* indent everything but first line twice as much as decl_type */
+    text-indent: -8ex; padding-left: 8ex;
 }
 
 .decl_type {
-    font-size:15px;
-    margin-top: 10px;
-    margin-left: 4ex;
+    margin-top: 2px;
+    margin-left: 4ex; /* extra indentation */
 }
 
-code, .decl_name, .decl_args, .decl_type,
+code, .decl_header,
  .structure .structure_fields .structure_field,
  .inductive .structure_fields .structure_field {
     font-family: monospace;
