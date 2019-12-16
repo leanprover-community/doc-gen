@@ -248,3 +248,24 @@ a.file:link, a.file:visited, a.file:active {
 .internal_nav .gh_link {
     padding-bottom: 1.5em;
 }
+
+.impl_args.collapsed {
+    cursor: pointer;
+}
+.impl_args.collapsed > span {
+    display: none;
+}
+.impl_args.collapsed:after {
+    content: '{…}';
+}
+
+.impl_args:not(.collapsed):after {
+    /* insert line break after expanded implicit arguments */
+    content: '\A';
+    white-space: pre;
+}
+
+.impl_args {
+    font-style: italic;
+    font-weight: normal;
+}

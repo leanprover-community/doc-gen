@@ -56,3 +56,8 @@ for (i = 0; i < coll.length; i++) {
 
 getExpandedCookie();
 expandExpanded();
+
+for (const collapsible of document.getElementsByClassName('collapsible')) {
+    collapsible.addEventListener('click', () =>
+        collapsible.classList.remove('collapsed'));
+}

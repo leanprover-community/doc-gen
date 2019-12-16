@@ -140,8 +140,8 @@ def write_decl_html(obj, loc_map, instances, out):
   name = '<a href="{0}">{1}</a>'.format(library_link(obj['filename'], obj['line']), obj['name'])
   attr_string = '<li>Attributes: ' + ', '.join(obj['attributes']) + '</li>' if len(obj['attributes']) > 0 else ''
   impls = [linkify_type(s['arg'], loc_map) for s in obj['args'] if s['implicit']]
-  impls = ['<span class="impl_arg">{}</span>'.format(s) for s in impls]
-  impl_string = '<li>Implicit arguments: {}</li>'.format(' '.join(impls)) if len(impls) > 0 else ''
+  impls = ['<span class="decl_args impl_arg">{}</span>'.format(s) for s in impls]
+  impl_string = '<span class="collapsible collapsed impl_args">{}</span>'.format(' '.join(impls)) if len(impls) > 0 else ''
   if obj['name'] in instances:
     insts = instances[obj['name']]
     insts = ['<li class="structure_field">{}</li>'.format(linkify_type(n, loc_map)) for n in insts]
@@ -150,9 +150,9 @@ def write_decl_html(obj, loc_map, instances, out):
     inst_string = ''
   out.write(
     '<div class="{4}"><a id="{0}"></a>\
-      <div class="decl_header"><span class="decl_name">{6}</span> {5} <span class="decl_args">:</span> \
+      <div class="decl_header"><span class="decl_name">{6}</span> {9} {5} <span class="decl_args">:</span> \
       <div class="decl_type">{1}</div></div>\n{2} \
-      <ul>\n{9}\n{3}\n{7}\n{8}\n{10}\n</ul></div>'.format(
+      <ul>\n{3}\n{7}\n{8}\n{10}\n</ul></div>'.format(
       obj['name'], type, doc_string, attr_string, kind, args, name, sfs, cstrs, impl_string, inst_string)
   )
 
