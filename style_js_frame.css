@@ -183,10 +183,16 @@ ul {
     color: darkslategray;
 }
 
-.decl_header {
-    font-size: 15px;
+.decl_header, .attributes {
     font-weight: bold;
     line-height: 1.5;
+}
+
+.decl_header {
+    font-size: 15px;
+}
+
+.decl_header {
     /* indent everything but first line twice as much as decl_type */
     text-indent: -8ex; padding-left: 8ex;
 }
@@ -196,7 +202,7 @@ ul {
     margin-left: 4ex; /* extra indentation */
 }
 
-code, .decl_header,
+code, .decl_header, .attributes,
  .structure .structure_fields .structure_field,
  .inductive .structure_fields .structure_field {
     font-family: monospace;
