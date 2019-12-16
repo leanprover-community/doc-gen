@@ -15,6 +15,7 @@ import subprocess
 import toml
 import shutil
 import argparse
+import html
 
 root = os.getcwd()
 
@@ -117,16 +118,29 @@ def load_json():
   file_map, loc_map = separate_results(decls['decls'])
   return file_map, loc_map, decls['mod_docs'], decls['instances']
 
-def linkify(string, file_map):
-  if string in file_map:
-    return '<a href="{0}#{1}">{1}</a>'.format(filename_core(site_root, file_map[string], 'html'), string)
+def linkify_core(decl_name, text, file_map):
+  if decl_name in file_map:
+    tooltip = ' title="{}"'.format(decl_name) if text != decl_name else ''
+    return '<a href="{0}#{1}"{3}>{2}</a>'.format(
+      filename_core(site_root, file_map[decl_name], 'html'), decl_name, text, tooltip)
+  elif text != decl_name:
+    return '<span title="{0}">{1}</span>'.format(decl_name, text)
   else:
-    return string
+    return text
+
+def linkify(string, file_map):
+  return linkify_core(string, string, file_map)
 
 def linkify_type(string, loc_map):
   splitstr = re.split(r'([\s\[\]\(\)\{\}])', string)
   tks = map(lambda s: linkify(s, loc_map), splitstr)
   return "".join(tks)
+
+def linkify_linked(string, loc_map):
+  return ''.join(
+    match[4] if match[0] == '' else
+    match[1] + linkify_core(match[0], match[2], loc_map) + match[3]
+    for match in re.findall(r'\ue000(.+?)\ue001(\s*)(.*?)(\s*)\ue002|([^\ue000]+)', string))
 
 def linkify_markdown(string, loc_map):
   return re.sub(r'<code>([\s\S]*?)<\/code>', lambda p: linkify_type(p.group(), loc_map), string)
@@ -144,11 +158,11 @@ def write_decl_html(obj, loc_map, instances, out):
   name = '<a href="{0}">{1}</a>'.format(library_link(obj['filename'], obj['line']), obj['name'])
   args = []
   for s in obj['args']:
-    arg = '<span class="decl_args">{}</span>'.format(linkify_type(s['arg'], loc_map))
+    arg = '<span class="decl_args">{}</span>'.format(linkify_linked(s['arg'], loc_map))
     if s['implicit']: arg = '<span class="impl_arg">{}</span>'.format(arg)
     args.append(arg)
   args = ' '.join(args)
-  type = linkify_type(obj['type'], loc_map)
+  type = linkify_linked(obj['type'], loc_map)
   decl_code = '{attr_string} \
     <div class="decl_header impl_collapsed"> \
       {is_meta} <span class="decl_kind">{kind}</span> \
@@ -162,10 +176,10 @@ def write_decl_html(obj, loc_map, instances, out):
       type = type,
     )
 
-  sf = ['<li class="structure_field" id="{2}.{0}">{0} : {1}</li>'.format(name.split('.')[-1], linkify_type(tp, loc_map), obj['name']) for (name, tp) in obj['structure_fields']]
+  sf = ['<li class="structure_field" id="{2}.{0}">{0} : {1}</li>'.format(name.split('.')[-1], linkify_linked(tp, loc_map), obj['name']) for (name, tp) in obj['structure_fields']]
   sfs = '<ul class="structure_fields">\n{}\n</ul>'.format('\n'.join(sf)) if len(sf) > 0 else ''
 
-  cstr = ['<li class="constructor" id="{2}.{0}">{0} : {1}</li>'.format(name.split('.')[-1], linkify_type(tp, loc_map), obj['name']) for (name, tp) in obj['constructors']]
+  cstr = ['<li class="constructor" id="{2}.{0}">{0} : {1}</li>'.format(name.split('.')[-1], linkify_linked(tp, loc_map), obj['name']) for (name, tp) in obj['constructors']]
   cstrs = '<ul class="constructors">\n{}\n</ul>'.format('\n'.join(cstr)) if len(cstr) > 0 else ''
 
   if obj['name'] in instances:
