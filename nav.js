@@ -56,3 +56,8 @@ for (i = 0; i < coll.length; i++) {
 
 getExpandedCookie();
 expandExpanded();
+
+for (const impl_collapsed of document.getElementsByClassName('impl_collapsed')) {
+    impl_collapsed.getElementsByClassName('impl_arg')[0].addEventListener('click', () =>
+        impl_collapsed.classList.remove('impl_collapsed'));
+}

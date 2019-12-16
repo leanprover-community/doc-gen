@@ -97,54 +97,49 @@ body {
 }
 
 .def, .thm, .ax, .cnst, .structure, .inductive {
-    padding: 8px 8px 8px 8px;
-    border-radius: 8px;
-    /* margin-top: 10px; */
-    margin-bottom: 10px;
+    padding-right: 8px;
+    margin-top: 20px;
+    margin-bottom: 20px;
 }
 
 .def {
-    background-color: #DAE0F2;
+    border-left: 10px solid #92dce5;
 }
 
 .def .decl_name:before {
-    content: "def "
+    content: "def ";
 }
 
 .thm {
-    background-color:#DACEE0;
+    border-left: 10px solid #8fe388;
 }
 
 .thm .decl_name:before {
-    content: "theorem "
-}
-
-.ax {
-    background-color:#88A0A8;
+    content: "theorem ";
 }
 
 .ax .decl_name:before {
-    content: "axiom "
+    content: "axiom ";
 }
 
-.cnst {
-    background-color: #88A0A8;
+.ax, .cnst {
+    border-left: 10px solid #f44708;
 }
 
 .cnst .decl_name:before {
-    content: "constant "
+    content: "constant ";
 }
 
 .structure, .inductive {
-    background-color: #92AFD7;
+    border-left: 10px solid #f0a202;
 }
 
 .structure .decl_name:before {
-    content: "structure "
+    content: "structure ";
 }
 
 .inductive .decl_name:before {
-    content: "inductive "
+    content: "inductive ";
 }
 
 .decl_name, .decl_args {
@@ -182,17 +177,26 @@ ul {
     color: darkslategray;
 }
 
-.decl_name, .decl_args {
-    font-size: 15px;
+.decl_header, .attributes {
     font-weight: bold;
+    line-height: 1.5;
+}
+
+.decl_header {
+    font-size: 15px;
+}
+
+.decl_header {
+    /* indent everything but first line twice as much as decl_type */
+    text-indent: -8ex; padding-left: 8ex;
 }
 
 .decl_type {
-    font-size:15px;
-    padding: 10px 0px 0px 0px;
+    margin-top: 2px;
+    margin-left: 4ex; /* extra indentation */
 }
 
-code, .decl_name, .decl_args, .decl_type,
+code, .decl_header, .attributes,
  .structure .structure_fields .structure_field,
  .inductive .structure_fields .structure_field {
     font-family: monospace;
@@ -243,4 +247,22 @@ a.file:link, a.file:visited, a.file:active {
 
 .internal_nav .gh_link {
     padding-bottom: 1.5em;
+}
+
+.decl_header.impl_collapsed .impl_arg > span {
+    display: none;
+}
+
+.decl_header.impl_collapsed .impl_arg ~ .impl_arg {
+    display: none;
+}
+
+.decl_header.impl_collapsed .impl_arg:after {
+    cursor: pointer;
+    content: '{…}';
+}
+
+.impl_arg {
+    font-style: italic;
+    font-weight: normal;
 }

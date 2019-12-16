@@ -129,8 +129,13 @@ def linkify_markdown(string, loc_map):
 def write_decl_html(obj, loc_map, instances, out):
   doc_string = markdown2.markdown(obj['doc_string'], extras=["code-friendly", 'cuddled-lists', 'fenced-code-blocks'])
   type = linkify_type(obj['type'], loc_map)
-  args = [linkify_type(s['arg'], loc_map) for s in obj['args'] if not s['implicit']]
-  args = ['<span class="decl_args">{}</span>'.format(s) for s in args]
+  args = []
+  for s in obj['args']:
+    clss = ['decl_args']
+    clss = ' '.join(clss)
+    arg = '<span class="decl_args">{}</span>'.format(linkify_type(s['arg'], loc_map), clss)
+    if s['implicit']: arg = '<span class="impl_arg">{}</span>'.format(arg)
+    args.append(arg)
   args = ' '.join(args)
   sf = ['<li><div class="structure_field">{0} : {1}</div></li>'.format(name, linkify_type(tp, loc_map)) for (name, tp) in obj['structure_fields']]
   sfs = '<li class="structure_fields">\nFields:\n<ul>{}\n</ul></li>'.format('\n'.join(sf)) if len(sf) > 0 else ''
@@ -138,10 +143,7 @@ def write_decl_html(obj, loc_map, instances, out):
   cstrs = '<li class="structure_fields">\nConstructors:\n<ul>{}\n</ul></li>'.format('\n'.join(cstr)) if len(cstr) > 0 else ''
   kind = 'structure' if len(sf) > 0 else 'inductive' if len(cstrs) > 0 else obj['kind']
   name = '<a href="{0}">{1}</a>'.format(library_link(obj['filename'], obj['line']), obj['name'])
-  attr_string = '<li>Attributes: ' + ', '.join(obj['attributes']) + '</li>' if len(obj['attributes']) > 0 else ''
-  impls = [linkify_type(s['arg'], loc_map) for s in obj['args'] if s['implicit']]
-  impls = ['<span class="impl_arg">{}</span>'.format(s) for s in impls]
-  impl_string = '<li>Implicit arguments: {}</li>'.format(' '.join(impls)) if len(impls) > 0 else ''
+  attr_string = '<div class="attributes">@[' + ', '.join(obj['attributes']) + ']</div>' if len(obj['attributes']) > 0 else ''
   if obj['name'] in instances:
     insts = instances[obj['name']]
     insts = ['<li class="structure_field">{}</li>'.format(linkify_type(n, loc_map)) for n in insts]
@@ -149,11 +151,11 @@ def write_decl_html(obj, loc_map, instances, out):
   else:
     inst_string = ''
   out.write(
-    '<div class="{4}"><a id="{0}"></a>\
-      <span class="decl_name">{6}</span> {5} <span class="decl_args">:</span> \
-      <div class="decl_type">{1}</div>\n{2} \
-      <ul>\n{9}\n{3}\n{7}\n{8}\n{10}\n</ul></div>'.format(
-      obj['name'], type, doc_string, attr_string, kind, args, name, sfs, cstrs, impl_string, inst_string)
+    '<div class="{4}" id="{0}">{3} \
+      <div class="decl_header impl_collapsed"><span class="decl_name">{6}</span> {5} <span class="decl_args">:</span> \
+      <div class="decl_type">{1}</div></div>\n{2} \
+      <ul>\n{7}\n{8}\n{9}\n</ul></div>'.format(
+      obj['name'], type, doc_string, attr_string, kind, args, name, sfs, cstrs, inst_string)
   )
 
 search_snippet = """
