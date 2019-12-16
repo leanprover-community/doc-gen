@@ -110,6 +110,10 @@ body {
     content: "def ";
 }
 
+.def .decl_name.meta:before {
+    content: "meta def ";
+}
+
 .thm {
     border-left: 10px solid #8fe388;
 }
@@ -118,8 +122,16 @@ body {
     content: "theorem ";
 }
 
+.thm .decl_name.meta:before {
+    content: "meta theorem ";
+}
+
 .ax .decl_name:before {
     content: "axiom ";
+}
+
+.ax .decl_name.meta:before {
+    content: "meta axiom ";
 }
 
 .ax, .cnst {
@@ -130,6 +142,10 @@ body {
     content: "constant ";
 }
 
+.cnst .decl_name.meta:before {
+    content: "meta constant ";
+}
+
 .structure, .inductive {
     border-left: 10px solid #f0a202;
 }
@@ -138,8 +154,16 @@ body {
     content: "structure ";
 }
 
+.structure .decl_name.meta:before {
+    content: "meta structure ";
+}
+
 .inductive .decl_name:before {
     content: "inductive ";
+}
+
+.inductive .decl_name.meta:before {
+    content: "meta inductive ";
 }
 
 .decl_name, .decl_args {
