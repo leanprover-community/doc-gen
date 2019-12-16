@@ -189,7 +189,8 @@ ul {
 
 .decl_type {
     font-size:15px;
-    padding: 10px 0px 0px 0px;
+    margin-top: 10px;
+    margin-left: 4ex;
 }
 
 code, .decl_name, .decl_args, .decl_type,
