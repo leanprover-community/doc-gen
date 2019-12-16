@@ -129,33 +129,49 @@ def linkify_markdown(string, loc_map):
 
 def write_decl_html(obj, loc_map, instances, out):
   doc_string = markdown2.markdown(obj['doc_string'], extras=["code-friendly", 'cuddled-lists', 'fenced-code-blocks'])
-  type = linkify_type(obj['type'], loc_map)
+
+  attr_string = '<div class="attributes">@[' + ', '.join(obj['attributes']) + ']</div>' if len(obj['attributes']) > 0 else ''
+  name = '<a href="{0}">{1}</a>'.format(library_link(obj['filename'], obj['line']), obj['name'])
   args = []
   for s in obj['args']:
     arg = '<span class="decl_args">{}</span>'.format(linkify_type(s['arg'], loc_map))
     if s['implicit']: arg = '<span class="impl_arg">{}</span>'.format(arg)
     args.append(arg)
   args = ' '.join(args)
+  type = linkify_type(obj['type'], loc_map)
+  decl_code = '{attr_string} \
+    <div class="decl_header impl_collapsed"><span class="decl_name">{name}</span> {args} <span class="decl_args">:</span> \
+    <div class="decl_type">{type}</div></div>\n'.format(
+      name = name,
+      attr_string = attr_string,
+      args = args,
+      type = type,
+    )
+
   sf = ['<li><div class="structure_field">{0} : {1}</div></li>'.format(name, linkify_type(tp, loc_map)) for (name, tp) in obj['structure_fields']]
   sfs = '<li class="structure_fields">\nFields:\n<ul>{}\n</ul></li>'.format('\n'.join(sf)) if len(sf) > 0 else ''
+
   cstr = ['<li><div class="structure_field">{0} : {1}</div></li>'.format(name, linkify_type(tp, loc_map)) for (name, tp) in obj['constructors']]
   cstrs = '<li class="structure_fields">\nConstructors:\n<ul>{}\n</ul></li>'.format('\n'.join(cstr)) if len(cstr) > 0 else ''
+
   kind = 'structure' if len(sf) > 0 else 'inductive' if len(cstrs) > 0 else obj['kind']
-  name = '<a href="{0}">{1}</a>'.format(library_link(obj['filename'], obj['line']), obj['name'])
-  attr_string = '<div class="attributes">@[' + ', '.join(obj['attributes']) + ']</div>' if len(obj['attributes']) > 0 else ''
+
   if obj['name'] in instances:
     insts = instances[obj['name']]
     insts = ['<li class="structure_field">{}</li>'.format(linkify_type(n, loc_map)) for n in insts]
     inst_string = '<li class="structure_fields">Instances:\n<ul>{}</ul></li>'.format('\n'.join(insts))
   else:
     inst_string = ''
-  out.write(
-    '<div class="{4}" id="{0}">{3} \
-      <div class="decl_header impl_collapsed"><span class="decl_name">{6}</span> {5} <span class="decl_args">:</span> \
-      <div class="decl_type">{1}</div></div>\n{2} \
-      <ul>\n{7}\n{8}\n{9}\n</ul></div>'.format(
-      obj['name'], type, doc_string, attr_string, kind, args, name, sfs, cstrs, inst_string)
-  )
+
+  out.write('<div class="{kind}" id="{raw_name}">{decl_code} {doc_string} <ul>\n{sfs}\n{cstrs}\n{inst_string}\n</ul></div>'.format(
+      decl_code = decl_code,
+      raw_name = obj['name'],
+      doc_string = doc_string,
+      kind = kind,
+      sfs = sfs,
+      cstrs = cstrs,
+      inst_string = inst_string,
+  ))
 
 search_snippet = """
 <script async src="https://cse.google.com/cse.js?cx=013315010647789779870:7aikx0zd1z9"></script>
