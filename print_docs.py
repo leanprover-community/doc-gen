@@ -130,6 +130,12 @@ def linkify_markdown(string, loc_map):
 def write_decl_html(obj, loc_map, instances, out):
   doc_string = markdown2.markdown(obj['doc_string'], extras=["code-friendly", 'cuddled-lists', 'fenced-code-blocks'])
 
+  kind = 'structure' if len(obj['structure_fields']) > 0 else 'inductive' if len(obj['constructors']) > 0 else obj['kind']
+  if kind == 'thm': kind = 'theorem'
+  elif kind == 'cnst': kind = 'constant'
+  elif kind == 'ax': kind = 'axiom'
+
+  is_meta = '<span class="decl_meta">meta</span>' if obj['is_meta'] else ''
   attr_string = '<div class="attributes">@[' + ', '.join(obj['attributes']) + ']</div>' if len(obj['attributes']) > 0 else ''
   name = '<a href="{0}">{1}</a>'.format(library_link(obj['filename'], obj['line']), obj['name'])
   args = []
@@ -140,9 +146,13 @@ def write_decl_html(obj, loc_map, instances, out):
   args = ' '.join(args)
   type = linkify_type(obj['type'], loc_map)
   decl_code = '{attr_string} \
-    <div class="decl_header impl_collapsed"><span class="decl_name">{name}</span> {args} <span class="decl_args">:</span> \
+    <div class="decl_header impl_collapsed"> \
+      {is_meta} <span class="decl_kind">{kind}</span> \
+      <span class="decl_name">{name}</span> {args} <span class="decl_args">:</span> \
     <div class="decl_type">{type}</div></div>\n'.format(
       name = name,
+      is_meta = is_meta,
+      kind = kind,
       attr_string = attr_string,
       args = args,
       type = type,
@@ -154,8 +164,6 @@ def write_decl_html(obj, loc_map, instances, out):
   cstr = ['<li><div class="structure_field">{0} : {1}</div></li>'.format(name, linkify_type(tp, loc_map)) for (name, tp) in obj['constructors']]
   cstrs = '<li class="structure_fields">\nConstructors:\n<ul>{}\n</ul></li>'.format('\n'.join(cstr)) if len(cstr) > 0 else ''
 
-  kind = 'structure' if len(sf) > 0 else 'inductive' if len(cstrs) > 0 else obj['kind']
-
   if obj['name'] in instances:
     insts = instances[obj['name']]
     insts = ['<li class="structure_field">{}</li>'.format(linkify_type(n, loc_map)) for n in insts]
@@ -163,7 +171,7 @@ def write_decl_html(obj, loc_map, instances, out):
   else:
     inst_string = ''
 
-  out.write('<div class="{kind}" id="{raw_name}">{decl_code} {doc_string} <ul>\n{sfs}\n{cstrs}\n{inst_string}\n</ul></div>'.format(
+  out.write('<div class="decl {kind}" id="{raw_name}">{decl_code} {doc_string} <ul>\n{sfs}\n{cstrs}\n{inst_string}\n</ul></div>'.format(
       decl_code = decl_code,
       raw_name = obj['name'],
       doc_string = doc_string,
