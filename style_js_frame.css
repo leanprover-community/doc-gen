@@ -97,14 +97,14 @@ body {
 }
 
 .def, .thm, .ax, .cnst, .structure, .inductive {
-    padding: 8px 8px 8px 8px;
-    border-radius: 8px;
-    /* margin-top: 10px; */
-    margin-bottom: 10px;
+    padding-left: 8px;
+    padding-right: 8px;
+    margin-top: 20px;
+    margin-bottom: 20px;
 }
 
 .def {
-    background-color: #DAE0F2;
+    border-left: 10px solid #92dce5;
 }
 
 .def .decl_name:before {
@@ -112,23 +112,19 @@ body {
 }
 
 .thm {
-    background-color:#DACEE0;
+    border-left: 10px solid #8fe388;
 }
 
 .thm .decl_name:before {
     content: "theorem "
 }
 
-.ax {
-    background-color:#88A0A8;
-}
-
 .ax .decl_name:before {
     content: "axiom "
 }
 
-.cnst {
-    background-color: #88A0A8;
+.ax, .cnst {
+    border-left: 10px solid #f44708;
 }
 
 .cnst .decl_name:before {
@@ -136,7 +132,7 @@ body {
 }
 
 .structure, .inductive {
-    background-color: #92AFD7;
+    border-left: 10px solid #f0a202;
 }
 
 .structure .decl_name:before {
