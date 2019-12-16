@@ -64,6 +64,9 @@ def filename_core(root, filename, ext):
   else:
     return root + filename.split('mathlib/scripts/', 1)[1][:-4] + ext
 
+def filename_import(filename):
+  return filename_core('', filename, '')[:-1].replace('/', '.')
+
 def library_link(filename, line=None):
   root = lean_root + filename.split('lean/library/', 1)[1] \
            if 'lean/library' in filename \
@@ -155,8 +158,7 @@ search_snippet = """
 
 def write_internal_nav(objs, filename, out):
   out.write('<h1>Lean <a href="https://leanprover-community.github.io">mathlib</a> docs</h1>')
-  out.write('<div class="search">{}</div>'.format(search_snippet))
-  out.write('<h2><a href="#top">{0}</a></h2>'.format(filename.split('/')[-1][:-5]))
+  out.write('<h2><a href="#top">{0}</a></h2>'.format(filename_import(filename)))
   out.write('<div class="gh_link"><a href="{}">(view source on GitHub)</a></div>'.format(library_link(filename)))
   for o in sorted([o['name'] for o in objs]):
     out.write('<a href="#{0}">{0}</a><br>\n'.format(o))
@@ -233,19 +235,22 @@ def print_dir_tree(path, active_path, tree):
   return s
 
 def content_nav(dir_list, active_path):
-  return '<a href="{0}">index</a><br><br>\n'.format(site_root) + print_dir_tree('', active_path, dir_list)
+  s = '<div class="search">{}</div>\n'.format(search_snippet)
+  s += '<a href="{0}">index</a><br><br>\n'.format(site_root)
+  s += print_dir_tree('', active_path, dir_list)
+  return s
 
 def write_html_file(content_nav_str, objs, loc_map, filename, mod_docs, out):
-  out.write(html_head(filename_core('', filename, '')[:-1].replace('/', '.')))
-  out.write('<div class="column left"><div class="nav">\n')
-  out.write(content_nav_str)
-  out.write('\n</div></div>\n')
+  out.write(html_head(filename_import(filename)))
+  out.write('<div class="column left"><div class="internal_nav">\n' )
+  write_internal_nav(objs, filename, out)
+  out.write('</div></div>\n')
   out.write('<div class="column middle"><div class="content">\n')
   write_body_content(objs, loc_map, filename, mod_docs, out)
   out.write('\n</div></div>\n')
-  out.write('<div class="column right"><div class="internal_nav">\n' )
-  write_internal_nav(objs, filename, out)
-  out.write('</div></div>\n')
+  out.write('<div class="column right"><div class="nav">\n')
+  out.write(content_nav_str)
+  out.write('\n</div></div>\n')
   out.write(html_tail)
 
 index_body = """
@@ -253,7 +258,7 @@ index_body = """
 
 {4}
 
-<p>Navigate through mathlib files using the menu on the left.</p>
+<p>Navigate through mathlib files using the menu on the right.</p>
 
 <p>Declaration names link to their locations in the mathlib or core Lean source.
 Names inside code snippets link to their locations in this documentation.</p>
@@ -276,14 +281,14 @@ def write_html_files(partition, loc_map, mod_docs):
     body_out.close()
   out = open_outfile(html_root + 'index.html', 'w')
   out.write(html_head('index'))
-  out.write('<div class="column left"><div class="nav">\n')
-  out.write(content_nav(dir_list, 'index.html'))
-  out.write('\n</div></div>\n')
+  out.write('<div class="column left"><div class="internal_nav">\n' )
+  out.write('</div></div>\n')
   out.write('<div class="column middle"><div class="content">\n')
   out.write(index_body)
   out.write('\n</div></div>\n')
-  out.write('<div class="column right"><div class="internal_nav">\n' )
-  out.write('</div></div>\n')
+  out.write('<div class="column right"><div class="nav">\n')
+  out.write(content_nav(dir_list, 'index.html'))
+  out.write('\n</div></div>\n')
   out.write(html_tail)
   out.close()
 
@@ -298,6 +303,6 @@ def copy_css(path):
   shutil.copyfile('nav.js', path+'nav.js')
 
 file_map, loc_map, mod_docs = load_json()
-write_html_files(file_map, loc_map, mod_docs)
+#write_html_files(file_map, loc_map, mod_docs)
 copy_css(html_root)
-write_site_map(file_map)
+#write_site_map(file_map)

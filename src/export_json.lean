@@ -137,7 +137,7 @@ do (locs, _) ← mk_const struct_name >>= infer_type >>= mk_local_pis,
    to_string <$> pp t
 
 meta def mk_structure_fields (decl : name) (e : environment) : tactic (list (string × string)) :=
-match e.is_structure decl, e.get_projections decl with
+match e.is_structure decl, e.structure_fields_full decl with
 | tt, some proj_names := proj_names.mmap $
     λ n, do tp ← get_proj_type decl n, return (to_string n, to_string tp)
 | _, _ := return []
