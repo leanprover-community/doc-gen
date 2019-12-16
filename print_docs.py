@@ -109,9 +109,8 @@ def load_json():
   f = open('json_export.txt', 'r', encoding='utf-8')
   decls = json.load(f, strict=False)
   f.close()
-  module_docs = decls['mod_docs']
   file_map, loc_map = separate_results(decls['decls'])
-  return file_map, loc_map, module_docs
+  return file_map, loc_map, decls['mod_docs'], decls['instances']
 
 def linkify(string, file_map):
   if string in file_map:
@@ -127,7 +126,7 @@ def linkify_type(string, loc_map):
 def linkify_markdown(string, loc_map):
   return re.sub(r'<code>([\s\S]*?)<\/code>', lambda p: linkify_type(p.group(), loc_map), string)
 
-def write_decl_html(obj, loc_map, out):
+def write_decl_html(obj, loc_map, instances, out):
   doc_string = markdown2.markdown(obj['doc_string'], extras=["code-friendly", 'cuddled-lists', 'fenced-code-blocks'])
   type = linkify_type(obj['type'], loc_map)
   args = [linkify_type(s['arg'], loc_map) for s in obj['args'] if not s['implicit']]
@@ -143,12 +142,18 @@ def write_decl_html(obj, loc_map, out):
   impls = [linkify_type(s['arg'], loc_map) for s in obj['args'] if s['implicit']]
   impls = ['<span class="impl_arg">{}</span>'.format(s) for s in impls]
   impl_string = '<li>Implicit arguments: {}</li>'.format(' '.join(impls)) if len(impls) > 0 else ''
+  if obj['name'] in instances:
+    insts = instances[obj['name']]
+    insts = ['<li class="structure_field">{}</li>'.format(linkify_type(n, loc_map)) for n in insts]
+    inst_string = '<li class="structure_fields">Instances:\n<ul>{}</ul></li>'.format('\n'.join(insts))
+  else:
+    inst_string = ''
   out.write(
     '<div class="{4}"><a id="{0}"></a>\
       <span class="decl_name">{6}</span> {5} <span class="decl_args">:</span> \
       <div class="decl_type">{1}</div>\n{2} \
-      <ul>\n{9}\n{3}\n{7}\n{8}\n</ul></div>'.format(
-      obj['name'], type, doc_string, attr_string, kind, args, name, sfs, cstrs, impl_string)
+      <ul>\n{9}\n{3}\n{7}\n{8}\n{10}\n</ul></div>'.format(
+      obj['name'], type, doc_string, attr_string, kind, args, name, sfs, cstrs, impl_string, inst_string)
   )
 
 search_snippet = """
@@ -168,11 +173,11 @@ def write_mod_doc(obj, loc_map, out):
   out.write('<div class="mod_doc">\n' + doc + '</div>')
 
 
-def write_body_content(objs, loc_map, filename, mod_docs, body_out):
+def write_body_content(objs, loc_map, filename, mod_docs, instances, body_out):
   body_out.write('<a id="top"></a>')
   for o in sorted(objs + mod_docs, key = lambda d: d['line']):
     if 'name' in o:
-      write_decl_html(o, loc_map, body_out)
+      write_decl_html(o, loc_map, instances, body_out)
     else:
       write_mod_doc(o, loc_map, body_out)
 
@@ -240,13 +245,13 @@ def content_nav(dir_list, active_path):
   s += print_dir_tree('', active_path, dir_list)
   return s
 
-def write_html_file(content_nav_str, objs, loc_map, filename, mod_docs, out):
+def write_html_file(content_nav_str, objs, loc_map, filename, mod_docs, instances, out):
   out.write(html_head(filename_import(filename)))
   out.write('<div class="column left"><div class="internal_nav">\n' )
   write_internal_nav(objs, filename, out)
   out.write('</div></div>\n')
   out.write('<div class="column middle"><div class="content">\n')
-  write_body_content(objs, loc_map, filename, mod_docs, out)
+  write_body_content(objs, loc_map, filename, mod_docs, instances, out)
   out.write('\n</div></div>\n')
   out.write('<div class="column right"><div class="nav">\n')
   out.write(content_nav_str)
@@ -271,13 +276,13 @@ under development. We welcome pull requests on <a href="{1}">GitHub</a> to updat
 badly formatted doc strings, or to add missing documentation.</p>
 """.format(mathlib_commit, mathlib_github_root, lean_root, lean_commit, search_snippet)
 
-def write_html_files(partition, loc_map, mod_docs):
+def write_html_files(partition, loc_map, mod_docs, instances):
   dir_list = add_to_dir_tree([filename_core('', filename, 'html').split('/') for filename in partition])
   for filename in partition:
     content_nav_str = content_nav(dir_list, filename_core('', filename, 'html'))
     body_out = open_outfile(filename_core(html_root, filename, 'html'), 'w')
     md = mod_docs[filename] if filename in mod_docs else []
-    write_html_file(content_nav_str, partition[filename], loc_map, filename, md, body_out)
+    write_html_file(content_nav_str, partition[filename], loc_map, filename, md, instances, body_out)
     body_out.close()
   out = open_outfile(html_root + 'index.html', 'w')
   out.write(html_head('index'))
@@ -302,7 +307,7 @@ def copy_css(path):
   shutil.copyfile('style_js_frame.css', path+'style_js_frame.css')
   shutil.copyfile('nav.js', path+'nav.js')
 
-file_map, loc_map, mod_docs = load_json()
-#write_html_files(file_map, loc_map, mod_docs)
+file_map, loc_map, mod_docs, instances = load_json()
+write_html_files(file_map, loc_map, mod_docs, instances)
 copy_css(html_root)
-#write_site_map(file_map)
+write_site_map(file_map)
