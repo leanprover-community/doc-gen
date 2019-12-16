@@ -131,9 +131,7 @@ def write_decl_html(obj, loc_map, instances, out):
   type = linkify_type(obj['type'], loc_map)
   args = []
   for s in obj['args']:
-    clss = ['decl_args']
-    clss = ' '.join(clss)
-    arg = '<span class="decl_args">{}</span>'.format(linkify_type(s['arg'], loc_map), clss)
+    arg = '<span class="decl_args">{}</span>'.format(linkify_type(s['arg'], loc_map))
     if s['implicit']: arg = '<span class="impl_arg">{}</span>'.format(arg)
     args.append(arg)
   args = ' '.join(args)
