@@ -35,6 +35,7 @@ local_lean_root = root + '/_target/deps/mathlib/src/'
 
 parser = argparse.ArgumentParser('Options to print_docs.py')
 parser.add_argument('-w', help = 'Generate docs for web. (Default local)', action = "store_true")
+parser.add_argument('-l', help = 'Symlink CSS and JS instead of copying', action = "store_true")
 cl_args = parser.parse_args()
 
 mathlib_commit = 'lean-3.4.2' # default
@@ -303,11 +304,18 @@ def write_site_map(partition):
     out.write(filename_core(site_root, filename, 'html') + '\n')
   out.close()
 
-def copy_css(path):
-  shutil.copyfile('style_js_frame.css', path+'style_js_frame.css')
-  shutil.copyfile('nav.js', path+'nav.js')
+def copy_css(path, use_symlinks):
+  def cp(a, b):
+    if use_symlinks:
+      os.remove(b)
+      os.symlink(os.path.relpath(a, os.path.dirname(b)), b)
+    else:
+      shutils.copyfile(a, b)
+
+  cp('style_js_frame.css', path+'style_js_frame.css')
+  cp('nav.js', path+'nav.js')
 
 file_map, loc_map, mod_docs, instances = load_json()
 write_html_files(file_map, loc_map, mod_docs, instances)
-copy_css(html_root)
+copy_css(html_root, use_symlinks=cl_args.l)
 write_site_map(file_map)
