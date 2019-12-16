@@ -158,20 +158,20 @@ def write_decl_html(obj, loc_map, instances, out):
       type = type,
     )
 
-  sf = ['<li><div class="structure_field">{0} : {1}</div></li>'.format(name, linkify_type(tp, loc_map)) for (name, tp) in obj['structure_fields']]
-  sfs = '<li class="structure_fields">\nFields:\n<ul>{}\n</ul></li>'.format('\n'.join(sf)) if len(sf) > 0 else ''
+  sf = ['<li class="structure_field">{0} : {1}</li>'.format(name, linkify_type(tp, loc_map)) for (name, tp) in obj['structure_fields']]
+  sfs = '<ul class="structure_fields">\n{}\n</ul>'.format('\n'.join(sf)) if len(sf) > 0 else ''
 
-  cstr = ['<li><div class="structure_field">{0} : {1}</div></li>'.format(name, linkify_type(tp, loc_map)) for (name, tp) in obj['constructors']]
-  cstrs = '<li class="structure_fields">\nConstructors:\n<ul>{}\n</ul></li>'.format('\n'.join(cstr)) if len(cstr) > 0 else ''
+  cstr = ['<li class="constructor">{0} : {1}</li>'.format(name, linkify_type(tp, loc_map)) for (name, tp) in obj['constructors']]
+  cstrs = '<ul class="constructors">\n{}\n</ul>'.format('\n'.join(cstr)) if len(cstr) > 0 else ''
 
   if obj['name'] in instances:
     insts = instances[obj['name']]
     insts = ['<li class="structure_field">{}</li>'.format(linkify_type(n, loc_map)) for n in insts]
-    inst_string = '<li class="structure_fields">Instances:\n<ul>{}</ul></li>'.format('\n'.join(insts))
+    inst_string = '<details class="instances"><summary>Instances</summary><ul>{}</ul></details>'.format('\n'.join(insts))
   else:
     inst_string = ''
 
-  out.write('<div class="decl {kind}" id="{raw_name}">{decl_code} {doc_string} <ul>\n{sfs}\n{cstrs}\n{inst_string}\n</ul></div>'.format(
+  out.write('<div class="decl {kind}" id="{raw_name}">{decl_code} {sfs} {cstrs} {doc_string} {inst_string}</ul></div>'.format(
       decl_code = decl_code,
       raw_name = obj['name'],
       doc_string = doc_string,
