@@ -172,9 +172,7 @@ ul {
     margin-left: 4ex; /* extra indentation */
 }
 
-code, .decl_header, .attributes,
- .structure .structure_fields .structure_field,
- .inductive .structure_fields .structure_field {
+code, .decl_header, .attributes, .structure_field, .constructor, .instances li {
     font-family: monospace;
 }
 
@@ -198,7 +196,7 @@ code a:hover, .decl_type a:hover, .decl_name a:hover, .structure_field a:hover {
 }
 
 a.index:link, a.index:visited, a.index:active {
-    color:darkbl</span>ue;
+    color:darkblue;
 }
 
 a.file:link, a.file:visited, a.file:active {
