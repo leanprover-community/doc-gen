@@ -108,7 +108,6 @@ body {
 
 .def .decl_name:before {
     content: "def ";
-    color: blue;
 }
 
 .thm {
@@ -117,12 +116,10 @@ body {
 
 .thm .decl_name:before {
     content: "theorem ";
-    color: blue;
 }
 
 .ax .decl_name:before {
     content: "axiom ";
-    color: blue;
 }
 
 .ax, .cnst {
@@ -131,7 +128,6 @@ body {
 
 .cnst .decl_name:before {
     content: "constant ";
-    color: blue;
 }
 
 .structure, .inductive {
@@ -140,12 +136,10 @@ body {
 
 .structure .decl_name:before {
     content: "structure ";
-    color: blue;
 }
 
 .inductive .decl_name:before {
     content: "inductive ";
-    color: blue;
 }
 
 .decl_name, .decl_args {
