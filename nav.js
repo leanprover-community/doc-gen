@@ -58,6 +58,9 @@ getExpandedCookie();
 expandExpanded();
 
 for (const impl_collapsed of document.getElementsByClassName('impl_collapsed')) {
-    impl_collapsed.getElementsByClassName('impl_arg')[0].addEventListener('click', () =>
-        impl_collapsed.classList.remove('impl_collapsed'));
+    const impl_args = impl_collapsed.getElementsByClassName('impl_arg');
+    if (impl_args.length > 0) {
+        impl_args[0].addEventListener('click', () =>
+            impl_collapsed.classList.remove('impl_collapsed'));
+    }
 }
