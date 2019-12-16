@@ -180,14 +180,39 @@ code {
     font-size: 15px;
 }
 
+.structure_fields, .constructors {
+    display: block;
+    padding-inline-start: 0;
+    margin-top: 1ex;
+    font-size: 15px;
+}
+
+.structure_field {
+    display: block;
+}
+.structure_field:before {
+    content: '(';
+    color: gray;
+}
+.structure_field:after {
+    content: ')';
+    color: gray;
+}
+
+.constructor {
+    display: block;
+}
+.constructor:before {
+    content: '| ';
+    color: gray;
+}
+
 code a:link, code a:visited, code a:active,
-.decl_type a:link, .decl_type a:visited, .decl_type a:active,
-.decl_name a:link, .decl_name a:visited, .decl_name a:active,
-.structure_field a:link, .structure_field a:visited, .structure_field a:active {
+.decl a:link, .decl a:visited, .decl a:active {
     color: black;
 }
 
-code a:hover, .decl_type a:hover, .decl_name a:hover, .structure_field a:hover {
+code a:hover, .decl a:hover {
     color: darkslategray;
 }
 
