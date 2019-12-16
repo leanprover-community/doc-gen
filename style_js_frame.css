@@ -255,23 +255,20 @@ a.file:link, a.file:visited, a.file:active {
     padding-bottom: 1.5em;
 }
 
-.impl_args.collapsed {
-    cursor: pointer;
-}
-.impl_args.collapsed > span {
+.decl_header.impl_collapsed .impl_arg > span {
     display: none;
 }
-.impl_args.collapsed:after {
+
+.decl_header.impl_collapsed .impl_arg ~ .impl_arg {
+    display: none;
+}
+
+.decl_header.impl_collapsed .impl_arg:after {
+    cursor: pointer;
     content: '{…}';
 }
 
-.impl_args:not(.collapsed):after {
-    /* insert line break after expanded implicit arguments */
-    content: '\A';
-    white-space: pre;
-}
-
-.impl_args {
+.impl_arg {
     font-style: italic;
     font-weight: normal;
 }
