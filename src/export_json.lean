@@ -131,6 +131,9 @@ meta def expr.instantiate_pis : list expr → expr → expr
 | (e'::es) (expr.pi n bi t e) := expr.instantiate_pis es (e.instantiate_var e')
 | _        e              := e
 
+meta def enable_links : tactic unit :=
+do o ← get_options, set_options $ o.set_bool `pp.links tt
+
 -- assumes proj_name exists
 meta def get_proj_type (struct_name proj_name : name) : tactic string :=
 do (locs, _) ← mk_const struct_name >>= infer_type >>= mk_local_pis,
@@ -181,7 +184,7 @@ do ff ← d.in_current_file | return none,
 meta def run_on_dcl_list (e : environment) (ens : list name) (handle : handle) (is_first : bool) : io unit :=
 ens.mfoldl  (λ is_first d_name, do
      d ← run_tactic (e.get d_name),
-     odi ← run_tactic (process_decl d),
+     odi ← run_tactic (enable_links >> process_decl d),
      match odi with
      | some di := do
         when (bnot is_first) (put_str_ln handle ","),
