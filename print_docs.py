@@ -176,6 +176,9 @@ def write_decl_html(obj, loc_map, instances, out):
       type = type,
     )
 
+  eqns = ['<li class="equation">{}</li>'.format(linkify_linked(eqn, loc_map)) for eqn in obj['equations']]
+  eqns = '<details><summary>Equations</summary><ul class="equations">{}</ul></details>'.format(''.join(eqns)) if len(eqns) > 0 else ''
+
   sf = ['<li class="structure_field" id="{2}.{0}">{0} : {1}</li>'.format(name.split('.')[-1], linkify_linked(tp, loc_map), obj['name']) for (name, tp) in obj['structure_fields']]
   sfs = '<ul class="structure_fields">\n{}\n</ul>'.format('\n'.join(sf)) if len(sf) > 0 else ''
 
@@ -189,11 +192,12 @@ def write_decl_html(obj, loc_map, instances, out):
   else:
     inst_string = ''
 
-  out.write('<div class="decl {kind}" id="{raw_name}">{decl_code} {sfs} {cstrs} {doc_string} {inst_string}</ul></div>'.format(
+  out.write('<div class="decl {kind}" id="{raw_name}">{decl_code} {sfs} {cstrs} {doc_string} {eqns} {inst_string}</ul></div>'.format(
       decl_code = decl_code,
       raw_name = obj['name'],
       doc_string = doc_string,
       kind = kind,
+      eqns = eqns,
       sfs = sfs,
       cstrs = cstrs,
       inst_string = inst_string,

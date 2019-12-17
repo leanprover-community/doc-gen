@@ -172,7 +172,7 @@ ul {
     margin-left: 4ex; /* extra indentation */
 }
 
-code, .decl_header, .attributes, .structure_field, .constructor, .instances li {
+code, .decl_header, .attributes, .structure_field, .constructor, .instances li, .equation {
     font-family: monospace;
 }
 
