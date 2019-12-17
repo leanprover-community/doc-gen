@@ -155,7 +155,7 @@ def write_decl_html(obj, loc_map, instances, out):
 
   is_meta = '<span class="decl_meta">meta</span>' if obj['is_meta'] else ''
   attr_string = '<div class="attributes">@[' + ', '.join(obj['attributes']) + ']</div>' if len(obj['attributes']) > 0 else ''
-  name = '<a href="{0}">{1}</a>'.format(library_link(obj['filename'], obj['line']), obj['name'])
+  name = '<a href="{0}#{1}">{2}</a>'.format(filename_core(site_root, obj['filename'], 'html'), obj['name'], obj['name'])
   args = []
   for s in obj['args']:
     arg = '<span class="decl_args">{}</span>'.format(linkify_linked(s['arg'], loc_map))
@@ -192,7 +192,9 @@ def write_decl_html(obj, loc_map, instances, out):
   else:
     inst_string = ''
 
-  out.write('<div class="decl {kind}" id="{raw_name}">{decl_code} {sfs} {cstrs} {doc_string} {eqns} {inst_string}</ul></div>'.format(
+  gh_link = '<div class="gh_link"><a href="{0}">View declaration on GitHub</a></div>'.format(library_link(obj['filename'], obj['line']))
+
+  out.write('<div class="decl {kind}" id="{raw_name}">{decl_code} {sfs} {cstrs} {doc_string} {eqns} {inst_string} {gh_link}</ul></div>'.format(
       decl_code = decl_code,
       raw_name = obj['name'],
       doc_string = doc_string,
@@ -201,6 +203,7 @@ def write_decl_html(obj, loc_map, instances, out):
       sfs = sfs,
       cstrs = cstrs,
       inst_string = inst_string,
+      gh_link = gh_link
   ))
 
 search_snippet = """
