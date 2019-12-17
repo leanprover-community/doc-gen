@@ -18,6 +18,7 @@ The json file is a list of maps, where each map has the structure
   filename: string,
   line: int,
   attributes: list string,
+  equations: list string,
   kind: string,
   structure_fields: list (list string),
   constructors: list (list string) }
@@ -44,6 +45,7 @@ structure decl_info :=
 (filename : string)
 (line : ℕ)
 (attributes : list string) -- not all attributes, we have a hardcoded list to check
+(equations : list string)
 (kind : string) -- def, thm, cnst, ax
 (structure_fields : list (string × string)) -- name and type of fields of a constructor
 (constructors : list (string × string)) -- name and type of constructors of an inductive type
@@ -61,15 +63,16 @@ meta def print_arg : bool × string → string
 "{" ++ (to_string $ format!"\"arg\":{repr s}, \"implicit\":{bstr}") ++ "}"
 
 meta def decl_info.to_format : decl_info → format
-| ⟨name, is_meta, args, type, doc_string, filename, line, attributes, kind, structure_fields, constructors⟩ :=
+| ⟨name, is_meta, args, type, doc_string, filename, line, attributes, equations, kind, structure_fields, constructors⟩ :=
 let doc_string := doc_string.get_or_else "",
     is_meta := if is_meta then "true" else "false",
     args := args.map print_arg,
     attributes := attributes.map repr,
+    equations := equations.map repr,
     structure_fields := structure_fields.map (λ ⟨n, t⟩, format!"[\"{to_string n}\", {repr t}]"),
     constructors := constructors.map (λ ⟨n, t⟩, format!"[\"{to_string n}\", {repr t}]") in
 "{" ++ format!"\"name\":\"{to_string name}\", \"is_meta\":{is_meta}, \"args\":{args}, \"type\":{repr type}, \"doc_string\":{repr doc_string}, "
-    ++ format!"\"filename\":\"{filename}\",\"line\":{line}, \"attributes\":{attributes}, "
+    ++ format!"\"filename\":\"{filename}\",\"line\":{line}, \"attributes\":{attributes}, \"equations\":{equations}, "
     ++ format!" \"kind\":{repr kind}, \"structure_fields\":{structure_fields}, \"constructors\":{constructors}" ++ "}"
 
 section
@@ -167,6 +170,13 @@ if (¬ e.is_inductive decl) ∨ (e.is_structure decl) then return [] else
 do d ← get_decl decl, ns ← get_constructors_for (mk_const_with_params d),
    ns.mmap $ λ n, do tp ← get_constructor_type decl n, return (to_string n, to_string tp)
 
+meta def get_equations (decl : name) : tactic (list string) := do
+ns ← get_eqn_lemmas_for tt decl,
+ns.mmap $ λ n, do
+d ← get_decl n,
+(_, ty) ← mk_local_pis d.type,
+to_string <$> pp ty
+
 /-- extracts `decl_info` from `d`. Should return `none` instead of failing. -/
 meta def process_decl (d : declaration) : tactic (option decl_info) :=
 do ff ← d.in_current_file | return none,
@@ -179,9 +189,10 @@ do ff ← d.in_current_file | return none,
    (args, type) ← get_args_and_type d.type,
 --   type ← escape_quotes <$> to_string <$> pp d.type,
    attributes ← attributes_of decl_name,
+   equations ← get_equations decl_name,
    structure_fields ← mk_structure_fields decl_name e,
    constructors ← mk_constructors decl_name e,
-   return $ some ⟨decl_name, !d.is_trusted, args, type, doc_string, filename, line, attributes, d.kind, structure_fields, constructors⟩
+   return $ some ⟨decl_name, !d.is_trusted, args, type, doc_string, filename, line, attributes, equations, d.kind, structure_fields, constructors⟩
 
 meta def run_on_dcl_list (e : environment) (ens : list name) (handle : handle) (is_first : bool) : io unit :=
 ens.mfoldl  (λ is_first d_name, do
