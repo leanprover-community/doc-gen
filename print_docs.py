@@ -334,7 +334,7 @@ def copy_css(path, use_symlinks):
       os.remove(b)
       os.symlink(os.path.relpath(a, os.path.dirname(b)), b)
     else:
-      shutils.copyfile(a, b)
+      shutil.copyfile(a, b)
 
   cp('style_js_frame.css', path+'style_js_frame.css')
   cp('nav.js', path+'nav.js')
