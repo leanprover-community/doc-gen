@@ -150,13 +150,12 @@ def write_decl_html(obj, loc_map, instances, out):
     inst_string = '<li class="structure_fields">Instances:\n<ul>{}</ul></li>'.format('\n'.join(insts))
   else:
     inst_string = ''
-  is_meta = ' meta' if obj['is_meta'] else ''
   out.write(
     '<div class="{4}" id="{0}">{3} \
-      <div class="decl_header impl_collapsed"><span class="decl_name{10}">{6}</span> {5} <span class="decl_args">:</span> \
+      <div class="decl_header impl_collapsed"><span class="decl_name">{6}</span> {5} <span class="decl_args">:</span> \
       <div class="decl_type">{1}</div></div>\n{2} \
       <ul>\n{7}\n{8}\n{9}\n</ul></div>'.format(
-      obj['name'], type, doc_string, attr_string, kind, args, name, sfs, cstrs, inst_string, is_meta)
+      obj['name'], type, doc_string, attr_string, kind, args, name, sfs, cstrs, inst_string)
   )
 
 search_snippet = """
@@ -311,6 +310,6 @@ def copy_css(path):
   shutil.copyfile('nav.js', path+'nav.js')
 
 file_map, loc_map, mod_docs, instances = load_json()
-#write_html_files(file_map, loc_map, mod_docs, instances)
+write_html_files(file_map, loc_map, mod_docs, instances)
 copy_css(html_root)
 write_site_map(file_map)
