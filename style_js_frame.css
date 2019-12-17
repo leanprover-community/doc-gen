@@ -266,11 +266,14 @@ a.file:link, a.file:visited, a.file:active {
     font-weight: normal;
 }
 
+.gh_link {
+    float: right;
+}
+
 .gh_link:before {
     content: "";
-    display: block;
+    display: inline-block;
     background: url(https://leanprover-community.github.io/assets/img/gh_logo.png) no-repeat;
     width: 16px;
     height: 13px;
-    float: left;
 }

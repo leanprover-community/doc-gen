@@ -192,9 +192,9 @@ def write_decl_html(obj, loc_map, instances, out):
   else:
     inst_string = ''
 
-  gh_link = '<div class="gh_link"><a href="{0}">View declaration on GitHub</a></div>'.format(library_link(obj['filename'], obj['line']))
+  gh_link = '<div class="gh_link"><a href="{0}">view source</a></div>'.format(library_link(obj['filename'], obj['line']))
 
-  out.write('<div class="decl {kind}" id="{raw_name}">{decl_code} {sfs} {cstrs} {doc_string} {eqns} {inst_string} {gh_link}</ul></div>'.format(
+  out.write('<div class="decl {kind}" id="{raw_name}">{gh_link} {decl_code} {sfs} {cstrs} {doc_string} {eqns} {inst_string}</ul></div>'.format(
       decl_code = decl_code,
       raw_name = obj['name'],
       doc_string = doc_string,
