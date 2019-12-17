@@ -109,6 +109,8 @@ def separate_results(objs):
       loc_map[cstr_name] = obj['filename']
     for (sf_name, _) in obj['structure_fields']:
       loc_map[sf_name] = obj['filename']
+    if len(obj['structure_fields']) > 0:
+      loc_map[obj['name'] + '.mk'] = obj['filename']
   return (file_map, loc_map)
 
 def load_json():
@@ -180,7 +182,7 @@ def write_decl_html(obj, loc_map, instances, out):
   eqns = '<details><summary>Equations</summary><ul class="equations">{}</ul></details>'.format(''.join(eqns)) if len(eqns) > 0 else ''
 
   sf = ['<li class="structure_field" id="{2}.{0}">{0} : {1}</li>'.format(name.split('.')[-1], linkify_linked(tp, loc_map), obj['name']) for (name, tp) in obj['structure_fields']]
-  sfs = '<ul class="structure_fields">\n{}\n</ul>'.format('\n'.join(sf)) if len(sf) > 0 else ''
+  sfs = '<ul class="structure_fields" id="{1}.mk">\n{0}\n</ul>'.format('\n'.join(sf), obj['name']) if len(sf) > 0 else ''
 
   cstr = ['<li class="constructor" id="{2}.{0}">{0} : {1}</li>'.format(name.split('.')[-1], linkify_linked(tp, loc_map), obj['name']) for (name, tp) in obj['constructors']]
   cstrs = '<ul class="constructors">\n{}\n</ul>'.format('\n'.join(cstr)) if len(cstr) > 0 else ''
