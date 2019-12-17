@@ -32,6 +32,8 @@ Usage: `lean --run export_json.lean` creates `json_export.txt` in the current di
 
 open tactic io io.fs native
 
+set_option pp.generalized_field_notation true
+
 /-- The information collected from each declaration -/
 structure decl_info :=
 (name : name)
