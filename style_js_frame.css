@@ -104,30 +104,22 @@ body {
 
 .def {
     border-left: 10px solid #92dce5;
-    border-right: 10px solid #92dce5;
     border-top: 2px solid #92dce5;
-    border-bottom: 2px solid #92dce5;
 }
 
 .theorem {
     border-left: 10px solid #8fe388;
-    border-right: 10px solid #8fe388;
     border-top: 2px solid #8fe388;
-    border-bottom: 2px solid #8fe388;
 }
 
 .axiom, .constant {
     border-left: 10px solid #f44708;
-    border-right: 10px solid #f44708;
     border-top: 2px solid #f44708;
-    border-bottom: 2px solid #f44708;
 }
 
 .structure, .inductive {
     border-left: 10px solid #f0a202;
-    border-right: 10px solid #f0a202;
     border-top: 2px solid #f0a202;
-    border-bottom: 2px solid #f0a202;
 }
 
 .decl_name, .decl_args {
