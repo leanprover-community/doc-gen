@@ -55,7 +55,7 @@ mathlib_github_src_root = "{0}/blob/{1}/src/".format(mathlib_github_root, mathli
 lean_commit = subprocess.check_output(['lean', '--run', 'src/lean_commit.lean']).decode()
 lean_root = 'https://github.com/leanprover-community/lean/blob/{}/library/'.format(lean_commit)
 
-note_regex = re.compile(r'Note \[(.*)\]')
+note_regex = re.compile(r'Note \[(.*)\]', re.I)
 target_url_regex = site_root + r'notes.html#\1'
 link_patterns = [(note_regex, target_url_regex)]
 
