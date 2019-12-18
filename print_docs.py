@@ -157,7 +157,7 @@ def write_decl_html(obj, loc_map, instances, out):
 
   is_meta = '<span class="decl_meta">meta</span>' if obj['is_meta'] else ''
   attr_string = '<div class="attributes">@[' + ', '.join(obj['attributes']) + ']</div>' if len(obj['attributes']) > 0 else ''
-  name = '<a href="{0}">{1}</a>'.format(library_link(obj['filename'], obj['line']), obj['name'])
+  name = '<a href="{0}#{1}">{2}</a>'.format(filename_core(site_root, obj['filename'], 'html'), obj['name'], obj['name'])
   args = []
   for s in obj['args']:
     arg = '<span class="decl_args">{}</span>'.format(linkify_linked(s['arg'], loc_map))
@@ -194,7 +194,9 @@ def write_decl_html(obj, loc_map, instances, out):
   else:
     inst_string = ''
 
-  out.write('<div class="decl {kind}" id="{raw_name}">{decl_code} {sfs} {cstrs} {doc_string} {eqns} {inst_string}</ul></div>'.format(
+  gh_link = '<div class="gh_link"><a href="{0}">view source</a></div>'.format(library_link(obj['filename'], obj['line']))
+
+  out.write('<div class="decl {kind}" id="{raw_name}">{gh_link} {decl_code} {sfs} {cstrs} {doc_string} {eqns} {inst_string}</ul></div>'.format(
       decl_code = decl_code,
       raw_name = obj['name'],
       doc_string = doc_string,
@@ -203,6 +205,7 @@ def write_decl_html(obj, loc_map, instances, out):
       sfs = sfs,
       cstrs = cstrs,
       inst_string = inst_string,
+      gh_link = gh_link
   ))
 
 search_snippet = """
@@ -213,7 +216,7 @@ search_snippet = """
 def write_internal_nav(objs, filename, out):
   out.write('<h1>Lean <a href="https://leanprover-community.github.io">mathlib</a> docs</h1>')
   out.write('<h2><a href="#top">{0}</a></h2>'.format(filename_import(filename)))
-  out.write('<div class="gh_link"><a href="{}">(view source on GitHub)</a></div>'.format(library_link(filename)))
+  out.write('<div class="gh_nav_link"><a href="{}">View source</a></div>'.format(library_link(filename)))
   for o in sorted([o['name'] for o in objs]):
     out.write('<a href="#{0}">{0}</a><br>\n'.format(o))
 
