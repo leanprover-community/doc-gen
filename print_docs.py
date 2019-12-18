@@ -214,7 +214,7 @@ search_snippet = """
 def write_internal_nav(objs, filename, out):
   out.write('<h1>Lean <a href="https://leanprover-community.github.io">mathlib</a> docs</h1>')
   out.write('<h2><a href="#top">{0}</a></h2>'.format(filename_import(filename)))
-  out.write('<div class="gh_link"><a href="{}">(view source on GitHub)</a></div>'.format(library_link(filename)))
+  out.write('<div class="gh_nav_link"><a href="{}">View source</a></div>'.format(library_link(filename)))
   for o in sorted([o['name'] for o in objs]):
     out.write('<a href="#{0}">{0}</a><br>\n'.format(o))
 
