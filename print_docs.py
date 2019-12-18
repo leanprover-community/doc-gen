@@ -55,10 +55,12 @@ mathlib_github_src_root = "{0}/blob/{1}/src/".format(mathlib_github_root, mathli
 lean_commit = subprocess.check_output(['lean', '--run', 'src/lean_commit.lean']).decode()
 lean_root = 'https://github.com/leanprover-community/lean/blob/{}/library/'.format(lean_commit)
 
-note_regex = re.compile(r'Note \[(.*)\]:([\s\S]*)')
+note_regex = re.compile(r'Note \[(.*)\]')
+target_url_regex = site_root + r'notes.html#\1'
+link_patterns = [(note_regex, target_url_regex)]
 
 def convert_markdown(ds):
-  return markdown2.markdown(ds, extras=['code-friendly', 'cuddled-lists', 'fenced-code-blocks'])
+  return markdown2.markdown(ds, extras=['code-friendly', 'cuddled-lists', 'fenced-code-blocks', 'link-patterns'], link_patterns = link_patterns)
 
 def filename_core(root, filename, ext):
   if 'lean/library' in filename:
@@ -150,7 +152,7 @@ def linkify_markdown(string, loc_map):
   return re.sub(r'<code>([\s\S]*?)<\/code>', lambda p: linkify_type(p.group(), loc_map), string)
 
 def write_decl_html(obj, loc_map, instances, out):
-  doc_string = markdown2.markdown(obj['doc_string'], extras=["code-friendly", 'cuddled-lists', 'fenced-code-blocks'])
+  doc_string = markdown2.markdown(obj['doc_string'], extras=["code-friendly", 'cuddled-lists', 'fenced-code-blocks', 'link-patterns'], link_patterns = link_patterns)
 
   kind = 'structure' if len(obj['structure_fields']) > 0 else 'inductive' if len(obj['constructors']) > 0 else obj['kind']
   if kind == 'thm': kind = 'theorem'
