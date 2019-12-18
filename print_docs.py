@@ -55,6 +55,8 @@ mathlib_github_src_root = "{0}/blob/{1}/src/".format(mathlib_github_root, mathli
 lean_commit = subprocess.check_output(['lean', '--run', 'src/lean_commit.lean']).decode()
 lean_root = 'https://github.com/leanprover-community/lean/blob/{}/library/'.format(lean_commit)
 
+note_regex = re.compile(r'Note \[(.*)\]:([\s\S]*)')
+
 def convert_markdown(ds):
   return markdown2.markdown(ds, extras=['code-friendly', 'cuddled-lists', 'fenced-code-blocks'])
 
@@ -118,7 +120,7 @@ def load_json():
   decls = json.load(f, strict=False)
   f.close()
   file_map, loc_map = separate_results(decls['decls'])
-  return file_map, loc_map, decls['mod_docs'], decls['instances']
+  return file_map, loc_map, decls['notes'], decls['mod_docs'], decls['instances']
 
 def linkify_core(decl_name, text, file_map):
   if decl_name in file_map:
@@ -220,6 +222,13 @@ def write_internal_nav(objs, filename, out):
   for o in sorted([o['name'] for o in objs]):
     out.write('<a href="#{0}">{0}</a><br>\n'.format(o))
 
+def write_notes_nav(notes, out):
+  out.write('<h1>Lean <a href="https://leanprover-community.github.io">mathlib</a> docs</h1>')
+  out.write('<h2><a href="#top">Library notes</a></h2>')
+  out.write('<div class="gh_link"></div>')
+  for o in sorted([o[0] for o in notes]):
+    out.write('<a href="#{0}">{0}</a><br>\n'.format(o))
+
 def write_mod_doc(obj, loc_map, out):
   doc = linkify_markdown(convert_markdown(obj['doc']), loc_map)
   out.write('<div class="mod_doc">\n' + doc + '</div>')
@@ -293,7 +302,8 @@ def print_dir_tree(path, active_path, tree):
 
 def content_nav(dir_list, active_path):
   s = '<div class="search">{}</div>\n'.format(search_snippet)
-  s += '<a href="{0}">index</a><br><br>\n'.format(site_root)
+  s += '<a href="{0}">index</a><br>\n'.format(site_root)
+  s += '<a href="{0}notes.html">notes</a><br><br>\n'.format(site_root)
   s += print_dir_tree('', active_path, dir_list)
   return s
 
@@ -328,7 +338,38 @@ under development. We welcome pull requests on <a href="{1}">GitHub</a> to updat
 badly formatted doc strings, or to add missing documentation.</p>
 """.format(mathlib_commit, mathlib_github_root, lean_root, lean_commit, search_snippet)
 
-def write_html_files(partition, loc_map, mod_docs, instances):
+notes_body = """
+<h1>Lean mathlib notes</h1>
+
+<p>Various implementation details are noted in the mathlib source, and referenced later on.
+We collect these notes here.</p>
+"""
+
+def write_note(n, loc_map, out):
+  note_id, note_body = n[0], linkify_markdown(convert_markdown(n[1]), loc_map)
+  out.write('<div class="note" id="{}">'.format(note_id))
+  out.write('<h2>{}</h2>'.format(note_id))
+  out.write(note_body)
+  out.write('</div>')
+
+def write_note_file(notes, loc_map, dir_list):
+  out = open_outfile(html_root + 'notes.html', 'w')
+  out.write(html_head('notes'))
+  out.write('<div class="column left"><div class="internal_nav">\n' )
+  write_notes_nav(notes, out)
+  out.write('</div></div>\n')
+  out.write('<div class="column middle"><div class="content">\n')
+  out.write(notes_body)
+  for n in notes:
+    write_note(n, loc_map, out)
+  out.write('\n</div></div>\n')
+  out.write('<div class="column right"><div class="nav">\n')
+  out.write(content_nav(dir_list, 'index.html'))
+  out.write('\n</div></div>\n')
+  out.write(html_tail)
+  out.close()
+
+def write_html_files(partition, loc_map, notes, mod_docs, instances):
   dir_list = add_to_dir_tree([filename_core('', filename, 'html').split('/') for filename in partition])
   for filename in partition:
     content_nav_str = content_nav(dir_list, filename_core('', filename, 'html'))
@@ -348,6 +389,7 @@ def write_html_files(partition, loc_map, mod_docs, instances):
   out.write('\n</div></div>\n')
   out.write(html_tail)
   out.close()
+  write_note_file(notes, loc_map, dir_list)
 
 def write_site_map(partition):
   out = open_outfile(html_root + 'sitemap.txt', 'w')
@@ -366,7 +408,7 @@ def copy_css(path, use_symlinks):
   cp('style_js_frame.css', path+'style_js_frame.css')
   cp('nav.js', path+'nav.js')
 
-file_map, loc_map, mod_docs, instances = load_json()
-write_html_files(file_map, loc_map, mod_docs, instances)
+file_map, loc_map, notes, mod_docs, instances = load_json()
+write_html_files(file_map, loc_map, notes, mod_docs, instances)
 copy_css(html_root, use_symlinks=cl_args.l)
 write_site_map(file_map)

@@ -237,6 +237,12 @@ do map ← get_instances,
    let lst := map.to_list.map (λ ⟨n, l⟩, to_string format!"\"{n}\" : {repr l}"),
    return $ "{" ++ (string.join (lst.intersperse ",")) ++ "}"
 
+meta def format_notes : tactic string :=
+do l ← get_library_notes,
+   let l := l.map $ λ ⟨l, r⟩, to_string $ format!"[{repr l}, {repr r}]",
+   let l := string.join $ l.intersperse ", ",
+   return $ to_string $ format!"[{l}]"
+
 /-- Using `environment.mfold` is much cleaner. Unfortunately this led to a segfault, I think because
 of a stack overflow. Converting the environment to a list of declarations and folding over that led
 to "deep recursion detected". Instead, we split that list into 8 smaller lists and process them
@@ -251,6 +257,8 @@ do handle ← mk_file_handle filename mode.write,
    put_str_ln handle "],",
    ods ← run_tactic write_olean_docs,
    put_str_ln handle $ "\"mod_docs\": {" ++ string.join (ods.intersperse ",\n") ++ "},",
+   notes ← run_tactic format_notes,
+   put_str_ln handle $ "\"notes\": " ++ notes ++ ",",
    instl ← run_tactic format_instance_list,
    put_str_ln handle $ "\"instances\": " ++ instl ++ "}",
    close handle
