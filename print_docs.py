@@ -227,7 +227,6 @@ def write_internal_nav(objs, filename, out):
 def write_notes_nav(notes, out):
   out.write('<h1>Lean <a href="https://leanprover-community.github.io">mathlib</a> docs</h1>')
   out.write('<h2><a href="#top">Library notes</a></h2>')
-  out.write('<div class="gh_link"></div>')
   for o in sorted([o[0] for o in notes]):
     out.write('<a href="#{0}">{0}</a><br>\n'.format(o))
 
@@ -341,6 +340,7 @@ badly formatted doc strings, or to add missing documentation.</p>
 """.format(mathlib_commit, mathlib_github_root, lean_root, lean_commit, search_snippet)
 
 notes_body = """
+<a id="top"></a>
 <h1>Lean mathlib notes</h1>
 
 <p>Various implementation details are noted in the mathlib source, and referenced later on.
