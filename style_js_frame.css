@@ -124,6 +124,7 @@ body {
 
 .note {
     border-left: 10px solid #0479c7;
+    border-top: 2px solid #0479c7;
     padding-left: 8px;
 }
 
