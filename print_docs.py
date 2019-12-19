@@ -30,9 +30,8 @@ site_root = "http://localhost:8000/"
 # web root, used in place of `site_root` if the `-w` flag is used
 web_root = "https://leanprover-community.github.io/mathlib_docs/"
 
-# src directory of mathlib. used to scrape module docs.
-# The files here should match the ones used to generate json_export.txt.
-local_lean_root = root + '/_target/deps/mathlib/src/'
+# root directory of mathlib.
+local_lean_root = root + '/_target/deps/mathlib/'
 
 parser = argparse.ArgumentParser('Options to print_docs.py')
 parser.add_argument('-w', help = 'Generate docs for web. (Default local)', action = "store_true")
@@ -304,6 +303,7 @@ def print_dir_tree(path, active_path, tree):
 def content_nav(dir_list, active_path):
   s = '<div class="search">{}</div>\n'.format(search_snippet)
   s += '<a href="{0}">index</a><br>\n'.format(site_root)
+  s += '<a href="{0}tactics.html">tactics</a><br><br>\n'.format(site_root)
   s += '<a href="{0}notes.html">notes</a><br><br>\n'.format(site_root)
   s += print_dir_tree('', active_path, dir_list)
   return s
@@ -320,6 +320,38 @@ def write_html_file(content_nav_str, objs, loc_map, filename, mod_docs, instance
   out.write(content_nav_str)
   out.write('\n</div></div>\n')
   out.write(html_tail)
+
+# returns (pagetitle, intro_block), [(tactic_name, tactic_block)]
+def split_tactic_list(markdown):
+  entries = re.findall(r'(?<=# )(.*)([\s\S]*?)(?=##)', markdown)
+  return entries[0], entries[1:]
+
+def write_tactic_doc_file(source, loc_map, dir_list):
+  with open(source, 'r') as infile:
+    intro, entries = split_tactic_list(infile.read())
+    infile.close()
+  entries.sort(key = lambda p: (str.lower(p[0]), str.lower(p[1])))
+  out = open_outfile(html_root + 'tactics.html', 'w')
+  out.write(html_head('mathlib tactics'))
+  out.write('<div class="column left"><div class="internal_nav">\n' )
+  out.write('<h1>Lean <a href="https://leanprover-community.github.io">mathlib</a> docs</h1>')
+  out.write('<h2><a href="#top">Tactics</a></h2>')
+  for e in entries:
+    out.write('<a href="#{0}">{0}</a><br>\n'.format(e[0]))
+  out.write('</div></div>\n')
+  out.write('<div class="column middle"><div class="content docfile">\n')
+  out.write('<h1>{0}</h1>\n\n{1}'.format(intro[0], convert_markdown(intro[1])))
+  for e in entries:
+    out.write('<div class="tactic">\n')
+    out.write('<h2 id="{0}"><a href="#{0}">{0}</a></h2>\n'.format(e[0]))
+    out.write(convert_markdown(e[1]))
+    out.write('</div>\n')
+  out.write('\n</div></div>\n')
+  out.write('<div class="column right"><div class="nav">\n')
+  out.write(content_nav(dir_list, 'index.html'))
+  out.write('\n</div></div>\n')
+  out.write(html_tail)
+  out.close()
 
 index_body = """
 <h1>Lean mathlib documentation</h1>
@@ -392,6 +424,7 @@ def write_html_files(partition, loc_map, notes, mod_docs, instances):
   out.write(html_tail)
   out.close()
   write_note_file(notes, loc_map, dir_list)
+  write_tactic_doc_file(local_lean_root + 'docs/tactics.md', loc_map, dir_list)
 
 def write_site_map(partition):
   out = open_outfile(html_root + 'sitemap.txt', 'w')
