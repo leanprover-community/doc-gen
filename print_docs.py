@@ -434,6 +434,8 @@ def write_site_map(partition):
   out = open_outfile(html_root + 'sitemap.txt', 'w')
   for filename in partition:
     out.write(filename_core(site_root, filename, 'html') + '\n')
+  for n in ['index', 'tactics', 'commands', 'hole_commands', 'notes']:
+    out.write(site_root + n + '.html\n')
   out.close()
 
 def copy_css(path, use_symlinks):
