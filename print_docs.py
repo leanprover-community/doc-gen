@@ -19,6 +19,14 @@ import html
 
 root = os.getcwd()
 
+# extra doc files to include in generation
+# format: (filename_root, display_name, source)
+extra_doc_files = [('overview', 'mathlib overview', 'docs/mathlib-overview.md'),
+                   ('tactic_writing', 'tactic writing', 'docs/extras/tactic_writing.md'),
+                   ('conv', 'conv mode', 'docs/extras/conv.md'),
+                   ('simp', 'simplification', 'docs/extras/simp.md'),
+                   ('well_founded_recursion', 'well founded recursion', 'docs/extras/well_founded_recursion.md')]
+
 # path to put generated html
 html_root = root + '/html/'
 
@@ -58,8 +66,11 @@ note_regex = re.compile(r'Note \[(.*)\]', re.I)
 target_url_regex = site_root + r'notes.html#\1'
 link_patterns = [(note_regex, target_url_regex)]
 
-def convert_markdown(ds):
-  return markdown2.markdown(ds, extras=['code-friendly', 'cuddled-lists', 'fenced-code-blocks', 'link-patterns'], link_patterns = link_patterns)
+def convert_markdown(ds, toc=False):
+  extras = ['code-friendly', 'cuddled-lists', 'fenced-code-blocks', 'link-patterns']
+  if toc:
+    extras.append('toc')
+  return markdown2.markdown(ds, extras=extras, link_patterns = link_patterns)
 
 def filename_core(root, filename, ext):
   if 'lean/library' in filename:
@@ -302,11 +313,16 @@ def print_dir_tree(path, active_path, tree):
 
 def content_nav(dir_list, active_path):
   s = '<div class="search">{}</div>\n'.format(search_snippet)
+  s += '<h3>General documentation</h3>'
   s += '<a href="{0}">index</a><br>\n'.format(site_root)
   s += '<a href="{0}tactics.html">tactics</a><br>\n'.format(site_root)
   s += '<a href="{0}commands.html">commands</a><br>\n'.format(site_root)
   s += '<a href="{0}hole_commands.html">hole commands</a><br>\n'.format(site_root)
-  s += '<a href="{0}notes.html">notes</a><br><br>\n'.format(site_root)
+  s += '<a href="{0}notes.html">notes</a><br>\n'.format(site_root)
+  s += '<h3>Tutorials</h3>'
+  for (filename, displayname, _) in extra_doc_files:
+    s += '<a href="{0}{1}.html">{2}</a><br>\n'.format(site_root, filename, displayname)
+  s += '<h3>Library</h3>'
   s += print_dir_tree('', active_path, dir_list)
   return s
 
@@ -354,6 +370,29 @@ def write_tactic_doc_file(source, name, loc_map, dir_list):
   out.write('\n</div></div>\n')
   out.write(html_tail)
   out.close()
+
+def write_pure_md_file(source, dest, name, loc_map, dir_list):
+  with open(source, 'r') as infile:
+    body = convert_markdown(infile.read(), True)
+    infile.close()
+  out = open_outfile(html_root + dest, 'w')
+  out.write(html_head(name))
+  out.write('<div class="column left"><div class="internal_nav">\n' )
+  out.write('<h1>Lean <a href="https://leanprover-community.github.io">mathlib</a> docs</h1>')
+  out.write('<h2><a href="#top">{0}</a></h2>'.format(name))
+  out.write(body.toc_html)
+  out.write('</div></div>\n')
+  out.write('<div class="column middle"><div class="content">\n')
+  out.write(body)
+  out.write('\n</div></div>\n')
+  out.write('<div class="column right"><div class="nav">\n')
+  out.write(content_nav(dir_list, 'index.html'))
+  out.write('\n</div></div>\n')
+  out.write(html_tail)
+  out.close()
+
+
+
 
 index_body = """
 <h1>Lean mathlib documentation</h1>
@@ -429,6 +468,8 @@ def write_html_files(partition, loc_map, notes, mod_docs, instances):
   write_tactic_doc_file(local_lean_root + 'docs/tactics.md', 'tactics', loc_map, dir_list)
   write_tactic_doc_file(local_lean_root + 'docs/commands.md', 'commands', loc_map, dir_list)
   write_tactic_doc_file(local_lean_root + 'docs/holes.md', 'hole_commands', loc_map, dir_list)
+  for (filename, displayname, source) in extra_doc_files:
+    write_pure_md_file(local_lean_root + source, filename + '.html', displayname, loc_map, dir_list)
 
 def write_site_map(partition):
   out = open_outfile(html_root + 'sitemap.txt', 'w')
@@ -436,6 +477,8 @@ def write_site_map(partition):
     out.write(filename_core(site_root, filename, 'html') + '\n')
   for n in ['index', 'tactics', 'commands', 'hole_commands', 'notes']:
     out.write(site_root + n + '.html\n')
+  for (filename, _, _) in extra_doc_files:
+    out.write(site_root + filename + '.html\n')
   out.close()
 
 def copy_css(path, use_symlinks):
