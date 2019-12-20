@@ -303,7 +303,9 @@ def print_dir_tree(path, active_path, tree):
 def content_nav(dir_list, active_path):
   s = '<div class="search">{}</div>\n'.format(search_snippet)
   s += '<a href="{0}">index</a><br>\n'.format(site_root)
-  s += '<a href="{0}tactics.html">tactics</a><br><br>\n'.format(site_root)
+  s += '<a href="{0}tactics.html">tactics</a><br>\n'.format(site_root)
+  s += '<a href="{0}commands.html">commands</a><br>\n'.format(site_root)
+  s += '<a href="{0}hole_commands.html">hole commands</a><br>\n'.format(site_root)
   s += '<a href="{0}notes.html">notes</a><br><br>\n'.format(site_root)
   s += print_dir_tree('', active_path, dir_list)
   return s
@@ -326,16 +328,16 @@ def split_tactic_list(markdown):
   entries = re.findall(r'(?<=# )(.*)([\s\S]*?)(?=##)', markdown)
   return entries[0], entries[1:]
 
-def write_tactic_doc_file(source, loc_map, dir_list):
+def write_tactic_doc_file(source, name, loc_map, dir_list):
   with open(source, 'r') as infile:
     intro, entries = split_tactic_list(infile.read())
     infile.close()
   entries.sort(key = lambda p: (str.lower(p[0]), str.lower(p[1])))
-  out = open_outfile(html_root + 'tactics.html', 'w')
-  out.write(html_head('mathlib tactics'))
+  out = open_outfile(html_root + name + '.html', 'w')
+  out.write(html_head(name))
   out.write('<div class="column left"><div class="internal_nav">\n' )
   out.write('<h1>Lean <a href="https://leanprover-community.github.io">mathlib</a> docs</h1>')
-  out.write('<h2><a href="#top">Tactics</a></h2>')
+  out.write('<h2><a href="#top">{0}</a></h2>'.format(name))
   for e in entries:
     out.write('<a href="#{0}">{0}</a><br>\n'.format(e[0]))
   out.write('</div></div>\n')
@@ -424,7 +426,9 @@ def write_html_files(partition, loc_map, notes, mod_docs, instances):
   out.write(html_tail)
   out.close()
   write_note_file(notes, loc_map, dir_list)
-  write_tactic_doc_file(local_lean_root + 'docs/tactics.md', loc_map, dir_list)
+  write_tactic_doc_file(local_lean_root + 'docs/tactics.md', 'tactics', loc_map, dir_list)
+  write_tactic_doc_file(local_lean_root + 'docs/commands.md', 'commands', loc_map, dir_list)
+  write_tactic_doc_file(local_lean_root + 'docs/holes.md', 'hole_commands', loc_map, dir_list)
 
 def write_site_map(partition):
   out = open_outfile(html_root + 'sitemap.txt', 'w')
