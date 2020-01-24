@@ -341,7 +341,7 @@ def write_html_file(content_nav_str, objs, loc_map, filename, mod_docs, instance
 
 # returns (pagetitle, intro_block), [(tactic_name, tactic_block)]
 def split_tactic_list(markdown):
-  entries = re.findall(r'(?<=# )(.*)([\s\S]*?)(?=##)', markdown)
+  entries = re.findall(r'(?<=# )(.*)([\s\S]*?)(?=(##|\Z))', markdown)
   return entries[0], entries[1:]
 
 def write_tactic_doc_file(source, name, loc_map, dir_list):
