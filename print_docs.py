@@ -8,6 +8,7 @@
 
 import json
 import os
+import glob
 import textwrap
 import markdown2
 import re
@@ -19,6 +20,13 @@ import html
 
 root = os.getcwd()
 
+parser = argparse.ArgumentParser('Options to print_docs.py')
+parser.add_argument('-w', help = 'Generate docs for web. (Default local)', action = "store_true")
+parser.add_argument('-l', help = 'Symlink CSS and JS instead of copying', action = "store_true")
+parser.add_argument('-r', help = 'relative path to mathlib root directory')
+parser.add_argument('-t', help = 'relative path to html output directory')
+cl_args = parser.parse_args()
+
 # extra doc files to include in generation
 # format: (filename_root, display_name, source)
 extra_doc_files = [('overview', 'mathlib overview', 'docs/mathlib-overview.md'),
@@ -28,7 +36,9 @@ extra_doc_files = [('overview', 'mathlib overview', 'docs/mathlib-overview.md'),
                    ('well_founded_recursion', 'well founded recursion', 'docs/extras/well_founded_recursion.md')]
 
 # path to put generated html
-html_root = root + '/html/'
+html_root = root + '/' + (cl_args.t if cl_args.t else 'html/')
+
+# TODO: make sure nothing is left in html_root
 
 # root of the site, for display purposes.
 # for local testing, use `html_root` or the address of a local server.
@@ -39,12 +49,9 @@ site_root = "http://localhost:8000/"
 web_root = "https://leanprover-community.github.io/mathlib_docs/"
 
 # root directory of mathlib.
-local_lean_root = root + '/_target/deps/mathlib/'
+local_lean_root = root + '/' + (cl_args.r if cl_args.r else '_target/deps/mathlib/')
 
-parser = argparse.ArgumentParser('Options to print_docs.py')
-parser.add_argument('-w', help = 'Generate docs for web. (Default local)', action = "store_true")
-parser.add_argument('-l', help = 'Symlink CSS and JS instead of copying', action = "store_true")
-cl_args = parser.parse_args()
+
 
 mathlib_commit = 'lean-3.4.2' # default
 mathlib_github_root = 'https://github.com/leanprover-community/mathlib' # default
