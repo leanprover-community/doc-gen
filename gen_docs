@@ -1,7 +1,31 @@
 #!/bin/bash
-find _target/deps/mathlib/src | grep "[.]olean$" | xargs touch
-bash _target/deps/mathlib/scripts/rm_all.sh
-bash _target/deps/mathlib/scripts/mk_all.sh
+while [ "$1" != "" ]; do
+    case $1 in
+        -t | --target )           shift
+                                target=$1
+                                ;;
+        -r | --source )           shift
+                                source=$1
+                                ;;
+        -w | --web )    web="-w"
+                                ;;
+        -l | --link )    link="-l"
+                                ;;
+        * )
+                                exit 1
+    esac
+    shift
+done
+echo "$target"
+if [ -z "$target" ]; then
+  target=_target/deps/mathlib/
+fi
+if [ -n "$source" ]; then
+  source = "-r $source"
+fi
+find "$target"src | grep "[.]olean$" | xargs touch
+bash "$target"scripts/rm_all.sh
+bash "$target"scripts/mk_all.sh
 lean --run src/export_json.lean
-bash _target/deps/mathlib/scripts/rm_all.sh
-python3 print_docs.py $1 $2 $3 $4 $5
+bash "$target"scripts/rm_all.sh
+python3 print_docs.py -t "$target $source"
