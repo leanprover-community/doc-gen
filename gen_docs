@@ -23,9 +23,9 @@ fi
 if [ -n "$source" ]; then
   source="-r $source"
 fi
-find "$target"src | grep "[.]olean$" | xargs touch
-bash "$target"scripts/rm_all.sh
-bash "$target"scripts/mk_all.sh
+find "$source"src | grep "[.]olean$" | xargs touch
+bash "$source"scripts/rm_all.sh
+bash "$source"scripts/mk_all.sh
 lean --run src/export_json.lean
-bash "$target"scripts/rm_all.sh
+bash "$source"scripts/rm_all.sh
 python3 print_docs.py -t "$target $source"
