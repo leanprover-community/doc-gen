@@ -21,7 +21,7 @@ if [ -z "$target" ]; then
   target=_target/deps/mathlib/
 fi
 if [ -n "$source" ]; then
-  source = "-r $source"
+  source="-r $source"
 fi
 find "$target"src | grep "[.]olean$" | xargs touch
 bash "$target"scripts/rm_all.sh
