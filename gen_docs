@@ -7,25 +7,35 @@ while [ "$1" != "" ]; do
         -r | --source )           shift
                                 source=$1
                                 ;;
-        -w | --web )    web="-w"
+        -w | --web )    web=1
                                 ;;
-        -l | --link )    link="-l"
+        -l | --link )    link=1
                                 ;;
         * )
                                 exit 1
     esac
     shift
 done
-echo "$source"
 if [ -z "$source" ]; then
   source=_target/deps/mathlib/
 fi
+
+args=()
 if [ -n "$target" ]; then
-  target="-t $target"
+  args+=( '-t' )
+  args+=( "$target" )
 fi
+if [ "$web" -eq "1" ]; then
+  args+=('-w')
+fi
+if [ "$link" -eq "1" ]; then
+  args+=('-l')
+fi
+
 find "$source"src | grep "[.]olean$" | xargs touch
 bash "$source"scripts/rm_all.sh
 bash "$source"scripts/mk_all.sh
 lean --run src/export_json.lean
 bash "$source"scripts/rm_all.sh
-python3 print_docs.py -r "$source $target"
+
+python3 print_docs.py -r "$source" "${args[@]}"
