@@ -268,6 +268,18 @@ def html_head(title):
         <link rel="shortcut icon" href="https://leanprover-community.github.io/assets/img/lean.ico">
         <title>mathlib docs: {1}</title>
         <meta charset="UTF-8">
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+        <script>
+        MathJax = {{
+          tex: {{
+            inlineMath: [['$', '$'], ['\\(', '\\)']]
+          }},
+          svg: {{
+            fontCache: 'global'
+          }}
+        }};
+        </script>
+        <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     </head>
     <body>
         <div class="row">""".format(site_root, title)
