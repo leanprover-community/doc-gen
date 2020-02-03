@@ -260,6 +260,12 @@ def write_body_content(objs, loc_map, filename, mod_docs, instances, body_out):
     else:
       write_mod_doc(o, loc_map, body_out)
 
+# MathJax configuration docs:
+#   http://docs.mathjax.org/en/latest/options/document.html#the-configuration-block
+# MathJax inlineMath/displayMath docs:
+#   http://docs.mathjax.org/en/latest/options/input/tex.html#tex-extension-options
+# StackOverflow link on why to avoid \(..\) and \[..\] when markdown is in the loop:
+#   https://math.meta.stackexchange.com/a/18714
 def html_head(title):
   return """<!DOCTYPE html>
 <html lang="en">
@@ -272,11 +278,20 @@ def html_head(title):
         <script>
         MathJax = {{
           tex: {{
-            inlineMath: [['$', '$'], ['\\(', '\\)']]
+            inlineMath: [['$', '$']],
+            displayMath: [['$$', '$$']]
           }},
-          svg: {{
-            fontCache: 'global'
-          }}
+          options: {{
+              skipHtmlTags: [
+                  'script', 'noscript', 'style', 'textarea', 'pre',
+                  'code', 'annotation', 'annotation-xml',
+                  'decl', 'decl_meta', 'attributes', 'decl_args', 'decl_header', 'decl_name',
+                  'decl_type', 'equation', 'equations', 'structure_field', 'structure_fields',
+                  'constructor', 'constructors', 'instances'
+              ],
+              ignoreHtmlClass: 'tex2jax_ignore',
+              processHtmlClass: 'tex2jax_process',
+          }},
         }};
         </script>
         <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
