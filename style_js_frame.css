@@ -313,3 +313,16 @@ a.file:link, a.file:visited, a.file:active {
 .nav h3 {
     margin-block-end: 4px;
 }
+
+.imports li {
+    font-family: monospace;
+}
+
+.tags li {
+    border-style: solid;
+    border-width: 1px;
+    list-style-type: none;
+    padding: 3px;
+    margin-right: 10px;
+    display: inline-block;
+}
