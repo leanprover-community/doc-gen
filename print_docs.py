@@ -139,7 +139,7 @@ def load_json():
   decls = json.load(f, strict=False)
   f.close()
   file_map, loc_map = separate_results(decls['decls'])
-  return file_map, loc_map, decls['notes'], decls['mod_docs'], decls['instances']
+  return file_map, loc_map, decls['notes'], decls['mod_docs'], decls['instances'], decls['tactic_docs']
 
 def linkify_core(decl_name, text, file_map):
   if decl_name in file_map:
@@ -526,7 +526,7 @@ def copy_css(path, use_symlinks):
   cp('style_js_frame.css', path+'style_js_frame.css')
   cp('nav.js', path+'nav.js')
 
-file_map, loc_map, notes, mod_docs, instances = load_json()
+file_map, loc_map, notes, mod_docs, instances, tactic_docs = load_json()
 write_html_files(file_map, loc_map, notes, mod_docs, instances)
 copy_css(html_root, use_symlinks=cl_args.l)
 write_site_map(file_map)

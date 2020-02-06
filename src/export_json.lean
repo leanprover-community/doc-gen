@@ -119,23 +119,6 @@ do count_named_intros e >>= intron,
 
 end
 
-meta def doc_category.to_format : doc_category → format
-| doc_category.tactic := "tactic"
-| doc_category.cmd := "command"
-| doc_category.hole_cmd := "hole_command"
-| doc_category.attr := "attribute"
-
-meta instance : has_to_format doc_category := ⟨doc_category.to_format⟩
-
-meta def tactic_doc_entry.to_string : tactic_doc_entry → string
-| ⟨name, category, decl_names, tags, description⟩ := 
-let decl_names := decl_names.map (repr ∘ to_string),
-    tags := tags.map repr in
-"{" ++ to_string (format!"\"name\": \"{name}\", \"category\": \"{category}\", \"decl_names\":{decl_names}, \"tags\": {tags}, \"description\": \"{description}\"") ++ "}"
-
-meta def get_tactic_doc_entries : tactic (list tactic_doc_entry) :=
-attribute.get_instances `tactic_doc >>= list.mmap (λ dcl, mk_const dcl >>= eval_expr tactic_doc_entry)
-
 /-- The attributes we check for -/
 meta def attribute_list := [`simp, `squash_cast, `move_cast, `elim_cast, `nolint, `ext, `instance, `class]
 
