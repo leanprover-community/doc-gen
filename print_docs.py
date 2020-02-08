@@ -85,6 +85,7 @@ def convert_markdown(ds, toc=False):
 
 def convert_markdown_math(ds):
   html = math_aware_markdown_obj(ds)
+  # imitate markdown2's "link-patterns" behavior
   for (regex, replacement) in link_patterns:
     html = regex.sub('<a href="' + replacement + r'">Note [\1]</a>', html)
   return html
