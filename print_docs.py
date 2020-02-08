@@ -85,8 +85,8 @@ def convert_markdown(ds, toc=False):
 
 def convert_markdown_math(ds):
   html = math_aware_markdown_obj(ds)
-  # for (regex, replacement) in link_patterns:
-  #   html = regex.sub('<a href="' + replacement + r'">Note [\1]</a>', html)
+  for (regex, replacement) in link_patterns:
+    html = regex.sub('<a href="' + replacement + r'">Note [\1]</a>', html)
   return html
 
 def filename_core(root, filename, ext):
