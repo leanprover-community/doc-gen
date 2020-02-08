@@ -11,6 +11,7 @@ import os
 import glob
 import textwrap
 import markdown2
+import misaka # alternate markdown
 import re
 import subprocess
 import toml
@@ -73,11 +74,20 @@ note_regex = re.compile(r'Note \[(.*)\]', re.I)
 target_url_regex = site_root + r'notes.html#\1'
 link_patterns = [(note_regex, target_url_regex)]
 
+math_aware_markdown_obj = misaka.Markdown(misaka.HtmlRenderer(), 
+  extensions=('math', 'math-explicit', 'fenced-code', 'autolink', 'no-intra-emphasis'))
+
 def convert_markdown(ds, toc=False):
   extras = ['code-friendly', 'cuddled-lists', 'fenced-code-blocks', 'link-patterns']
   if toc:
     extras.append('toc')
   return markdown2.markdown(ds, extras=extras, link_patterns = link_patterns)
+
+def convert_markdown_math(ds):
+  html = math_aware_markdown_obj(ds)
+  # for (regex, replacement) in link_patterns:
+  #   html = regex.sub('<a href="' + replacement + r'">Note [\1]</a>', html)
+  return html
 
 def filename_core(root, filename, ext):
   if 'lean/library' in filename:
@@ -248,7 +258,7 @@ def write_notes_nav(notes, out):
     out.write('<a href="#{0}">{0}</a><br>\n'.format(o))
 
 def write_mod_doc(obj, loc_map, out):
-  doc = linkify_markdown(convert_markdown(obj['doc']), loc_map)
+  doc = linkify_markdown(convert_markdown_math(obj['doc']), loc_map)
   out.write('<div class="mod_doc">\n' + doc + '</div>')
 
 
@@ -278,8 +288,8 @@ def html_head(title):
         <script>
         MathJax = {{
           tex: {{
-            inlineMath: [['$', '$']],
-            displayMath: [['$$', '$$']]
+            inlineMath: [['$', '$'], ['\\\\(', '\\\\)']],
+            displayMath: [['$$', '$$'], ['\\\\[', '\\\\]']]
           }},
           options: {{
               skipHtmlTags: [
@@ -455,7 +465,7 @@ We collect these notes here.</p>
 """
 
 def write_note(n, loc_map, out):
-  note_id, note_body = n[0], linkify_markdown(convert_markdown(n[1]), loc_map)
+  note_id, note_body = n[0], linkify_markdown(convert_markdown_math(n[1]), loc_map)
   out.write('<div class="note" id="{}">'.format(note_id))
   out.write('<h2>{}</h2>'.format(note_id))
   out.write(note_body)
