@@ -352,6 +352,7 @@ def content_nav(dir_list, active_path):
   s += '<a href="{0}tactics.html">tactics</a><br>\n'.format(site_root)
   s += '<a href="{0}commands.html">commands</a><br>\n'.format(site_root)
   s += '<a href="{0}hole_commands.html">hole commands</a><br>\n'.format(site_root)
+  s += '<a href="{0}attributes.html">attributes</a><br>\n'.format(site_root)
   s += '<a href="{0}notes.html">notes</a><br>\n'.format(site_root)
   s += '<h3>Tutorials</h3>'
   for (filename, displayname, _) in extra_doc_files:
@@ -556,7 +557,7 @@ All should be available with `import tactic`."""},
 }
 
 def write_tactic_doc_files(local_lean_root, entries, loc_map, dir_list):
-  kinds = [('tactic', 'tactics'), ('command', 'commands'), ('hole_command', 'holes'), ('attribute', 'attributes')]
+  kinds = [('tactic', 'tactics'), ('command', 'commands'), ('hole_command', 'hole_commands'), ('attribute', 'attributes')]
   for (kind, filename) in kinds:
     restr_entries = [e for e in entries if e['category'] == kind]
     write_tactic_doc_file(tactic_doc_intros[kind], restr_entries, filename, loc_map, dir_list)

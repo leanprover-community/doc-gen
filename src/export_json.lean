@@ -81,7 +81,7 @@ structure ext_tactic_doc_entry extends tactic_doc_entry :=
 (imported : string)
 
 meta def ext_tactic_doc_entry.to_string : ext_tactic_doc_entry → string
-| ⟨name, category, decl_names, tags, description, imported⟩ :=
+| ⟨name, category, decl_names, tags, description, _, imported⟩ :=
 let decl_names := decl_names.map (repr ∘ to_string),
     tags := tags.map repr in
 "{" ++ to_string (format!"\"name\": {repr name}, \"category\": \"{category}\", \"decl_names\":{decl_names}, \"tags\": {tags}, \"description\": {repr description}, \"import\": {repr imported}") ++ "}"
@@ -288,13 +288,13 @@ let env := environment.from_imported_module_name `system.random in
 env.contains decl_name
 
 meta def tactic_doc_entry.add_import : tactic_doc_entry → ext_tactic_doc_entry
-| ⟨name, category, [], tags, description⟩ := ⟨name, category, [], tags, description, ""⟩
-| ⟨name, category, rel_decls@(decl_name::_), tags, description⟩ :=
+| ⟨name, category, [], tags, description, idf⟩ := ⟨name, category, [], tags, description, idf, ""⟩
+| ⟨name, category, rel_decls@(decl_name::_), tags, description, idf⟩ :=
   let imported := if decl_name.imported_by_tactic_core then "tactic.core"
                   else if decl_name.imported_by_tactic_default then "tactic.default"
                   else if decl_name.imported_always then "always imported"
                   else "" in
-  ⟨name, category, rel_decls, tags, description, imported⟩
+  ⟨name, category, rel_decls, tags, description, idf, imported⟩
 
 meta def format_tactic_docs : tactic string :=
 do l ← list.map tactic_doc_entry.add_import <$> get_tactic_doc_entries,
