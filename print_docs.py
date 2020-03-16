@@ -553,7 +553,29 @@ Many of these commands are available whenever `tactic.core` is imported.
 Commands that require additional imports are noted below.
 All should be available with `import tactic`."""},
   'attribute': {'title': 'Attributes',
-               'body':"""Describe attributes here!"""}
+               'body':"""
+*Attributes* are a tool for associating information with declarations.
+
+In the simplest case, an attribute is a tag that can be applied to a declaration.
+`simp` is a common example of this. A lemma
+```lean
+@[simp] lemma foo : ...
+```
+has been tagged with the `simp` attribute. 
+When the simplifier runs, it will collect all lemmas that have been tagged with this attribute.
+
+More complicated attributes take *parameters*. An example of this is the `nolint` attribute.
+It takes a list of linter names when it is applied, and for each declaration tagged with `@[nolint linter_1 linter_2]`,
+this list can be accessed by a metaprogram.
+
+Attributes can also be applied to declarations with the syntax:
+```lean
+attribute [attr_name] decl_name_1 decl_name_2 decl_name 3
+```
+
+The core API for creating and using attributes can be found in
+[core.init.meta.attribute](core/init/meta/attribute.html).
+"""}
 }
 
 def write_tactic_doc_files(local_lean_root, entries, loc_map, dir_list):
