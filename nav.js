@@ -64,3 +64,77 @@ for (const impl_collapsed of document.getElementsByClassName('impl_collapsed')) 
             impl_collapsed.classList.remove('impl_collapsed'));
     }
 }
+
+
+
+function filterSelection(c) {
+    var x, i;
+    x = document.getElementsByClassName("tactic");
+    //if (c == "all") c = "";
+    //cs = c.split(",");
+    // Add the "show" class (display:block) to the filtered elements, and remove the "show" class from the elements that are not selected
+    for (i = 0; i < x.length; i++) {
+      w3AddClass(x[i], "hide");
+      for (j = 0; j < c.length; j++) { 
+          if (x[i].className.indexOf(c[j]) > -1) w3RemoveClass(x[i], "hide");
+      }
+    }
+  }
+
+// Show filtered elements
+function w3AddClass(element, name) {
+    var i, arr1, arr2;
+    arr1 = element.className.split(" ");
+    arr2 = name.split(" ");
+    for (i = 0; i < arr2.length; i++) {
+      if (arr1.indexOf(arr2[i]) == -1) {
+        element.className += " " + arr2[i];
+      }
+    }
+  }
+  
+  // Hide elements that are not selected
+  function w3RemoveClass(element, name) {
+    var i, arr1, arr2;
+    arr1 = element.className.split(" ");
+    arr2 = name.split(" ");
+    for (i = 0; i < arr2.length; i++) {
+      while (arr1.indexOf(arr2[i]) > -1) {
+        arr1.splice(arr1.indexOf(arr2[i]), 1);
+      }
+    }
+    element.className = arr1.join(" ");
+  }
+
+  document.multiselect('#tagfilter')
+var select = document.getElementById("tagfilter");
+
+function updateDisplay() {
+    //alert(getSelectValues(select));
+    filterSelection(getSelectValues(select));
+}
+
+function getSelectValues(select) {
+    var result = [];
+    var options = select && select.options;
+    var opt;
+  
+    for (var i=0, iLen=options.length; i<iLen; i++) {
+      opt = options[i];
+  
+      if (opt.selected) {
+        result.push(opt.value || opt.text);
+      }
+    }
+    return result;
+  }
+
+
+  updateDisplay();
+
+select_input = document.getElementById("tagfilter_itemList")
+
+//select.addEventListener("click", function() { updateDisplay(); });
+
+//select_input.addEventListener("click", function(event) { updateDisplay(); }, false);
+// select.addEventListener("mouseover", function() { updateDisplay(); });

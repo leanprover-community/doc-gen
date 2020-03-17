@@ -54,6 +54,9 @@ body {
     margin-top: 0;
 }
 
+.hide {
+    display: none;
+}
 
  /* Clear floats after the columns */
 .row:after {

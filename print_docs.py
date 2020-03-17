@@ -271,6 +271,7 @@ def html_head(title):
 <html lang="en">
     <head>
         <link rel="stylesheet" href="{0}style_js_frame.css">
+        <link href="{0}multiselect.css" rel="stylesheet">
         <link rel="shortcut icon" href="https://leanprover-community.github.io/assets/img/lean.ico">
         <title>mathlib docs: {1}</title>
         <meta charset="UTF-8">
@@ -302,6 +303,7 @@ def html_head(title):
 html_tail = """
         </div>
     </body>
+    <script src="{0}multiselect.min.js"></script>
     <script src="{0}nav.js"></script>
 </html>
 """.format(site_root)
@@ -406,13 +408,20 @@ def write_tactic_doc_file(intro, entries, name, loc_map, dir_list):
   out.write('<div class="column left"><div class="internal_nav">\n' )
   out.write('<h1>Lean <a href="https://leanprover-community.github.io">mathlib</a> docs</h1>')
   out.write('<h2><a href="#top">{0}</a></h2>'.format(name))
+  tagset = set()
+  for e in entries:
+    tagset.update(e['tags'])
+  out.write('<select id="tagfilter" multiple>')
+  for t in sorted(tagset):
+    out.write('<option value="{0}">{0}</option><\n'.format(t))
+  out.write('</select><br>')
   for e in entries:
     out.write('<a href="#{0}">{0}</a><br>\n'.format(e['name']))
   out.write('</div></div>\n')
   out.write('<div class="column middle"><div class="content docfile">\n')
   out.write('<h1>{0}</h1>\n\n{1}'.format(intro['title'], convert_markdown(intro['body'])))
   for e in entries:
-    out.write('<div class="tactic">\n')
+    out.write('<div class="tactic {}">\n'.format(' '.join(e['tags'])))
     out.write('<h2 id="{0}"><a href="#{0}">{0}</a></h2>\n'.format(e['name']))
     out.write(convert_markdown(e['description']))
     if len(e['tags']) > 0:
@@ -632,6 +641,10 @@ def copy_css(path, use_symlinks):
 
   cp('style_js_frame.css', path+'style_js_frame.css')
   cp('nav.js', path+'nav.js')
+  cp('multiselect.min.js', path+'multiselect.min.js')
+  cp('multiselect.css', path+'multiselect.css')
+#  cp('multiselect.core.js', path+'scripts/multiselect.core.js')
+#  cp('multiselect.js', path+'scripts/multiselect.js')
 
 file_map, loc_map, notes, mod_docs, instances, tactic_docs = load_json()
 write_html_files(file_map, loc_map, notes, mod_docs, instances, tactic_docs)
