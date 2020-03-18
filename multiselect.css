@@ -7,7 +7,7 @@
 }
 
 .multiselect-wrapper .multiselect-input {
-	width: 120px;
+	width: 90%;
 	padding-right: 50px;
 }
 
@@ -97,7 +97,8 @@
 	display: inline-block !important;
 	padding: 2px 7px;
 	left: -45px;
-	display: none;
+	width: 0px;
+	visibility: hidden !important;
 }
 
 .multiselect-dropdown-arrow {
