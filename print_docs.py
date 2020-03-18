@@ -403,7 +403,7 @@ def import_options(loc_map, decl_name, import_string):
     return ''
 
 def split_on_hr(description):
-  return description.split('\n---\n', 1)[1]
+  return description.split('\n---\n', 1)[-1]
 
 # entries has the structure:
 # [{name: "", category: "", decl_names: [], tags: [], description: "", import: ""}]
