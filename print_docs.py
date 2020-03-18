@@ -413,7 +413,7 @@ def write_tactic_doc_file(intro, entries, name, loc_map, dir_list):
     tagset.update(e['tags'])
   out.write('<select id="tagfilter" multiple>')
   for t in sorted(tagset):
-    out.write('<option value="{0}">{0}</option><\n'.format(t))
+    out.write('<option value="{0}">{0}</option>\n'.format(t))
   out.write('</select><br>')
   for e in entries:
     out.write('<a href="#{0}">{0}</a><br>\n'.format(e['name']))

@@ -97,6 +97,7 @@
 	display: inline-block !important;
 	padding: 2px 7px;
 	left: -45px;
+	display: none;
 }
 
 .multiselect-dropdown-arrow {
