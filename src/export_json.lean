@@ -5,7 +5,7 @@ Author: Robert Y. Lewis
 -/
 
 import tactic.core system.io data.string.defs tactic.interactive data.list.sort
---import all
+import all
 
 /-!
 Used to generate a json file for html docs.
