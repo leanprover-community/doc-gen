@@ -416,7 +416,7 @@ def write_tactic_doc_file(intro, entries, name, loc_map, dir_list):
     out.write('<option value="{0}">{0}</option>\n'.format(t))
   out.write('</select><br><br>\n')
   for e in entries:
-    out.write('<a href="#{0}">{0}</a><br>\n'.format(e['name']))
+    out.write('<a href="#{0}" class="taclink {1}">{0}</a><br>\n'.format(e['name'], ' '.join(e['tags'])))
   out.write('</div></div>\n')
   out.write('<div class="column middle"><div class="content docfile">\n')
   out.write('<h1>{0}</h1>\n\n{1}'.format(intro['title'], convert_markdown(intro['body'])))

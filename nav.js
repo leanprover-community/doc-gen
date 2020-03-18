@@ -67,9 +67,9 @@ for (const impl_collapsed of document.getElementsByClassName('impl_collapsed')) 
 
 
 
-function filterSelection(c) {
+function filterSelectionClass(c, classname) {
     var x, i;
-    x = document.getElementsByClassName("tactic");
+    x = document.getElementsByClassName(classname);
     //if (c == "all") c = "";
     //cs = c.split(",");
     // Add the "show" class (display:block) to the filtered elements, and remove the "show" class from the elements that are not selected
@@ -79,6 +79,11 @@ function filterSelection(c) {
           if (x[i].className.indexOf(c[j]) > -1) w3RemoveClass(x[i], "hide");
       }
     }
+  }
+
+  function filterSelection(c) {
+    filterSelectionClass(c, "tactic");
+    filterSelectionClass(c, "taclink");
   }
 
 // Show filtered elements
