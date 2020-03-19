@@ -67,16 +67,18 @@ for (const impl_collapsed of document.getElementsByClassName('impl_collapsed')) 
 
 
 
-function filterSelectionClass(c, classname) {
+function filterSelectionClass(tagNames, classname) {
     var x, i;
     x = document.getElementsByClassName(classname);
     //if (c == "all") c = "";
     //cs = c.split(",");
     // Add the "show" class (display:block) to the filtered elements, and remove the "show" class from the elements that are not selected
-    for (i = 0; i < x.length; i++) {
-      w3AddClass(x[i], "hide");
-      for (j = 0; j < c.length; j++) { 
-          if (x[i].className.indexOf(c[j]) > -1) w3RemoveClass(x[i], "hide");
+    for (const elem of document.getElementsByClassName(classname)) {
+      x[i].classList.add("hide");
+      for (const tagName of c) { 
+          if (x[i].classList.contains(c[j])) {
+            x[i].classList.remove("hide");
+          }
       }
     }
   }
@@ -124,7 +126,7 @@ function getSelectValues(select) {
     var options = select && select.options;
     var opt;
   
-    for (var i=0, iLen=options.length; i<iLen; i++) {
+    for (const opt of options) {
       opt = options[i];
   
       if (opt.selected) {
