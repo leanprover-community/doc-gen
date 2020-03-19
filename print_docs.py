@@ -439,7 +439,7 @@ def write_tactic_doc_file(intro, entries, name, loc_map, dir_list):
     out.write(convert_markdown(split_on_hr(e['description'])))
     if len(e['tags']) > 0:
       tags = ['<li>{}</li>'.format(t) for t in e['tags']]
-      out.write('<details class="tags"><summary>Tags</summary><ul>{}</ul></details>'.format('\n'.join(tags)))
+      out.write('<div class="tags">Tags:<ul>{}</ul></div>'.format('\n'.join(tags)))
     if len(e['decl_names']) > 0:
       rel_decls = ['<li>{}</li>'.format(linkify_type(d, loc_map)) for d in e['decl_names']]
       decl_string = '<details class="rel_decls"><summary>Related declarations</summary><ul>{}</ul></details>'.format('\n'.join(rel_decls))
