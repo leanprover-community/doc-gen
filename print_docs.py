@@ -139,6 +139,9 @@ def load_json():
   decls = json.load(f, strict=False)
   f.close()
   file_map, loc_map = separate_results(decls['decls'])
+  for entry in decls['tactic_docs']:
+    if len(entry['tags']) == 0:
+      entry['tags'] = ['untagged']
   return file_map, loc_map, decls['notes'], decls['mod_docs'], decls['instances'], decls['tactic_docs']
 
 def linkify_core(decl_name, text, file_map):
