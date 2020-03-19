@@ -409,6 +409,9 @@ def import_options(loc_map, decl_name, import_string):
 def split_on_hr(description):
   return description.split('\n---\n', 1)[-1]
 
+def escape_tag_name(tag):
+  return tag.strip().replace(' ', '-')
+
 # entries has the structure:
 # [{name: "", category: "", decl_names: [], tags: [], description: "", import: ""}]
 def write_tactic_doc_file(intro, entries, name, loc_map, dir_list):
@@ -423,15 +426,15 @@ def write_tactic_doc_file(intro, entries, name, loc_map, dir_list):
     tagset.update(e['tags'])
   out.write('\n<br>Filter by tag:<br>\n<select id="tagfilter" multiple>\n')
   for t in sorted(tagset):
-    out.write('<option value="{0}">{0}</option>\n'.format(t))
+    out.write('<option value="{1}">{0}</option>\n'.format(t, escape_tag_name(t)))
   out.write('</select><br><br>\n')
   for e in entries:
-    out.write('<div class="taclink {1}"><a href="#{0}">{0}</a></div>\n'.format(e['name'], ' '.join(e['tags'])))
+    out.write('<div class="taclink {1}"><a href="#{0}">{0}</a></div>\n'.format(e['name'], ' '.join([escape_tag_name(t) for t in e['tags']])))
   out.write('</div></div>\n')
   out.write('<div class="column middle"><div class="content docfile">\n')
   out.write('<h1>{0}</h1>\n\n{1}'.format(intro['title'], convert_markdown(intro['body'])))
   for e in entries:
-    out.write('<div class="tactic {}">\n'.format(' '.join(e['tags'])))
+    out.write('<div class="tactic {}">\n'.format(' '.join([escape_tag_name(t) for t in e['tags']])))
     out.write('<h2 id="{0}"><a href="#{0}">{0}</a></h2>\n'.format(e['name']))
     out.write(convert_markdown(split_on_hr(e['description'])))
     if len(e['tags']) > 0:
