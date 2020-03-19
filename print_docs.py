@@ -399,6 +399,9 @@ def import_options(loc_map, decl_name, import_string):
   else:
     return ''
 
+def split_on_hr(description):
+  return description.split('\n---\n', 1)[1]
+
 # entries has the structure:
 # [{name: "", category: "", decl_names: [], tags: [], description: "", import: ""}]
 def write_tactic_doc_file(intro, entries, name, loc_map, dir_list):
@@ -423,7 +426,7 @@ def write_tactic_doc_file(intro, entries, name, loc_map, dir_list):
   for e in entries:
     out.write('<div class="tactic {}">\n'.format(' '.join(e['tags'])))
     out.write('<h2 id="{0}"><a href="#{0}">{0}</a></h2>\n'.format(e['name']))
-    out.write(convert_markdown(e['description']))
+    out.write(convert_markdown(split_on_hr(e['description'])))
     if len(e['tags']) > 0:
       tags = ['<li>{}</li>'.format(t) for t in e['tags']]
       out.write('<details class="tags"><summary>Tags</summary><ul>{}</ul></details>'.format('\n'.join(tags)))
