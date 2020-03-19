@@ -256,8 +256,8 @@ do l ← get_library_notes,
    let l := string.join $ l.intersperse ", ",
    return $ to_string $ format!"[{l}]"
 
-meta def name.imported_by_tactic_core (decl_name : name) : bool :=
-let env := environment.from_imported_module_name `tactic.core in
+meta def name.imported_by_tactic_basic (decl_name : name) : bool :=
+let env := environment.from_imported_module_name `tactic.basic in
 env.contains decl_name
 
 meta def name.imported_by_tactic_default (decl_name : name) : bool :=
@@ -271,9 +271,9 @@ env.contains decl_name
 meta def tactic_doc_entry.add_import : tactic_doc_entry → ext_tactic_doc_entry
 | ⟨name, category, [], tags, description, idf⟩ := ⟨name, category, [], tags, description, idf, ""⟩
 | ⟨name, category, rel_decls@(decl_name::_), tags, description, idf⟩ :=
-  let imported := if decl_name.imported_by_tactic_core then "tactic.core"
-                  else if decl_name.imported_by_tactic_default then "tactic.default"
-                  else if decl_name.imported_always then "always imported"
+  let imported := if decl_name.imported_always then "always imported"
+                  else if decl_name.imported_by_tactic_basic then "tactic.basic"
+                  else if decl_name.imported_by_tactic_default then "tactic"
                   else "" in
   ⟨name, category, rel_decls, tags, description, idf, imported⟩
 

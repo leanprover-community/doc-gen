@@ -393,11 +393,11 @@ def find_import_path(loc_map, decl_name):
 
 def import_options(loc_map, decl_name, import_string):
   direct_import_path = find_import_path(loc_map, decl_name)
-  direct_import_paths = set() 
+  direct_import_paths = [] 
   if direct_import_path != "":
-    direct_import_paths.add(direct_import_path)
-  if import_string != '':
-    direct_import_paths.add(import_string)
+    direct_import_paths.append(direct_import_path)
+  if import_string != '' and import_string not in direct_import_paths:
+    direct_import_paths.append(import_string)
   if any(i.startswith('init.') for i in direct_import_paths):
     return '<details class="imports"><summary>Import using</summary><ul>{}</ul>'.format('<li>imported by default</li>')
   elif len(direct_import_paths) > 0:
