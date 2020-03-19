@@ -68,13 +68,19 @@ for (const impl_collapsed of document.getElementsByClassName('impl_collapsed')) 
 
 
 function filterSelectionClass(tagNames, classname) {
-    // Add the "show" class (display:block) to the filtered elements, and remove the "show" class from the elements that are not selected
-    for (const elem of document.getElementsByClassName(classname)) {
-      elem.classList.add("hide");
-      for (const tagName of tagNames) { 
-          if (elem.classList.contains(tagName)) {
-            elem.classList.remove("hide");
-          }
+    if (tagNames.length == 0) {
+      for (const elem of document.getElementsByClassName(classname)) {
+        elem.classList.remove("hide");
+      }
+    } else {
+      // Add the "show" class (display:block) to the filtered elements, and remove the "show" class from the elements that are not selected
+      for (const elem of document.getElementsByClassName(classname)) {
+        elem.classList.add("hide");
+        for (const tagName of tagNames) { 
+            if (elem.classList.contains(tagName)) {
+              elem.classList.remove("hide");
+            }
+        }
       }
     }
   }
