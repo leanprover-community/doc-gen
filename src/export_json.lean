@@ -50,25 +50,6 @@ structure decl_info :=
 (structure_fields : list (string × string)) -- name and type of fields of a constructor
 (constructors : list (string × string)) -- name and type of constructors of an inductive type
 
-section add_notes
-
-add_tactic_doc
-{ name := "new cmd",
-  category := doc_category.cmd,
-  decl_names := [`io.fs.read],
-  tags := [],
-  description := "new cmd description" }
-
-add_tactic_doc
-{ name := "linarith",
-  category := doc_category.cmd,
-  decl_names := [`tactic.interactive.linarith],
-  tags := ["expensive", "arithmetic", "decision procedure"],
-  description := "the linarith tactic" }
-
-end add_notes
-
-
 structure module_doc_info :=
 (filename : string)
 (line : ℕ)
