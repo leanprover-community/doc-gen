@@ -653,10 +653,6 @@ def copy_css(path, use_symlinks):
 
   cp('style_js_frame.css', path+'style_js_frame.css')
   cp('nav.js', path+'nav.js')
-  cp('multiselect.min.js', path+'multiselect.min.js')
-  cp('multiselect.css', path+'multiselect.css')
-#  cp('multiselect.core.js', path+'scripts/multiselect.core.js')
-#  cp('multiselect.js', path+'scripts/multiselect.js')
 
 file_map, loc_map, notes, mod_docs, instances, tactic_docs = load_json()
 write_html_files(file_map, loc_map, notes, mod_docs, instances, tactic_docs)
