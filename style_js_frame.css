@@ -338,3 +338,9 @@ a.file:link, a.file:visited, a.file:active {
     margin-right: 10px;
     display: inline-block;
 }
+
+.tagfilter-div {
+    display: inline-block;
+    margin-top: 8px;
+    margin-bottom: 8px;
+}

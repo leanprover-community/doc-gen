@@ -46,7 +46,8 @@ html_root = root + '/' + (cl_args.t if cl_args.t else 'html/')
 site_root = "http://localhost:8000/"
 
 # web root, used in place of `site_root` if the `-w` flag is used
-web_root = "https://leanprover-community.github.io/mathlib_docs/"
+web_root = "https://robertylewis.com/mathlib_docs/"
+#web_root = "https://leanprover-community.github.io/mathlib_docs/"
 
 # root directory of mathlib.
 local_lean_root = root + '/' + (cl_args.r if cl_args.r else '_target/deps/mathlib/')
@@ -422,9 +423,10 @@ def write_tactic_doc_file(intro, entries, name, loc_map, dir_list):
   tagset = set()
   for e in entries:
     tagset.update(e['tags'])
-  out.write('\n<br><details>\n<summary>Filter by tag</summary>\n')
+  out.write('\n<details class="tagfilter-div">\n<summary>Filter by tag</summary>\n')
+  out.write('<label><input type="checkbox" id="tagfilter-selectall" name="tagfilter-selectall">Select/deselect all</label><br><hr>\n')
   for t in sorted(tagset):
-    out.write('<input type="checkbox" class="tagfilter" name="{1}" value="{1}"><label for="{1}">{0}</label><br>\n'.format(t, escape_tag_name(t)))
+    out.write('<label><input type="checkbox" class="tagfilter" name="{1}" value="{1}">{0}</label><br>\n'.format(t, escape_tag_name(t)))
   out.write('</details><br>\n')
   for e in entries:
     out.write('<div class="taclink {1}"><a href="#{0}">{0}</a></div>\n'.format(e['name'], ' '.join([escape_tag_name(t) for t in e['tags']])))

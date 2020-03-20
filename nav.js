@@ -90,7 +90,7 @@ function filterSelectionClass(tagNames, classname) {
     filterSelectionClass(c, "taclink");
   }
 
-var filterBoxes = document.getElementByClassName("tagfilter");
+var filterBoxes = document.getElementsByClassName("tagfilter");
 
 function updateDisplay() {
     //alert(getSelectValues(select));
@@ -109,12 +109,22 @@ function getSelectValues() {
     return result;
   }
 
+function setSelectVal(val) {
+  for (const opt of filterBoxes) {
+    opt.checked = val;
+  }
+}
 
-  updateDisplay();
+updateDisplay();
 
 for (const opt of filterBoxes) {
   opt.addEventListener('change', updateDisplay);
 }
+
+document.getElementById("tagfilter-selectall").addEventListener('change', function() {
+  setSelectVal(this.checked);
+  updateDisplay();
+});
 
 //select.addEventListener("click", function() { updateDisplay(); });
 
