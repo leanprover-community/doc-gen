@@ -55,6 +55,19 @@ structure module_doc_info :=
 (line : ℕ)
 (content : string)
 
+section
+set_option old_structure_cmd true
+
+structure ext_tactic_doc_entry extends tactic_doc_entry :=
+(imported : string)
+
+meta def ext_tactic_doc_entry.to_string : ext_tactic_doc_entry → string
+| ⟨name, category, decl_names, tags, description, _, imported⟩ :=
+let decl_names := decl_names.map (repr ∘ to_string),
+    tags := tags.map repr in
+"{" ++ to_string (format!"\"name\": {repr name}, \"category\": \"{category}\", \"decl_names\":{decl_names}, \"tags\": {tags}, \"description\": {repr description}, \"import\": {repr imported}") ++ "}"
+end
+
 meta def escape_quotes (s : string) : string :=
 s.fold "" (λ s x, s ++ if x = '"' then '\\'.to_string ++ '"'.to_string else x.to_string)
 
@@ -243,6 +256,31 @@ do l ← get_library_notes,
    let l := string.join $ l.intersperse ", ",
    return $ to_string $ format!"[{l}]"
 
+meta def name.imported_by_tactic_basic (decl_name : name) : bool :=
+let env := environment.from_imported_module_name `tactic.basic in
+env.contains decl_name
+
+meta def name.imported_by_tactic_default (decl_name : name) : bool :=
+let env := environment.from_imported_module_name `tactic.default in
+env.contains decl_name
+
+meta def name.imported_always (decl_name : name) : bool :=
+let env := environment.from_imported_module_name `system.random in
+env.contains decl_name
+
+meta def tactic_doc_entry.add_import : tactic_doc_entry → ext_tactic_doc_entry
+| ⟨name, category, [], tags, description, idf⟩ := ⟨name, category, [], tags, description, idf, ""⟩
+| ⟨name, category, rel_decls@(decl_name::_), tags, description, idf⟩ :=
+  let imported := if decl_name.imported_always then "always imported"
+                  else if decl_name.imported_by_tactic_basic then "tactic.basic"
+                  else if decl_name.imported_by_tactic_default then "tactic"
+                  else "" in
+  ⟨name, category, rel_decls, tags, description, idf, imported⟩
+
+meta def format_tactic_docs : tactic string :=
+do l ← list.map tactic_doc_entry.add_import <$> get_tactic_doc_entries,
+   return $ to_string $ l.map ext_tactic_doc_entry.to_string
+
 /-- Using `environment.mfold` is much cleaner. Unfortunately this led to a segfault, I think because
 of a stack overflow. Converting the environment to a list of declarations and folding over that led
 to "deep recursion detected". Instead, we split that list into 8 smaller lists and process them
@@ -259,6 +297,8 @@ do handle ← mk_file_handle filename mode.write,
    put_str_ln handle $ "\"mod_docs\": {" ++ string.join (ods.intersperse ",\n") ++ "},",
    notes ← run_tactic format_notes,
    put_str_ln handle $ "\"notes\": " ++ notes ++ ",",
+   tactic_docs ← run_tactic format_tactic_docs,
+   put_str_ln handle $ "\"tactic_docs\": " ++ tactic_docs ++ ",",
    instl ← run_tactic format_instance_list,
    put_str_ln handle $ "\"instances\": " ++ instl ++ "}",
    close handle

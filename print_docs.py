@@ -139,7 +139,10 @@ def load_json():
   decls = json.load(f, strict=False)
   f.close()
   file_map, loc_map = separate_results(decls['decls'])
-  return file_map, loc_map, decls['notes'], decls['mod_docs'], decls['instances']
+  for entry in decls['tactic_docs']:
+    if len(entry['tags']) == 0:
+      entry['tags'] = ['untagged']
+  return file_map, loc_map, decls['notes'], decls['mod_docs'], decls['instances'], decls['tactic_docs']
 
 def linkify_core(decl_name, text, file_map):
   if decl_name in file_map:
@@ -352,6 +355,7 @@ def content_nav(dir_list, active_path):
   s += '<a href="{0}tactics.html">tactics</a><br>\n'.format(site_root)
   s += '<a href="{0}commands.html">commands</a><br>\n'.format(site_root)
   s += '<a href="{0}hole_commands.html">hole commands</a><br>\n'.format(site_root)
+  s += '<a href="{0}attributes.html">attributes</a><br>\n'.format(site_root)
   s += '<a href="{0}notes.html">notes</a><br>\n'.format(site_root)
   s += '<h3>Tutorials</h3>'
   for (filename, displayname, _) in extra_doc_files:
@@ -378,25 +382,68 @@ def split_tactic_list(markdown):
   entries = re.findall(r'(?<=# )(.*)([\s\S]*?)(?=(##|\Z))', markdown)
   return entries[0], entries[1:]
 
-def write_tactic_doc_file(source, name, loc_map, dir_list):
-  with open(source, 'r') as infile:
-    intro, entries = split_tactic_list(infile.read())
-    infile.close()
-  entries.sort(key = lambda p: (str.lower(p[0]), str.lower(p[1])))
+def find_import_path(loc_map, decl_name):
+  path = filename_import(loc_map[decl_name]) if decl_name in loc_map else ''
+  if path.startswith('core.'):
+    return path[5:]
+  else:
+    return path
+
+def import_options(loc_map, decl_name, import_string):
+  direct_import_path = find_import_path(loc_map, decl_name)
+  direct_import_paths = [] 
+  if direct_import_path != "":
+    direct_import_paths.append(direct_import_path)
+  if import_string != '' and import_string not in direct_import_paths:
+    direct_import_paths.append(import_string)
+  if any(i.startswith('init.') for i in direct_import_paths):
+    return '<details class="imports"><summary>Import using</summary><ul>{}</ul>'.format('<li>imported by default</li>')
+  elif len(direct_import_paths) > 0:
+    return '<details class="imports"><summary>Import using</summary><ul>{}</ul>'.format(
+      '\n'.join(['<li>import {}</li>'.format(d) for d in direct_import_paths]))
+  else:
+    return ''
+
+def split_on_hr(description):
+  return description.split('\n---\n', 1)[-1]
+
+def escape_tag_name(tag):
+  return tag.strip().replace(' ', '-')
+
+# entries has the structure:
+# [{name: "", category: "", decl_names: [], tags: [], description: "", import: ""}]
+def write_tactic_doc_file(intro, entries, name, loc_map, dir_list):
+  entries.sort(key = lambda p: (str.lower(p['name']), str.lower(p['category'])))
   out = open_outfile(html_root + name + '.html', 'w')
   out.write(html_head(name))
   out.write('<div class="column left"><div class="internal_nav">\n' )
   out.write('<h1>Lean <a href="https://leanprover-community.github.io">mathlib</a> docs</h1>')
   out.write('<h2><a href="#top">{0}</a></h2>'.format(name))
+  tagset = set()
   for e in entries:
-    out.write('<a href="#{0}">{0}</a><br>\n'.format(e[0]))
+    tagset.update(e['tags'])
+  out.write('\n<details class="tagfilter-div">\n<summary>Filter by tag</summary>\n')
+  out.write('<label><input type="checkbox" id="tagfilter-selectall" name="tagfilter-selectall">Select/deselect all</label><br><hr>\n')
+  for t in sorted(tagset):
+    out.write('<label><input type="checkbox" class="tagfilter" name="{1}" value="{1}">{0}</label><br>\n'.format(t, escape_tag_name(t)))
+  out.write('</details><br>\n')
+  for e in entries:
+    out.write('<div class="taclink {1}"><a href="#{0}">{0}</a></div>\n'.format(e['name'], ' '.join([escape_tag_name(t) for t in e['tags']])))
   out.write('</div></div>\n')
   out.write('<div class="column middle"><div class="content docfile">\n')
-  out.write('<h1>{0}</h1>\n\n{1}'.format(intro[0], convert_markdown(intro[1])))
+  out.write('<h1>{0}</h1>\n\n{1}'.format(intro['title'], convert_markdown(intro['body'])))
   for e in entries:
-    out.write('<div class="tactic">\n')
-    out.write('<h2 id="{0}"><a href="#{0}">{0}</a></h2>\n'.format(e[0]))
-    out.write(convert_markdown(e[1]))
+    out.write('<div class="tactic {}">\n'.format(' '.join([escape_tag_name(t) for t in e['tags']])))
+    out.write('<h2 id="{0}"><a href="#{0}">{0}</a></h2>\n'.format(e['name']))
+    out.write(convert_markdown(split_on_hr(e['description'])))
+    if len(e['tags']) > 0:
+      tags = ['<li>{}</li>'.format(t) for t in e['tags']]
+      out.write('<div class="tags">Tags:<ul>{}</ul></div>'.format('\n'.join(tags)))
+    if len(e['decl_names']) > 0:
+      rel_decls = ['<li>{}</li>'.format(linkify_type(d, loc_map)) for d in e['decl_names']]
+      decl_string = '<details class="rel_decls"><summary>Related declarations</summary><ul>{}</ul></details>'.format('\n'.join(rel_decls))
+      out.write(decl_string)
+      out.write(import_options(loc_map, e['decl_names'][0], e['import']))
     out.write('</div>\n')
   out.write('\n</div></div>\n')
   out.write('<div class="column right"><div class="nav">\n')
@@ -478,7 +525,87 @@ def write_note_file(notes, loc_map, dir_list):
   out.write(html_tail)
   out.close()
 
-def write_html_files(partition, loc_map, notes, mod_docs, instances):
+tactic_doc_intros = {
+  'tactic': {'title': 'Mathlib tactics',
+             'body':
+             """In addition to the [tactics found in the core library](https://leanprover.github.io/reference/tactics.html),
+mathlib provides a number of specific interactive tactics.
+Here we document the mostly commonly used ones, as well as some underdocumented tactics from core."""},
+  'command': {'title': 'Commands',
+               'body':
+               """Commands provide a way to interact with and modify a Lean environment outside of the context of a proof.
+Familiar commands from core Lean include `#check`, `#eval`, and `run_cmd`.
+
+Mathlib provides a number of commands that offer customized behavior. These commands fall into two
+categories:
+
+* *Transient* commands are used to query the environment for information, but do not modify it,
+  and have no effect on the following proofs. These are useful as a user to get information from Lean.
+  They should not appear in "finished" files.
+  Transient commands typically begin with the symbol `#`.
+  `#check` is a standard example of a transient command.
+
+* *Permanent* commands modify the environment. Removing a permanent command from a file may affect
+  the following proofs. `set_option class.instance_max_depth 500` is a standard example of a
+  permanent command.
+
+User-defined commands can have unintuitive interactions with the parser. For the most part, this is
+not something to worry about. However, you may occasionally see strange error messages when using
+mathlib commands: for instance, running these commands immediately after `import file.name` will
+produce an error. An easy solution is to run a built-in no-op command in between, for example:
+
+```
+import data.nat.basic
+
+run_cmd tactic.skip -- this serves as a "barrier" between `import` and `#find`
+
+#find _ + _ = _ + _
+```"""},
+  'hole_command': {'title': 'Hole commands',
+               'body':"""Both VS Code and emacs support integration for 'hole commands'.
+
+In VS Code, if you enter `{! !}`, a small light bulb symbol will appear, and
+clicking on it gives a drop down menu of available hole commands. Running one
+of these will replace the `{! !}` with whatever text that hole command provides.
+
+In emacs, you can do something similar with `C-c SPC`.
+
+Many of these commands are available whenever `tactic.core` is imported.
+Commands that require additional imports are noted below.
+All should be available with `import tactic`."""},
+  'attribute': {'title': 'Attributes',
+               'body':"""
+*Attributes* are a tool for associating information with declarations.
+
+In the simplest case, an attribute is a tag that can be applied to a declaration.
+`simp` is a common example of this. A lemma
+```lean
+@[simp] lemma foo : ...
+```
+has been tagged with the `simp` attribute. 
+When the simplifier runs, it will collect all lemmas that have been tagged with this attribute.
+
+More complicated attributes take *parameters*. An example of this is the `nolint` attribute.
+It takes a list of linter names when it is applied, and for each declaration tagged with `@[nolint linter_1 linter_2]`,
+this list can be accessed by a metaprogram.
+
+Attributes can also be applied to declarations with the syntax:
+```lean
+attribute [attr_name] decl_name_1 decl_name_2 decl_name 3
+```
+
+The core API for creating and using attributes can be found in
+[core.init.meta.attribute](core/init/meta/attribute.html).
+"""}
+}
+
+def write_tactic_doc_files(local_lean_root, entries, loc_map, dir_list):
+  kinds = [('tactic', 'tactics'), ('command', 'commands'), ('hole_command', 'hole_commands'), ('attribute', 'attributes')]
+  for (kind, filename) in kinds:
+    restr_entries = [e for e in entries if e['category'] == kind]
+    write_tactic_doc_file(tactic_doc_intros[kind], restr_entries, filename, loc_map, dir_list)
+
+def write_html_files(partition, loc_map, notes, mod_docs, instances, entries):
   dir_list = add_to_dir_tree([filename_core('', filename, 'html').split('/') for filename in partition])
   for filename in partition:
     content_nav_str = content_nav(dir_list, filename_core('', filename, 'html'))
@@ -499,9 +626,10 @@ def write_html_files(partition, loc_map, notes, mod_docs, instances):
   out.write(html_tail)
   out.close()
   write_note_file(notes, loc_map, dir_list)
-  write_tactic_doc_file(local_lean_root + 'docs/tactics.md', 'tactics', loc_map, dir_list)
-  write_tactic_doc_file(local_lean_root + 'docs/commands.md', 'commands', loc_map, dir_list)
-  write_tactic_doc_file(local_lean_root + 'docs/holes.md', 'hole_commands', loc_map, dir_list)
+  #write_tactic_doc_file(local_lean_root + 'docs/tactics.md', 'tactics', loc_map, dir_list)
+  #write_tactic_doc_file(local_lean_root + 'docs/commands.md', 'commands', loc_map, dir_list)
+  #write_tactic_doc_file(local_lean_root + 'docs/holes.md', 'hole_commands', loc_map, dir_list)
+  write_tactic_doc_files(local_lean_root, entries, loc_map, dir_list)
   for (filename, displayname, source) in extra_doc_files:
     write_pure_md_file(local_lean_root + source, filename + '.html', displayname, loc_map, dir_list)
 
@@ -526,7 +654,7 @@ def copy_css(path, use_symlinks):
   cp('style_js_frame.css', path+'style_js_frame.css')
   cp('nav.js', path+'nav.js')
 
-file_map, loc_map, notes, mod_docs, instances = load_json()
-write_html_files(file_map, loc_map, notes, mod_docs, instances)
+file_map, loc_map, notes, mod_docs, instances, tactic_docs = load_json()
+write_html_files(file_map, loc_map, notes, mod_docs, instances, tactic_docs)
 copy_css(html_root, use_symlinks=cl_args.l)
 write_site_map(file_map)
