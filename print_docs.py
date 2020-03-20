@@ -274,7 +274,6 @@ def html_head(title):
 <html lang="en">
     <head>
         <link rel="stylesheet" href="{0}style_js_frame.css">
-        <link href="{0}multiselect.css" rel="stylesheet">
         <link rel="shortcut icon" href="https://leanprover-community.github.io/assets/img/lean.ico">
         <title>mathlib docs: {1}</title>
         <meta charset="UTF-8">
@@ -306,7 +305,6 @@ def html_head(title):
 html_tail = """
         </div>
     </body>
-    <script src="{0}multiselect.min.js"></script>
     <script src="{0}nav.js"></script>
 </html>
 """.format(site_root)
@@ -424,10 +422,10 @@ def write_tactic_doc_file(intro, entries, name, loc_map, dir_list):
   tagset = set()
   for e in entries:
     tagset.update(e['tags'])
-  out.write('\n<br>Filter by tag:<br>\n<select id="tagfilter" multiple>\n')
+  out.write('\n<br><details>\n<summary>Filter by tag</summary>\n')
   for t in sorted(tagset):
-    out.write('<option value="{1}">{0}</option>\n'.format(t, escape_tag_name(t)))
-  out.write('</select><br><br>\n')
+    out.write('<input type="checkbox" class="tagfilter" name="{1}" value="{1}"><label for="{1}">{0}</label><br>\n'.format(t, escape_tag_name(t)))
+  out.write('</details><br>\n')
   for e in entries:
     out.write('<div class="taclink {1}"><a href="#{0}">{0}</a></div>\n'.format(e['name'], ' '.join([escape_tag_name(t) for t in e['tags']])))
   out.write('</div></div>\n')
