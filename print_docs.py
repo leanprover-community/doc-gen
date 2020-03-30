@@ -486,7 +486,7 @@ index_body = """
 Names inside code snippets link to their locations in this documentation.</p>
 
 <p>This documentation has been generated with mathlib commit
-<a href="{1}/tree/{0}">{0}</a> and Lean 3.5c commit <a href="{2}">{3}</a>.</p>
+<a href="{1}/tree/{0}">{0}</a> and Lean commit <a href="{2}">{3}</a>.</p>
 
 <p>Note: mathlib is still only partially documented, and this HTML display is still
 under development. We welcome pull requests on <a href="{1}">GitHub</a> to update misleading or
