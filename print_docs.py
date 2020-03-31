@@ -11,6 +11,7 @@ import os
 import glob
 import textwrap
 import markdown2
+import misaka
 import re
 import subprocess
 import toml
@@ -73,11 +74,21 @@ note_regex = re.compile(r'Note \[(.*)\]', re.I)
 target_url_regex = site_root + r'notes.html#\1'
 link_patterns = [(note_regex, target_url_regex)]
 
+math_aware_markdown_obj = misaka.Markdown(misaka.HtmlRenderer(),
+   extensions=('math', 'math-explicit', 'fenced-code', 'autolink', 'no-intra-emphasis'))
+
 def convert_markdown(ds, toc=False):
   extras = ['code-friendly', 'cuddled-lists', 'fenced-code-blocks', 'link-patterns']
   if toc:
     extras.append('toc')
   return markdown2.markdown(ds, extras=extras, link_patterns = link_patterns)
+
+def convert_markdown_math(ds):
+   html = math_aware_markdown_obj(ds)
+   # imitate markdown2's "link-patterns" behavior
+   for (regex, replacement) in link_patterns:
+     html = regex.sub('<a href="' + replacement + r'">Note [\1]</a>', html)
+   return html
 
 def filename_core(root, filename, ext):
   if 'lean/library' in filename:
@@ -172,7 +183,7 @@ def linkify_markdown(string, loc_map):
   return re.sub(r'<code>([\s\S]*?)<\/code>', lambda p: linkify_type(p.group(), loc_map), string)
 
 def write_decl_html(obj, loc_map, instances, out):
-  doc_string = markdown2.markdown(obj['doc_string'], extras=["code-friendly", 'cuddled-lists', 'fenced-code-blocks', 'link-patterns'], link_patterns = link_patterns)
+  doc_string = convert_markdown_math(obj['doc_string'])
 
   kind = 'structure' if len(obj['structure_fields']) > 0 else 'inductive' if len(obj['constructors']) > 0 else obj['kind']
   if kind == 'thm': kind = 'theorem'
@@ -251,7 +262,7 @@ def write_notes_nav(notes, out):
     out.write('<a href="#{0}">{0}</a><br>\n'.format(o))
 
 def write_mod_doc(obj, loc_map, out):
-  doc = linkify_markdown(convert_markdown(obj['doc']), loc_map)
+  doc = linkify_markdown(convert_markdown_math(obj['doc']), loc_map)
   out.write('<div class="mod_doc">\n' + doc + '</div>')
 
 
@@ -281,8 +292,8 @@ def html_head(title):
         <script>
         MathJax = {{
           tex: {{
-            inlineMath: [['$', '$']],
-            displayMath: [['$$', '$$']]
+            inlineMath: [['$', '$'], ['\\\\(', '\\\\)']],
+            displayMath: [['$$', '$$'], ['\\\\[', '\\\\]']]
           }},
           options: {{
               skipHtmlTags: [
@@ -391,7 +402,7 @@ def find_import_path(loc_map, decl_name):
 
 def import_options(loc_map, decl_name, import_string):
   direct_import_path = find_import_path(loc_map, decl_name)
-  direct_import_paths = [] 
+  direct_import_paths = []
   if direct_import_path != "":
     direct_import_paths.append(direct_import_path)
   if import_string != '' and import_string not in direct_import_paths:
@@ -431,11 +442,11 @@ def write_tactic_doc_file(intro, entries, name, loc_map, dir_list):
     out.write('<div class="taclink {1}"><a href="#{0}">{0}</a></div>\n'.format(e['name'], ' '.join([escape_tag_name(t) for t in e['tags']])))
   out.write('</div></div>\n')
   out.write('<div class="column middle"><div class="content docfile">\n')
-  out.write('<h1>{0}</h1>\n\n{1}'.format(intro['title'], convert_markdown(intro['body'])))
+  out.write('<h1>{0}</h1>\n\n{1}'.format(intro['title'], convert_markdown_math(intro['body'])))
   for e in entries:
     out.write('<div class="tactic {}">\n'.format(' '.join([escape_tag_name(t) for t in e['tags']])))
     out.write('<h2 id="{0}"><a href="#{0}">{0}</a></h2>\n'.format(e['name']))
-    out.write(convert_markdown(split_on_hr(e['description'])))
+    out.write(convert_markdown_math(split_on_hr(e['description'])))
     if len(e['tags']) > 0:
       tags = ['<li>{}</li>'.format(t) for t in e['tags']]
       out.write('<div class="tags">Tags:<ul>{}</ul></div>'.format('\n'.join(tags)))
@@ -502,7 +513,7 @@ We collect these notes here.</p>
 """
 
 def write_note(n, loc_map, out):
-  note_id, note_body = n[0], linkify_markdown(convert_markdown(n[1]), loc_map)
+  note_id, note_body = n[0], linkify_markdown(convert_markdown_math(n[1]), loc_map)
   out.write('<div class="note" id="{}">'.format(note_id))
   out.write('<h2>{}</h2>'.format(note_id))
   out.write(note_body)
@@ -582,7 +593,7 @@ In the simplest case, an attribute is a tag that can be applied to a declaration
 ```lean
 @[simp] lemma foo : ...
 ```
-has been tagged with the `simp` attribute. 
+has been tagged with the `simp` attribute.
 When the simplifier runs, it will collect all lemmas that have been tagged with this attribute.
 
 More complicated attributes take *parameters*. An example of this is the `nolint` attribute.
