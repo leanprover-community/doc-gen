@@ -31,6 +31,7 @@ cl_args = parser.parse_args()
 # format: (filename_root, display_name, source)
 extra_doc_files = [('overview', 'mathlib overview', 'docs/mathlib-overview.md'),
                    ('tactic_writing', 'tactic writing', 'docs/extras/tactic_writing.md'),
+                   ('calc', 'calc mode', 'docs/extras/calc.md'),
                    ('conv', 'conv mode', 'docs/extras/conv.md'),
                    ('simp', 'simplification', 'docs/extras/simp.md'),
                    ('well_founded_recursion', 'well founded recursion', 'docs/extras/well_founded_recursion.md')]
