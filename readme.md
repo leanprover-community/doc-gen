@@ -10,9 +10,8 @@ It depends on features of Lean 3.5c added in
 <https://github.com/leanprover-community/lean/pull/81>.
 
 ```
-pip install markdown2 toml
-leanpkg configure
-update-mathlib
+pip install markdown2 toml mathlibtools
+leanproject up
 ```
 
 Make sure that olean files are generated for mathlib in `_target`, otherwise this will be extremely slow.
