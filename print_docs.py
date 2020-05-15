@@ -28,13 +28,15 @@ parser.add_argument('-t', help = 'relative path to html output directory')
 cl_args = parser.parse_args()
 
 # extra doc files to include in generation
-# format: (filename_root, display_name, source)
-extra_doc_files = [('overview', 'mathlib overview', 'docs/mathlib-overview.md'),
-                   ('tactic_writing', 'tactic writing', 'docs/extras/tactic_writing.md'),
-                   ('calc', 'calc mode', 'docs/extras/calc.md'),
-                   ('conv', 'conv mode', 'docs/extras/conv.md'),
-                   ('simp', 'simplification', 'docs/extras/simp.md'),
-                   ('well_founded_recursion', 'well founded recursion', 'docs/extras/well_founded_recursion.md')]
+# the content has moved to the community website,
+# but we still build them to avoid broken links
+# format: (filename_root, display_name, source, community_site_url)
+extra_doc_files = [('overview', 'mathlib overview', 'docs/mathlib-overview.md', 'mathlib-overview.html'),
+                   ('tactic_writing', 'tactic writing', 'docs/extras/tactic_writing.md', 'extras/tactic_writing.html'),
+                   ('calc', 'calc mode', 'docs/extras/calc.md', 'extras/calc.html'),
+                   ('conv', 'conv mode', 'docs/extras/conv.md', 'extras/conv.html'),
+                   ('simp', 'simplification', 'docs/extras/simp.md', 'extras/simp.html'),
+                   ('well_founded_recursion', 'well founded recursion', 'docs/extras/well_founded_recursion.md','extras/well_founded_recursion.html')]
 
 # path to put generated html
 html_root = root + '/' + (cl_args.t if cl_args.t else 'html/')
@@ -359,8 +361,8 @@ def content_nav(dir_list, active_path):
   s += '<a href="{0}attributes.html">attributes</a><br>\n'.format(site_root)
   s += '<a href="{0}notes.html">notes</a><br>\n'.format(site_root)
   s += '<h3>Tutorials</h3>'
-  for (filename, displayname, _) in extra_doc_files:
-    s += '<a href="{0}{1}.html">{2}</a><br>\n'.format(site_root, filename, displayname)
+  for (filename, displayname, _, community_site_url) in extra_doc_files:
+    s += '<a href="https://leanprover-community.github.io/{0}.html">{1}</a><br>\n'.format(community_site_url, displayname)
   s += '<h3>Library</h3>'
   s += print_dir_tree('', active_path, dir_list)
   return s
@@ -392,7 +394,7 @@ def find_import_path(loc_map, decl_name):
 
 def import_options(loc_map, decl_name, import_string):
   direct_import_path = find_import_path(loc_map, decl_name)
-  direct_import_paths = [] 
+  direct_import_paths = []
   if direct_import_path != "":
     direct_import_paths.append(direct_import_path)
   if import_string != '' and import_string not in direct_import_paths:
@@ -583,7 +585,7 @@ In the simplest case, an attribute is a tag that can be applied to a declaration
 ```lean
 @[simp] lemma foo : ...
 ```
-has been tagged with the `simp` attribute. 
+has been tagged with the `simp` attribute.
 When the simplifier runs, it will collect all lemmas that have been tagged with this attribute.
 
 More complicated attributes take *parameters*. An example of this is the `nolint` attribute.
@@ -631,7 +633,7 @@ def write_html_files(partition, loc_map, notes, mod_docs, instances, entries):
   #write_tactic_doc_file(local_lean_root + 'docs/commands.md', 'commands', loc_map, dir_list)
   #write_tactic_doc_file(local_lean_root + 'docs/holes.md', 'hole_commands', loc_map, dir_list)
   write_tactic_doc_files(local_lean_root, entries, loc_map, dir_list)
-  for (filename, displayname, source) in extra_doc_files:
+  for (filename, displayname, source, _) in extra_doc_files:
     write_pure_md_file(local_lean_root + source, filename + '.html', displayname, loc_map, dir_list)
 
 def write_site_map(partition):
@@ -640,7 +642,7 @@ def write_site_map(partition):
     out.write(filename_core(site_root, filename, 'html') + '\n')
   for n in ['index', 'tactics', 'commands', 'hole_commands', 'notes']:
     out.write(site_root + n + '.html\n')
-  for (filename, _, _) in extra_doc_files:
+  for (filename, _, _, _) in extra_doc_files:
     out.write(site_root + filename + '.html\n')
   out.close()
 
