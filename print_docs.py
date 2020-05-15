@@ -31,12 +31,12 @@ cl_args = parser.parse_args()
 # the content has moved to the community website,
 # but we still build them to avoid broken links
 # format: (filename_root, display_name, source, community_site_url)
-extra_doc_files = [('overview', 'mathlib overview', 'docs/mathlib-overview.md', 'mathlib-overview.html'),
-                   ('tactic_writing', 'tactic writing', 'docs/extras/tactic_writing.md', 'extras/tactic_writing.html'),
-                   ('calc', 'calc mode', 'docs/extras/calc.md', 'extras/calc.html'),
-                   ('conv', 'conv mode', 'docs/extras/conv.md', 'extras/conv.html'),
-                   ('simp', 'simplification', 'docs/extras/simp.md', 'extras/simp.html'),
-                   ('well_founded_recursion', 'well founded recursion', 'docs/extras/well_founded_recursion.md','extras/well_founded_recursion.html')]
+extra_doc_files = [('overview', 'mathlib overview', 'docs/mathlib-overview.md', 'mathlib-overview'),
+                   ('tactic_writing', 'tactic writing', 'docs/extras/tactic_writing.md', 'extras/tactic_writing'),
+                   ('calc', 'calc mode', 'docs/extras/calc.md', 'extras/calc'),
+                   ('conv', 'conv mode', 'docs/extras/conv.md', 'extras/conv'),
+                   ('simp', 'simplification', 'docs/extras/simp.md', 'extras/simp'),
+                   ('well_founded_recursion', 'well founded recursion', 'docs/extras/well_founded_recursion.md','extras/well_founded_recursion')]
 
 # path to put generated html
 html_root = root + '/' + (cl_args.t if cl_args.t else 'html/')
