@@ -227,10 +227,14 @@ code {
 code a:link, code a:visited, code a:active,
 .decl a:link, .decl a:visited, .decl a:active {
     color: black;
+    /** Don't show underline on types, to prevent the ≤ vs < confusion. **/
+    text-decoration: none;
 }
 
 code a:hover, .decl a:hover {
     color: darkslategray;
+    /** Show it on hover though. **/
+    text-decoration: underline;
 }
 
 .indent {
