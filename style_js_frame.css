@@ -291,7 +291,7 @@ a.file:link, a.file:visited, a.file:active {
 .gh_link:before, .internal_nav .gh_nav_link:before {
     content: "";
     display: inline-block;
-    background: url(https://leanprover-community.github.io/assets/img/gh_logo.png) no-repeat;
+    background: url(https://leanprover-community.github.io/archive/assets/img/gh_logo.png) no-repeat;
     width: 16px;
     height: 13px;
 }

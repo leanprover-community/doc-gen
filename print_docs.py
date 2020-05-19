@@ -277,7 +277,7 @@ def html_head(title):
 <html lang="en">
     <head>
         <link rel="stylesheet" href="{0}style_js_frame.css">
-        <link rel="shortcut icon" href="https://leanprover-community.github.io/assets/img/lean.ico">
+        <link rel="shortcut icon" href="https://leanprover-community.github.io/archive/assets/img/lean.ico">
         <title>mathlib docs: {1}</title>
         <meta charset="UTF-8">
         <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
