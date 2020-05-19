@@ -683,12 +683,12 @@ def write_json_file(loc_map):
   html_loc_map = {}
   for k in loc_map:
     html_loc_map[k] = loc_in_docs(loc_map, k)
-  out = open_outfile(html_root + 'json_output.js', 'w')
+  out = open_outfile(html_root + 'decl_lookup.js', 'w')
   out.write('var json_str = "' + json.dumps(html_loc_map).replace('"','\\"') + '"')
   out.close()
 
 file_map, loc_map, notes, mod_docs, instances, tactic_docs = load_json()
-#write_html_files(file_map, loc_map, notes, mod_docs, instances, tactic_docs)
+write_html_files(file_map, loc_map, notes, mod_docs, instances, tactic_docs)
 write_json_file(loc_map)
 copy_css(html_root, use_symlinks=cl_args.l)
 write_site_map(file_map)
