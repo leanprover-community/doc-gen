@@ -496,6 +496,22 @@ under development. We welcome pull requests on <a href="{1}">GitHub</a> to updat
 badly formatted doc strings, or to add missing documentation.</p>
 """.format(mathlib_commit, mathlib_github_root, lean_root, lean_commit, search_snippet)
 
+def count_decls(attr, map):
+  return len([o for o in map if attr in o['attributes']])
+
+def write_stats(file_map, tactic_docs, out):
+  #num_decls = sum(len(l) for l in file_map)
+  num_tacs = len(tactic_docs)
+  num_decls = sum(len(l) for l in file_map.values())
+  num_classes = sum(count_decls('class',l) for l in file_map.values())
+  num_instances = sum(count_decls('instance',l) for l in file_map.values())
+  num_simp_lemmas = sum(count_decls('simp',l) for l in file_map.values())
+  s = f"""
+<p>We display {num_decls} declarations, of which {num_classes} are type classes and {num_instances} are instances. 
+{num_simp_lemmas} are simp lemmas. 
+We display {num_tacs} tactics, commands, hole commands, and attributes.</p>"""
+  out.write(s)
+
 notes_body = """
 <a id="top"></a>
 <h1>Lean mathlib notes</h1>
@@ -622,6 +638,7 @@ def write_html_files(partition, loc_map, notes, mod_docs, instances, entries):
   out.write('</div></div>\n')
   out.write('<div class="column middle"><div class="content">\n')
   out.write(index_body)
+  write_stats(file_map, entries, out)
   out.write('\n</div></div>\n')
   out.write('<div class="column right"><div class="nav">\n')
   out.write(content_nav(dir_list, 'index.html'))
@@ -656,8 +673,22 @@ def copy_css(path, use_symlinks):
 
   cp('style_js_frame.css', path+'style_js_frame.css')
   cp('nav.js', path+'nav.js')
+  cp('redirect.js', path+'redirect.js')
+  cp('find.html', path+'find.html')
+
+def loc_in_docs(loc_map, decl_name):
+  return filename_core(site_root, loc_map[decl_name], 'html')
+
+def write_json_file(loc_map):
+  html_loc_map = {}
+  for k in loc_map:
+    html_loc_map[k] = loc_in_docs(loc_map, k)
+  out = open_outfile(html_root + 'json_output.js', 'w')
+  out.write('var json_str = "' + json.dumps(html_loc_map).replace('"','\\"') + '"')
+  out.close()
 
 file_map, loc_map, notes, mod_docs, instances, tactic_docs = load_json()
-write_html_files(file_map, loc_map, notes, mod_docs, instances, tactic_docs)
+#write_html_files(file_map, loc_map, notes, mod_docs, instances, tactic_docs)
+write_json_file(loc_map)
 copy_css(html_root, use_symlinks=cl_args.l)
 write_site_map(file_map)
