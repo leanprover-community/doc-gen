@@ -648,15 +648,11 @@ def write_site_map(partition):
 
 def redirect_body(decl_name, decl_loc):
   url = filename_core(site_root, decl_loc, 'html')
-  return f"""
-<!DOCTYPE html>
-<Content-Type="text/html">
-<meta http-equiv="refresh" content="0;url={url}#{decl_name}">
-"""
+  return f'<meta http-equiv="refresh" content="0;url={url}#{decl_name}">'
 
 def write_redirects(loc_map):
   for decl_name in loc_map:
-    out = open_outfile(html_root + 'find/' + decl_name + '.html', 'w')
+    out = open_outfile(html_root + 'find/' + decl_name + '/index.html', 'w')
     out.write(redirect_body(decl_name, loc_map[decl_name]))
     out.close()
 
