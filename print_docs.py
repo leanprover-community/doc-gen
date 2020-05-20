@@ -49,7 +49,7 @@ html_root = root + '/' + (cl_args.t if cl_args.t else 'html/')
 site_root = "http://localhost:8000/"
 
 # web root, used in place of `site_root` if the `-w` flag is used
-web_root = "https://leanprover-community.github.io/mathlib_docs/"
+web_root = "https://robertylewis.com/mathlib_docs/"
 
 # root directory of mathlib.
 local_lean_root = root + '/' + (cl_args.r if cl_args.r else '_target/deps/mathlib/')
@@ -98,6 +98,27 @@ def library_link(filename, line=None):
            if 'lean/library' in filename \
            else mathlib_github_src_root + filename.split('mathlib/src/', 1)[1]
   return root + ('#L' + str(line) if line is not None else '')
+
+def name_in_decl(decl_name, dmap):
+  if dmap['name'] == decl_name:
+    return True
+  if decl_name in [sf[0] for sf in dmap['structure_fields']]:
+    return True
+  if decl_name in [sf[0] for sf in dmap['constructors']]:
+    return True
+  return False
+    
+
+def library_link_from_decl_name(decl_name, decl_loc, file_map):
+  try:
+    e = next(d for d in file_map[decl_loc] if name_in_decl(decl_name, d))
+  except StopIteration:
+    if decl_name[-3:] == '.mk':
+      return library_link_from_decl_name(decl_name[:-3], decl_loc, file_map)
+    print(decl_name)
+    print(file_map[decl_loc])
+    raise StopIteration
+  return library_link(decl_loc, e['line'])
 
 def nav_link(filename):
   tks = filename_core('', filename, '').split('/')
@@ -646,15 +667,23 @@ def write_site_map(partition):
     out.write(site_root + filename + '.html\n')
   out.close()
 
-def redirect_body(decl_name, decl_loc):
+def write_docs_redirect(decl_name, decl_loc):
+  out = open_outfile(html_root + 'find/' + decl_name + '/index.html', 'w')
   url = filename_core(site_root, decl_loc, 'html')
-  return f'<meta http-equiv="refresh" content="0;url={url}#{decl_name}">'
+  out.write(f'<meta http-equiv="refresh" content="0;url={url}#{decl_name}">')
+  out.close()
 
-def write_redirects(loc_map):
+def write_src_redirect(decl_name, decl_loc, file_map):
+  out = open_outfile(html_root + 'find/' + decl_name + '/src/index.html', 'w')
+  url = library_link_from_decl_name(decl_name, decl_loc, file_map)
+  out.write(f'<meta http-equiv="refresh" content="0;url={url}">')
+  out.close()
+
+def write_redirects(loc_map, file_map):
   for decl_name in loc_map:
-    out = open_outfile(html_root + 'find/' + decl_name + '/index.html', 'w')
-    out.write(redirect_body(decl_name, loc_map[decl_name]))
-    out.close()
+    write_docs_redirect(decl_name, loc_map[decl_name])
+    write_src_redirect(decl_name, loc_map[decl_name], file_map)
+
 
 def copy_css(path, use_symlinks):
   def cp(a, b):
@@ -671,6 +700,6 @@ def copy_css(path, use_symlinks):
 
 file_map, loc_map, notes, mod_docs, instances, tactic_docs = load_json()
 write_html_files(file_map, loc_map, notes, mod_docs, instances, tactic_docs)
-write_redirects(loc_map)
+write_redirects(loc_map, file_map)
 copy_css(html_root, use_symlinks=cl_args.l)
 write_site_map(file_map)
