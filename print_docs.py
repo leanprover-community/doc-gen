@@ -112,12 +112,12 @@ def name_in_decl(decl_name, dmap):
 def library_link_from_decl_name(decl_name, decl_loc, file_map):
   try:
     e = next(d for d in file_map[decl_loc] if name_in_decl(decl_name, d))
-  except StopIteration:
+  except StopIteration as e:
     if decl_name[-3:] == '.mk':
       return library_link_from_decl_name(decl_name[:-3], decl_loc, file_map)
-    print(decl_name)
+    print(f'{decl_name} appears in {decl_loc}, but we do not have data for that declaration. file_map:')
     print(file_map[decl_loc])
-    raise StopIteration
+    raise e
   return library_link(decl_loc, e['line'])
 
 def nav_link(filename):
