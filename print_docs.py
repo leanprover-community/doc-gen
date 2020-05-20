@@ -99,6 +99,27 @@ def library_link(filename, line=None):
            else mathlib_github_src_root + filename.split('mathlib/src/', 1)[1]
   return root + ('#L' + str(line) if line is not None else '')
 
+def name_in_decl(decl_name, dmap):
+  if dmap['name'] == decl_name:
+    return True
+  if decl_name in [sf[0] for sf in dmap['structure_fields']]:
+    return True
+  if decl_name in [sf[0] for sf in dmap['constructors']]:
+    return True
+  return False
+    
+
+def library_link_from_decl_name(decl_name, decl_loc, file_map):
+  try:
+    e = next(d for d in file_map[decl_loc] if name_in_decl(decl_name, d))
+  except StopIteration as e:
+    if decl_name[-3:] == '.mk':
+      return library_link_from_decl_name(decl_name[:-3], decl_loc, file_map)
+    print(f'{decl_name} appears in {decl_loc}, but we do not have data for that declaration. file_map:')
+    print(file_map[decl_loc])
+    raise e
+  return library_link(decl_loc, e['line'])
+
 def nav_link(filename):
   tks = filename_core('', filename, '').split('/')
   links = ['<a href="{0}index.html">root</a>'.format(site_root)]
@@ -646,6 +667,24 @@ def write_site_map(partition):
     out.write(site_root + filename + '.html\n')
   out.close()
 
+def write_docs_redirect(decl_name, decl_loc):
+  out = open_outfile(html_root + 'find/' + decl_name + '/index.html', 'w')
+  url = filename_core(site_root, decl_loc, 'html')
+  out.write(f'<meta http-equiv="refresh" content="0;url={url}#{decl_name}">')
+  out.close()
+
+def write_src_redirect(decl_name, decl_loc, file_map):
+  out = open_outfile(html_root + 'find/' + decl_name + '/src/index.html', 'w')
+  url = library_link_from_decl_name(decl_name, decl_loc, file_map)
+  out.write(f'<meta http-equiv="refresh" content="0;url={url}">')
+  out.close()
+
+def write_redirects(loc_map, file_map):
+  for decl_name in loc_map:
+    write_docs_redirect(decl_name, loc_map[decl_name])
+    write_src_redirect(decl_name, loc_map[decl_name], file_map)
+
+
 def copy_css(path, use_symlinks):
   def cp(a, b):
     if use_symlinks:
@@ -657,7 +696,10 @@ def copy_css(path, use_symlinks):
   cp('style_js_frame.css', path+'style_js_frame.css')
   cp('nav.js', path+'nav.js')
 
+
+
 file_map, loc_map, notes, mod_docs, instances, tactic_docs = load_json()
 write_html_files(file_map, loc_map, notes, mod_docs, instances, tactic_docs)
+write_redirects(loc_map, file_map)
 copy_css(html_root, use_symlinks=cl_args.l)
 write_site_map(file_map)
