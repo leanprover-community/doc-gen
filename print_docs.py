@@ -49,7 +49,7 @@ html_root = root + '/' + (cl_args.t if cl_args.t else 'html/')
 site_root = "http://localhost:8000/"
 
 # web root, used in place of `site_root` if the `-w` flag is used
-web_root = "https://robertylewis.com/mathlib_docs/"
+web_root = "https://leanprover-community.github.io/mathlib_docs/"
 
 # root directory of mathlib.
 local_lean_root = root + '/' + (cl_args.r if cl_args.r else '_target/deps/mathlib/')
