@@ -646,6 +646,20 @@ def write_site_map(partition):
     out.write(site_root + filename + '.html\n')
   out.close()
 
+def redirect_body(decl_name, decl_loc):
+  url = filename_core(site_root, decl_loc, 'html')
+  return f"""
+<!DOCTYPE html>
+<Content-Type="text/html">
+<meta http-equiv="refresh" content="0;url={url}#{decl_name}">
+"""
+
+def write_redirects(loc_map):
+  for decl_name in loc_map:
+    out = open_outfile(html_root + 'find/' + decl_name + '.html', 'w')
+    out.write(redirect_body(decl_name, loc_map[decl_name]))
+    out.close()
+
 def copy_css(path, use_symlinks):
   def cp(a, b):
     if use_symlinks:
@@ -657,7 +671,10 @@ def copy_css(path, use_symlinks):
   cp('style_js_frame.css', path+'style_js_frame.css')
   cp('nav.js', path+'nav.js')
 
+
+
 file_map, loc_map, notes, mod_docs, instances, tactic_docs = load_json()
 write_html_files(file_map, loc_map, notes, mod_docs, instances, tactic_docs)
+write_redirects(loc_map)
 copy_css(html_root, use_symlinks=cl_args.l)
 write_site_map(file_map)
