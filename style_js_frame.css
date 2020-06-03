@@ -230,6 +230,16 @@ code a:link, code a:visited, code a:active,
     color: black;
 }
 
+/** Don't show underline on types, to prevent the ≤ vs < confusion. **/
+.decl_type a:link, .structure_field a:link {
+    text-decoration: none;
+}
+
+/** Show it on hover though. **/
+.decl_type a:hover, .structure_field a:hover {
+    text-decoration: underline;
+}
+
 code a:hover, .decl a:hover {
     color: darkslategray;
 }
