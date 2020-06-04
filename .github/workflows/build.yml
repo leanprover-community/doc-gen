@@ -1,0 +1,39 @@
+name: build and deploy docs
+
+on: push
+
+jobs:
+  build:
+    name: build and deploy docs
+    runs-on: ubuntu-latest
+    steps:
+      - name: install elan
+        run: |
+          set -o pipefail
+          curl https://raw.githubusercontent.com/Kha/elan/master/elan-init.sh -sSf | sh -s -- --default-toolchain none -y
+          ~/.elan/bin/lean --version
+          echo "::add-path::$HOME/.elan/bin"
+
+      - name: install Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.8
+
+      - name: install Python dependencies
+        run: python -m pip install --upgrade pip requests markdown2 toml mathlibtools
+
+      - name: Checkout mathlib
+        run: git clone https://github.com/leanprover-community/mathlib
+
+      - name: run leanproject
+        run: |
+          cd mathlib
+          leanproject up
+
+      - name: generate docs
+        run: |
+          ./ci.sh
+        env:
+          DEPLOY_GITHUB_TOKEN: ${{ secrets.DEPLOY_GITHUB_TOKEN }}
+          github_repo: ${{ github.repository }}
+          github_ref: ${{ github.ref }}
