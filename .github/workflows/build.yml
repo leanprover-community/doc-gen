@@ -33,6 +33,8 @@ jobs:
 
       - name: generate docs
         run: |
+          ls
+          cd ..
           ./ci.sh
         env:
           DEPLOY_GITHUB_TOKEN: ${{ secrets.DEPLOY_GITHUB_TOKEN }}
