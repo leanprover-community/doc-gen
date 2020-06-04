@@ -7,6 +7,9 @@ jobs:
     name: build and deploy docs
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+
       - name: Checkout mathlib
         run: git clone https://github.com/leanprover-community/mathlib
 
@@ -30,9 +33,6 @@ jobs:
         run: |
           cd mathlib
           leanproject up
-
-      - name: Checkout repo
-        uses: actions/checkout@v2
 
       - name: generate docs
         run: ./ci.sh
