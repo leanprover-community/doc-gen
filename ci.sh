@@ -12,7 +12,7 @@ cd ..
 # the commit hash in leanpkg.toml is used by doc_gen.
 sed -i "s/rev = \"\S*\"/rev = \"$git_hash\"/" leanpkg.toml
 
-echo -e "builtin_path\npath ./src\npath ../src" > leanpkg.path
+echo -e "builtin_path\npath ./src\npath mathlib/src" > leanpkg.path
 git clone "https://$DEPLOY_GITHUB_USER:$DEPLOY_GITHUB_TOKEN@github.com/leanprover-community/mathlib_docs.git"
 
 rm -rf mathlib_docs/docs/
