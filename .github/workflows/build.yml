@@ -31,11 +31,11 @@ jobs:
           cd mathlib
           leanproject up
 
+      - name: Checkout repo
+        uses: actions/checkout@v2
+
       - name: generate docs
-        run: |
-          ls
-          cd ..
-          ./ci.sh
+        run: ./ci.sh
         env:
           DEPLOY_GITHUB_TOKEN: ${{ secrets.DEPLOY_GITHUB_TOKEN }}
           github_repo: ${{ github.repository }}
