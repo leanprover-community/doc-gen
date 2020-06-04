@@ -5,12 +5,12 @@ set -x
 
 lean_version="$(sed '/^lean_version/!d;s/.*"\(.*\)".*/\1/' mathlib/leanpkg.toml)"
 
+cd mathlib
 git_hash="$(git log -1 --pretty=format:%h)"
-git clone https://github.com/leanprover-community/doc-gen.git
-cd doc-gen
 
+cd ..
 # the commit hash in leanpkg.toml is used by doc_gen.
-sed -i "s/rev = \"\S*\"/rev = \"$git_hash\"/" mathlib/leanpkg.toml
+sed -i "s/rev = \"\S*\"/rev = \"$git_hash\"/" leanpkg.toml
 
 echo -e "builtin_path\npath ./src\npath ../src" > leanpkg.path
 git clone "https://$DEPLOY_GITHUB_USER:$DEPLOY_GITHUB_TOKEN@github.com/leanprover-community/mathlib_docs.git"
