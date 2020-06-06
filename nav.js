@@ -121,10 +121,13 @@ for (const opt of filterBoxes) {
   opt.addEventListener('change', updateDisplay);
 }
 
-document.getElementById("tagfilter-selectall").addEventListener('change', function() {
-  setSelectVal(this.checked);
-  updateDisplay();
-});
+const tse = document.getElementById("tagfilter-selectall")
+if (tse != null) {
+  tse.addEventListener('change', function() {
+    setSelectVal(this.checked);
+    updateDisplay();
+  });
+}
 
 //select.addEventListener("click", function() { updateDisplay(); });
 
