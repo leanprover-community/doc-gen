@@ -141,8 +141,12 @@ body {
     white-space: nowrap;
 }
 
-.decl_args, .decl_args a:link, .decl_args a:visited, .decl_args a:active {
+.decl_args a:link, .decl_args a:visited, .decl_args a:active {
     color: darkslategray;
+}
+
+.decl_args, .decl_type {
+    font-weight: normal;
 }
 
 .decl_args a:hover {
@@ -227,7 +231,7 @@ code {
 
 code a:link, code a:visited, code a:active,
 .decl a:link, .decl a:visited, .decl a:active {
-    color: #0000ee;
+    color: darkslategray;
     /** Don't show underline on types, to prevent the ≤ vs < confusion. **/
     text-decoration: none;
 }
@@ -239,7 +243,7 @@ code a:hover,
 }
 
 code a:hover, .decl a:hover {
-    color: darkslategray;
+    color: slategray;
 }
 
 .indent {
