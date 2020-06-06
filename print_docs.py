@@ -139,9 +139,18 @@ def open_outfile(filename, mode):
         os.makedirs(os.path.dirname(filename))
     return open(filename, mode, encoding='utf-8')
 
+def mk_export_map_entry(decl_name, filename, line, args, tp):
+  return {'filename': filename, 
+          'line': line, 
+          'args': args, 
+          'type': tp,
+          'src_link': library_link(filename, line),
+          'docs_link': filename_core(site_root, filename, 'html') + f'#{decl_name}'}
+
 def separate_results(objs):
   file_map = {}
   loc_map = {}
+  export_db = {}
   for obj in objs:
     if 'lean/library' not in obj['filename'] and 'mathlib/src' not in obj['filename']:
       continue
@@ -150,23 +159,26 @@ def separate_results(objs):
     else:
       file_map[obj['filename']].append(obj)
     loc_map[obj['name']] = obj['filename']
-    for (cstr_name, _) in obj['constructors']:
+    export_db[obj['name']] = mk_export_map_entry(obj['name'], obj['filename'], obj['line'], obj['args'], obj['type'])
+    for (cstr_name, tp) in obj['constructors']:
       loc_map[cstr_name] = obj['filename']
-    for (sf_name, _) in obj['structure_fields']:
+      export_db[cstr_name] = mk_export_map_entry(cstr_name, obj['filename'], obj['line'], [], tp)
+    for (sf_name, tp) in obj['structure_fields']:
       loc_map[sf_name] = obj['filename']
+      export_db[sf_name] = mk_export_map_entry(sf_name, obj['filename'], obj['line'], [], tp)
     if len(obj['structure_fields']) > 0:
       loc_map[obj['name'] + '.mk'] = obj['filename']
-  return (file_map, loc_map)
+  return (file_map, loc_map, export_db)
 
 def load_json():
   f = open('json_export.txt', 'r', encoding='utf-8')
   decls = json.load(f, strict=False)
   f.close()
-  file_map, loc_map = separate_results(decls['decls'])
+  file_map, loc_map, export_db = separate_results(decls['decls'])
   for entry in decls['tactic_docs']:
     if len(entry['tags']) == 0:
       entry['tags'] = ['untagged']
-  return file_map, loc_map, decls['notes'], decls['mod_docs'], decls['instances'], decls['tactic_docs']
+  return file_map, loc_map, export_db, decls['notes'], decls['mod_docs'], decls['instances'], decls['tactic_docs']
 
 def linkify_core(decl_name, text, file_map):
   if decl_name in file_map:
@@ -696,10 +708,14 @@ def copy_css(path, use_symlinks):
   cp('style_js_frame.css', path+'style_js_frame.css')
   cp('nav.js', path+'nav.js')
 
+def write_export_db(export_db):
+  out = open_outfile(html_root + 'export_db.json', 'w')
+  json.dump(export_db, out)
+  out.close()
 
-
-file_map, loc_map, notes, mod_docs, instances, tactic_docs = load_json()
+file_map, loc_map, export_db, notes, mod_docs, instances, tactic_docs = load_json()
 write_html_files(file_map, loc_map, notes, mod_docs, instances, tactic_docs)
 write_redirects(loc_map, file_map)
 copy_css(html_root, use_symlinks=cl_args.l)
+write_export_db(export_db)
 write_site_map(file_map)
