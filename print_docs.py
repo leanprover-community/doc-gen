@@ -17,6 +17,7 @@ import toml
 import shutil
 import argparse
 import html
+import gzip
 
 root = os.getcwd()
 
@@ -710,8 +711,12 @@ def copy_css(path, use_symlinks):
 
 def write_export_db(export_db):
   out = open_outfile(html_root + 'export_db.json', 'w')
-  json.dump(export_db, out)
+  json_str = json.dumps(export_db)
+  out.write(json_str)
   out.close()
+  with gzip.GzipFile(html_root + 'export_db.json.gz', 'w') as zout:
+    zout.write(json_str.encode('utf-8'))
+    zout.close()
 
 file_map, loc_map, export_db, notes, mod_docs, instances, tactic_docs = load_json()
 write_html_files(file_map, loc_map, notes, mod_docs, instances, tactic_docs)
