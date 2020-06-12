@@ -108,7 +108,7 @@ def name_in_decl(decl_name, dmap):
   if decl_name in [sf[0] for sf in dmap['constructors']]:
     return True
   return False
-    
+
 
 def library_link_from_decl_name(decl_name, decl_loc, file_map):
   try:
@@ -141,9 +141,9 @@ def open_outfile(filename, mode):
     return open(filename, mode, encoding='utf-8')
 
 def mk_export_map_entry(decl_name, filename, line, args, tp):
-  return {'filename': filename, 
-          'line': line, 
-          'args': args, 
+  return {'filename': filename,
+          'line': line,
+          'args': args,
           'type': tp,
           'src_link': library_link(filename, line),
           'docs_link': filename_core(site_root, filename, 'html') + f'#{decl_name}'}
@@ -604,6 +604,8 @@ run_cmd tactic.skip -- this serves as a "barrier" between `import` and `#find`
 In VS Code, if you enter `{! !}`, a small light bulb symbol will appear, and
 clicking on it gives a drop down menu of available hole commands. Running one
 of these will replace the `{! !}` with whatever text that hole command provides.
+
+As of Lean 3.16.0c, hole commands can also be activated at underscores `_`.
 
 In emacs, you can do something similar with `C-c SPC`.
 
