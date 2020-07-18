@@ -140,10 +140,12 @@ def open_outfile(filename, mode):
         os.makedirs(os.path.dirname(filename))
     return open(filename, mode, encoding='utf-8')
 
-def mk_export_map_entry(decl_name, filename, line, args, tp):
-  return {'filename': filename,
-          'line': line,
-          'args': args,
+def mk_export_map_entry(decl_name, filename, kind, is_meta, line, args, tp):
+  return {'filename': filename, 
+          'kind': kind,
+          'is_meta': is_meta,
+          'line': line, 
+          'args': args, 
           'type': tp,
           'src_link': library_link(filename, line),
           'docs_link': filename_core(site_root, filename, 'html') + f'#{decl_name}'}
@@ -160,13 +162,13 @@ def separate_results(objs):
     else:
       file_map[obj['filename']].append(obj)
     loc_map[obj['name']] = obj['filename']
-    export_db[obj['name']] = mk_export_map_entry(obj['name'], obj['filename'], obj['line'], obj['args'], obj['type'])
+    export_db[obj['name']] = mk_export_map_entry(obj['name'], obj['filename'], obj['kind'], obj['is_meta'], obj['line'], obj['args'], obj['type'])
     for (cstr_name, tp) in obj['constructors']:
       loc_map[cstr_name] = obj['filename']
-      export_db[cstr_name] = mk_export_map_entry(cstr_name, obj['filename'], obj['line'], [], tp)
+      export_db[cstr_name] = mk_export_map_entry(cstr_name, obj['filename'], obj['kind'], obj['is_meta'], obj['line'], [], tp)
     for (sf_name, tp) in obj['structure_fields']:
       loc_map[sf_name] = obj['filename']
-      export_db[sf_name] = mk_export_map_entry(sf_name, obj['filename'], obj['line'], [], tp)
+      export_db[sf_name] = mk_export_map_entry(sf_name, obj['filename'],  obj['kind'], obj['is_meta'], obj['line'], [], tp)
     if len(obj['structure_fields']) > 0:
       loc_map[obj['name'] + '.mk'] = obj['filename']
   return (file_map, loc_map, export_db)
