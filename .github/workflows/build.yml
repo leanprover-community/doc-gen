@@ -1,7 +1,10 @@
 name: build and deploy docs
 
-on: push
-
+on:
+  schedule:
+    - cron: "0 */2 * * *" # every 2 hours
+  push:
+      
 jobs:
   build:
     name: build and deploy docs
