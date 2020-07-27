@@ -1,7 +1,10 @@
 name: build and deploy docs
 
-on: push
-
+on:
+  schedule:
+    - cron: '0 */2 * * *' # every 2 hours
+  push:
+      
 jobs:
   build:
     name: build and deploy docs
@@ -35,7 +38,7 @@ jobs:
           leanproject up
 
       - name: generate docs
-        run: mathlib/scripts/deploy_docs.sh "mathlib" ".." "mathlib"
+        run: ./deploy_docs.sh "mathlib" ".." "mathlib"
         env:
           DEPLOY_GITHUB_TOKEN: ${{ secrets.DEPLOY_GITHUB_TOKEN }}
           github_repo: ${{ github.repository }}
