@@ -38,7 +38,7 @@ jobs:
           leanproject up
 
       - name: generate docs
-        run: deploy_docs.sh "mathlib" ".." "mathlib"
+        run: ./deploy_docs.sh "mathlib" ".." "mathlib"
         env:
           DEPLOY_GITHUB_TOKEN: ${{ secrets.DEPLOY_GITHUB_TOKEN }}
           github_repo: ${{ github.repository }}
