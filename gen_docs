@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 link=0
 web=0
 while [ "$1" != "" ]; do
@@ -34,8 +34,6 @@ if [ "$link" -eq "1" ]; then
   args+=('-l')
 fi
 
-find "$source"src | grep "[.]olean$" | xargs touch
-bash "$source"scripts/rm_all.sh
 bash "$source"scripts/mk_all.sh
 lean --run src/export_json.lean
 bash "$source"scripts/rm_all.sh
