@@ -1,3 +1,6 @@
+// Persistent expansion cookie for the file tree
+// ---------------------------------------------
+
 var expanded = [];
 
 function unexpand(name) {
@@ -21,7 +24,6 @@ function showItem(item) {
 }
 
 function hideItem(item) {
-    //item.style.display = "none";
     item.className = "nav_sect_inner hidden";
     unexpand(item.id);
 }
@@ -57,6 +59,15 @@ for (i = 0; i < coll.length; i++) {
 getExpandedCookie();
 expandExpanded();
 
+
+
+
+
+
+// Expansion of implicit arguments ({...})
+// ---------------------------------------
+
+
 for (const impl_collapsed of document.getElementsByClassName('impl_collapsed')) {
     const impl_args = impl_collapsed.getElementsByClassName('impl_arg');
     if (impl_args.length > 0) {
@@ -67,6 +78,13 @@ for (const impl_collapsed of document.getElementsByClassName('impl_collapsed')) 
 
 
 
+
+
+
+
+// Tactic list tag filter
+// ----------------------
+
 function filterSelectionClass(tagNames, classname) {
     if (tagNames.length == 0) {
       for (const elem of document.getElementsByClassName(classname)) {
@@ -76,7 +94,7 @@ function filterSelectionClass(tagNames, classname) {
       // Add the "show" class (display:block) to the filtered elements, and remove the "show" class from the elements that are not selected
       for (const elem of document.getElementsByClassName(classname)) {
         elem.classList.add("hide");
-        for (const tagName of tagNames) { 
+        for (const tagName of tagNames) {
             if (elem.classList.contains(tagName)) {
               elem.classList.remove("hide");
             }
@@ -93,15 +111,14 @@ function filterSelectionClass(tagNames, classname) {
 var filterBoxes = document.getElementsByClassName("tagfilter");
 
 function updateDisplay() {
-    //alert(getSelectValues(select));
     filterSelection(getSelectValues());
 }
 
 function getSelectValues() {
     var result = [];
-  
+
     for (const opt of filterBoxes) {
-  
+
       if (opt.checked) {
         result.push(opt.value);
       }
@@ -128,8 +145,3 @@ if (tse != null) {
     updateDisplay();
   });
 }
-
-//select.addEventListener("click", function() { updateDisplay(); });
-
-//select_input.addEventListener("click", function(event) { updateDisplay(); }, false);
-// select.addEventListener("mouseover", function() { updateDisplay(); });
