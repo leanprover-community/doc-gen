@@ -14,11 +14,11 @@ h1, h2, h3, h4, h5, h6 {
 :root {
     --header-height: 3em;
     --fragment-offset: calc(var(--header-height) + 1em);
-    --content-width: 60vw;
+    --content-width: 55vw;
 }
 @supports (width: min(10px, 5vw)) {
     :root {
-        --content-width: clamp(20em, 50vw, 50em);
+        --content-width: clamp(20em, 55vw, 60em);
     }
 }
 
