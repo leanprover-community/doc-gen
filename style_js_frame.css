@@ -131,16 +131,14 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .nav details > * {
-    padding-left: 2em;
+    padding-left: 2ex;
 }
-
-.nav details > details {
-    padding-left: 1em;
-}
-
-.nav details > summary {
+.nav summary {
     cursor: pointer;
     padding-left: 0;
+}
+.nav summary::marker {
+    font-size: 85%;
 }
 
 .nav .nav_file {
