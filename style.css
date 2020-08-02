@@ -39,11 +39,9 @@ label[for="nav_toggle"] { /* The MENU button */
     }
 
     body .nav {
-        /* float: none; */
-        width: inherit;
-        max-width: inherit;
+        width: 100vw;
+        max-width: 100vw;
         margin-left: 1em;
-        /* position: static; */
         z-index: 1;
     }
 
@@ -62,7 +60,7 @@ label[for="nav_toggle"] { /* The MENU button */
         border: 1px solid #eee;
         padding: 0.5ex 1ex;
         cursor: pointer;
-        margin-right: 1em;
+        margin-left: 1em;
     }
     #nav_toggle:checked ~ * label[for="nav_toggle"] {
         background: white;

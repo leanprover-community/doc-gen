@@ -307,7 +307,6 @@ def html_head(title):
     <body>
     <input id="nav_toggle" type="checkbox">
     <div class="header">
-      <label for="nav_toggle"></label>
       <h1><a href="https://leanprover-community.github.io">mathlib</a> documentation</h1>
       <p class="header_filename">{1}</p>
       <form class="header_search" action="https://google.com/search" method="get">
@@ -315,6 +314,7 @@ def html_head(title):
         <input type="text" name="q">
         <button>search</button>
       </form>
+      <label for="nav_toggle"></label>
     </div>
 """.format(site_root, title)
 
