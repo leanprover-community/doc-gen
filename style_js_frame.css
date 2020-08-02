@@ -251,17 +251,10 @@ pre {
     white-space: break-spaces;
 }
 
-:root {
-    --code-bg: #f3f3f3;
-}
-p code, .mod_doc code, .tactic code, .note code {
-    background: var(--code-bg);
-    padding: 1px 3px;
-}
-pre {
-    background: var(--code-bg);
-    padding: 1ex;
-}
+code, pre { background: #f3f3f3; }
+code { padding: 1px 3px; }
+pre { padding: 1ex; }
+pre code { padding: 0 0; }
 
 .structure_fields, .constructors {
     display: block;
