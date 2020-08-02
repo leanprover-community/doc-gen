@@ -8,6 +8,7 @@
 
 import json
 import os
+import os.path
 import glob
 import textwrap
 import markdown2
@@ -40,7 +41,7 @@ extra_doc_files = [('overview', 'mathlib overview', 'docs/mathlib-overview.md', 
                    ('well_founded_recursion', 'well founded recursion', 'docs/extras/well_founded_recursion.md','extras/well_founded_recursion')]
 
 # path to put generated html
-html_root = root + '/' + (cl_args.t if cl_args.t else 'html/')
+html_root = os.path.join(root, cl_args.t if cl_args.t else 'html') + '/'
 
 # TODO: make sure nothing is left in html_root
 
@@ -53,7 +54,7 @@ site_root = "/"
 web_root = "https://leanprover-community.github.io/mathlib_docs/"
 
 # root directory of mathlib.
-local_lean_root = root + '/' + (cl_args.r if cl_args.r else '_target/deps/mathlib/')
+local_lean_root = os.path.join(root, cl_args.r if cl_args.r else '_target/deps/mathlib') + '/'
 
 
 
