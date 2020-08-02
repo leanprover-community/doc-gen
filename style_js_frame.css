@@ -291,10 +291,6 @@ a:hover {
     text-decoration: underline;
 }
 
-/* .decl a, code a {
-    color: #444;
-} */
-
 .decl_header.impl_collapsed .impl_arg > span {
     display: none;
 }
