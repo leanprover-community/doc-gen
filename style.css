@@ -22,6 +22,61 @@ h1, h2, h3, h4, h5, h6 {
     }
 }
 
+#nav_toggle {
+    display: none;
+}
+label[for="nav_toggle"] { /* The MENU button */
+    display: none;
+}
+
+@media screen and (max-width: 1000px) {
+    :root {
+        --content-width: 100vw;
+    }
+
+    .internal_nav {
+        display: none;
+    }
+
+    body .nav {
+        /* float: none; */
+        width: inherit;
+        max-width: inherit;
+        margin-left: 1em;
+        /* position: static; */
+        z-index: 1;
+    }
+
+    #nav_toggle:not(:checked) ~ .nav {
+        display: none;
+    }
+    #nav_toggle:checked ~ .content {
+        visibility: hidden;
+    }
+
+    label[for="nav_toggle"]::before {
+        content: '🐙';
+    }
+    label[for="nav_toggle"] {
+        display: block;
+        border: 1px solid #eee;
+        padding: 0.5ex 1ex;
+        cursor: pointer;
+        margin-right: 1em;
+    }
+    #nav_toggle:checked ~ * label[for="nav_toggle"] {
+        background: white;
+    }
+
+    body .header h1 {
+        font-size: 100%;
+    }
+
+    body .header {
+        padding: 0 2ex;
+    }
+}
+
 .header {
     height: 3em;
     float: left;
