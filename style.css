@@ -29,6 +29,12 @@ label[for="nav_toggle"] { /* The MENU button */
     display: none;
 }
 
+@media screen and (max-width: 600px) {
+    :root {
+        --header-height: 4em;
+    }
+}
+
 @media screen and (max-width: 1000px) {
     :root {
         --content-width: 100vw;
@@ -43,6 +49,16 @@ label[for="nav_toggle"] { /* The MENU button */
         max-width: 100vw;
         margin-left: 1em;
         z-index: 1;
+    }
+
+    body .content {
+        width: unset;
+        max-width: unset;
+        margin-left: unset;
+        margin-right: unset;
+    }
+    body .decl > div {
+        overflow-x: unset;
     }
 
     #nav_toggle:not(:checked) ~ .nav {
@@ -76,7 +92,7 @@ label[for="nav_toggle"] { /* The MENU button */
 }
 
 .header {
-    height: 3em;
+    height: var(--header-height);
     float: left;
     position: fixed;
     width: 100vw;
@@ -207,14 +223,17 @@ label[for="nav_toggle"] { /* The MENU button */
     overflow-wrap: break-word;
 }
 
-.decl > div, .mod_doc, .index_body {
+.decl > div, .mod_doc {
     padding-left: 8px;
     padding-right: 8px;
 }
 
-.decl, .inductive {
+.decl {
     margin-top: 20px;
     margin-bottom: 20px;
+}
+
+.decl > div {
     /* sometimes declarations arguments are way too long
        and would continue into the right column,
        so put a scroll bar there: */
