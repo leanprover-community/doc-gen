@@ -298,6 +298,7 @@ def html_head(title):
 <html lang="en">
     <head>
         <link rel="stylesheet" href="{0}style_js_frame.css">
+        <link rel="stylesheet" href="{0}pygments.css">
         <link rel="shortcut icon" href="https://leanprover-community.github.io/archive/assets/img/lean.ico">
         <title>mathlib docs: {1}</title>
         <meta charset="UTF-8">
@@ -703,6 +704,7 @@ def copy_css(path, use_symlinks):
       shutil.copyfile(a, b)
 
   cp('style_js_frame.css', path+'style_js_frame.css')
+  cp('pygments.css', path+'pygments.css')
   cp('nav.js', path+'nav.js')
 
 def write_export_db(export_db):

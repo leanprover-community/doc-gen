@@ -10,7 +10,7 @@ It depends on features of Lean 3.5c added in
 <https://github.com/leanprover-community/lean/pull/81>.
 
 ```
-pip install markdown2 toml mathlibtools
+pip install markdown2 toml mathlibtools pygments
 leanproject up
 ```
 
