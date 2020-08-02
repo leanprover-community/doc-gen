@@ -47,7 +47,7 @@ html_root = root + '/' + (cl_args.t if cl_args.t else 'html/')
 # root of the site, for display purposes.
 # for local testing, use `html_root` or the address of a local server.
 # override this setting with the `-w` flag.
-site_root = "http://localhost:8000/"
+site_root = "/"
 
 # web root, used in place of `site_root` if the `-w` flag is used
 web_root = "https://leanprover-community.github.io/mathlib_docs/"
@@ -65,8 +65,9 @@ with open('leanpkg.toml') as f:
   ml_data = parsed_toml['dependencies']['mathlib']
   mathlib_commit = ml_data['rev'][:7]
   mathlib_github_root = ml_data['git'].strip('/')
-  if cl_args.w:
-    site_root = web_root
+
+if cl_args.w:
+  site_root = web_root
 
 mathlib_github_src_root = "{0}/blob/{1}/src/".format(mathlib_github_root, mathlib_commit)
 
@@ -121,31 +122,17 @@ def library_link_from_decl_name(decl_name, decl_loc, file_map):
     raise e
   return library_link(decl_loc, e['line'])
 
-def nav_link(filename):
-  tks = filename_core('', filename, '').split('/')
-  links = ['<a href="{0}index.html">root</a>'.format(site_root)]
-  for i in range(len(tks)-1):
-    links.append('<a href="{2}{0}/index.html">{1}</a>'.format('/'.join(tks[:i+1]), tks[i], site_root))
-  return '/<br>'.join(links) + '/<br><a href="{0}.html">{0}</a>'.format(tks[-1][:-1])
-
-def index_nav_link(path):
-  tks = path[len(html_root):].split('/')
-  links = ['<a href="{0}/index.html">root</a>'.format(site_root)]
-  for i in range(len(tks)):
-    links.append('<a href="{2}{0}/index.html">{1}</a>'.format('/'.join(tks[:i+1]), tks[i], site_root))
-  return '/<br>'.join(links)
-
 def open_outfile(filename, mode):
     if not os.path.exists(os.path.dirname(filename)):
         os.makedirs(os.path.dirname(filename))
     return open(filename, mode, encoding='utf-8')
 
 def mk_export_map_entry(decl_name, filename, kind, is_meta, line, args, tp):
-  return {'filename': filename, 
+  return {'filename': filename,
           'kind': kind,
           'is_meta': is_meta,
-          'line': line, 
-          'args': args, 
+          'line': line,
+          'args': args,
           'type': tp,
           'src_link': library_link(filename, line),
           'docs_link': filename_core(site_root, filename, 'html') + f'#{decl_name}'}
@@ -220,7 +207,8 @@ def write_decl_html(obj, loc_map, instances, out):
 
   is_meta = '<span class="decl_meta">meta</span>' if obj['is_meta'] else ''
   attr_string = '<div class="attributes">@[' + ', '.join(obj['attributes']) + ']</div>' if len(obj['attributes']) > 0 else ''
-  name = '<a href="{0}#{1}">{2}</a>'.format(filename_core(site_root, obj['filename'], 'html'), obj['name'], obj['name'])
+  name = '<a href="{0}#{1}">{2}</a>'.format(
+    filename_core(site_root, obj['filename'], 'html'), obj['name'], htmlify_name(obj['name']))
   args = []
   for s in obj['args']:
     arg = '<span class="decl_args">{}</span>'.format(linkify_linked(s['arg'], loc_map))
@@ -257,9 +245,9 @@ def write_decl_html(obj, loc_map, instances, out):
   else:
     inst_string = ''
 
-  gh_link = '<div class="gh_link"><a href="{0}">view source</a></div>'.format(library_link(obj['filename'], obj['line']))
+  gh_link = '<div class="gh_link"><a href="{0}">source</a></div>'.format(library_link(obj['filename'], obj['line']))
 
-  out.write('<div class="decl {kind}" id="{raw_name}">{gh_link} {decl_code} {sfs} {cstrs} {doc_string} {eqns} {inst_string}</ul></div>'.format(
+  out.write('<div class="decl" id="{raw_name}"><div class="{kind}">{gh_link} {decl_code} {sfs} {cstrs} {doc_string} {eqns} {inst_string}</ul></div></div>'.format(
       decl_code = decl_code,
       raw_name = obj['name'],
       doc_string = doc_string,
@@ -271,23 +259,23 @@ def write_decl_html(obj, loc_map, instances, out):
       gh_link = gh_link
   ))
 
-search_snippet = """
-<script async src="https://cse.google.com/cse.js?cx=013315010647789779870:7aikx0zd1z9"></script>
-<div class="gcse-search"></div>
-"""
+# Inserts zero-width spaces after dots
+def htmlify_name(n):
+  # TODO: html escape
+  return '.&#8203;'.join(n.split('.'))
 
 def write_internal_nav(objs, filename, out):
-  out.write('<h1>Lean <a href="https://leanprover-community.github.io">mathlib</a> docs</h1>')
-  out.write('<h2><a href="#top">{0}</a></h2>'.format(filename_import(filename)))
-  out.write('<div class="gh_nav_link"><a href="{}">View source</a></div>'.format(library_link(filename)))
+  # out.write('<h1>Lean <a href="https://leanprover-community.github.io">mathlib</a> docs</h1>')
+  out.write('<h3><a href="#top">{0}</a></h3>'.format(htmlify_name(filename_import(filename))))
+  out.write('<div class="gh_nav_link"><a href="{}">source</a></div>'.format(library_link(filename)))
   for o in sorted([o['name'] for o in objs]):
-    out.write('<a href="#{0}">{0}</a><br>\n'.format(o))
+    out.write('<div class="nav_link"><a href="#{0}">{1}</a></div>\n'.format(o, htmlify_name(o)))
 
 def write_notes_nav(notes, out):
-  out.write('<h1>Lean <a href="https://leanprover-community.github.io">mathlib</a> docs</h1>')
-  out.write('<h2><a href="#top">Library notes</a></h2>')
+  # out.write('<h1>Lean <a href="https://leanprover-community.github.io">mathlib</a> docs</h1>')
+  out.write('<h3><a href="#top">Library notes</a></h3>')
   for o in sorted([o[0] for o in notes]):
-    out.write('<a href="#{0}">{0}</a><br>\n'.format(o))
+    out.write('<div class="nav_link"><a href="#{0}">{0}</a></div>\n'.format(o))
 
 def write_mod_doc(obj, loc_map, out):
   doc = linkify_markdown(convert_markdown(obj['doc']), loc_map)
@@ -316,35 +304,43 @@ def html_head(title):
         <link rel="shortcut icon" href="https://leanprover-community.github.io/archive/assets/img/lean.ico">
         <title>mathlib docs: {1}</title>
         <meta charset="UTF-8">
-        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-        <script>
-        MathJax = {{
-          tex: {{
-            inlineMath: [['$', '$']],
-            displayMath: [['$$', '$$']]
-          }},
-          options: {{
-              skipHtmlTags: [
-                  'script', 'noscript', 'style', 'textarea', 'pre',
-                  'code', 'annotation', 'annotation-xml',
-                  'decl', 'decl_meta', 'attributes', 'decl_args', 'decl_header', 'decl_name',
-                  'decl_type', 'equation', 'equations', 'structure_field', 'structure_fields',
-                  'constructor', 'constructors', 'instances'
-              ],
-              ignoreHtmlClass: 'tex2jax_ignore',
-              processHtmlClass: 'tex2jax_process',
-          }},
-        }};
-        </script>
-        <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     </head>
     <body>
-        <div class="row">""".format(site_root, title)
+    <div class="header">
+      <h1><a href="https://leanprover-community.github.io">mathlib</a> documentation</h1>
+      <p class="header_filename">{1}</p>
+      <form class="header_search" action="https://google.com/search" method="get">
+        <input type="hidden" name="sitesearch" value="https://leanprover-community.github.io/mathlib_docs">
+        <input type="text" name="q">
+        <button>search</button>
+      </form>
+    </div>
+""".format(site_root, title)
 
 html_tail = """
-        </div>
     </body>
     <script src="{0}nav.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script>
+    MathJax = {{
+      tex: {{
+        inlineMath: [['$', '$']],
+        displayMath: [['$$', '$$']]
+      }},
+      options: {{
+          skipHtmlTags: [
+              'script', 'noscript', 'style', 'textarea', 'pre',
+              'code', 'annotation', 'annotation-xml',
+              'decl', 'decl_meta', 'attributes', 'decl_args', 'decl_header', 'decl_name',
+              'decl_type', 'equation', 'equations', 'structure_field', 'structure_fields',
+              'constructor', 'constructors', 'instances'
+          ],
+          ignoreHtmlClass: 'tex2jax_ignore',
+          processHtmlClass: 'tex2jax_process',
+      }},
+    }};
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </html>
 """.format(site_root)
 
@@ -372,13 +368,14 @@ def print_dir_tree(path, active_path, tree):
   s = ''
   for name in sorted(tree['dirs'].keys()):
     new_path = os.path.join(path, name)
-    s += '<div class="nav_sect">{0}</div>\n'.format(name)
-    s += '<div class="nav_sect_inner{1}" id="{0}">\n'.format(new_path, '' if active_path.startswith(new_path + '/') else ' hidden')
+    s += '<details class="nav_sect" id="nav_sect_{0}" {1}><summary>{0}</summary>\n'.format(name,
+      'open' if active_path.startswith(new_path + '/') else '')
+    # s += '<div class="nav_sect_inner{1}" id="{0}">\n'.format(new_path, '' if active_path.startswith(new_path + '/') else ' hidden')
     s += print_dir_tree(new_path, active_path, tree['dirs'][name])
-    s += '\n</div>'
+    s += '\n</details>'
   for name in sorted(tree['files']):
     p = os.path.join(path, name)
-    s += '<a class="nav_file{3}" id="{0}" href="{2}{0}">{1}</a><br>\n'.format(
+    s += '<div class="nav_link"><a class="nav_file{3}" href="{2}{0}">{1}</a></div>\n'.format(
           p,
           name[:-5],
           site_root,
@@ -388,32 +385,31 @@ def print_dir_tree(path, active_path, tree):
   return s
 
 def content_nav(dir_list, active_path):
-  s = '<div class="search">{}</div>\n'.format(search_snippet)
-  s += '<h3>General documentation</h3>'
-  s += '<a href="{0}">index</a><br>\n'.format(site_root)
-  s += '<a href="{0}tactics.html">tactics</a><br>\n'.format(site_root)
-  s += '<a href="{0}commands.html">commands</a><br>\n'.format(site_root)
-  s += '<a href="{0}hole_commands.html">hole commands</a><br>\n'.format(site_root)
-  s += '<a href="{0}attributes.html">attributes</a><br>\n'.format(site_root)
-  s += '<a href="{0}notes.html">notes</a><br>\n'.format(site_root)
+  s = '<h3>General documentation</h3>'
+  s += '<div class="nav_link"><a href="{0}">index</a></div>\n'.format(site_root)
+  s += '<div class="nav_link"><a href="{0}tactics.html">tactics</a></div>\n'.format(site_root)
+  s += '<div class="nav_link"><a href="{0}commands.html">commands</a></div>\n'.format(site_root)
+  s += '<div class="nav_link"><a href="{0}hole_commands.html">hole commands</a></div>\n'.format(site_root)
+  s += '<div class="nav_link"><a href="{0}attributes.html">attributes</a></div>\n'.format(site_root)
+  s += '<div class="nav_link"><a href="{0}notes.html">notes</a></div>\n'.format(site_root)
   s += '<h3>Tutorials</h3>'
   for (filename, displayname, _, community_site_url) in extra_doc_files:
-    s += '<a href="https://leanprover-community.github.io/{0}.html">{1}</a><br>\n'.format(community_site_url, displayname)
+    s += '<div class="nav_link"><a href="https://leanprover-community.github.io/{0}.html">{1}</a></div>\n'.format(community_site_url, displayname)
   s += '<h3>Library</h3>'
   s += print_dir_tree('', active_path, dir_list)
   return s
 
 def write_html_file(content_nav_str, objs, loc_map, filename, mod_docs, instances, out):
   out.write(html_head(filename_import(filename)))
-  out.write('<div class="column left"><div class="internal_nav">\n' )
+  out.write('<div class="internal_nav">\n' )
   write_internal_nav(objs, filename, out)
-  out.write('</div></div>\n')
-  out.write('<div class="column middle"><div class="content">\n')
+  out.write('</div>\n')
+  out.write('<div class="content">\n')
   write_body_content(objs, loc_map, filename, mod_docs, instances, out)
-  out.write('\n</div></div>\n')
-  out.write('<div class="column right"><div class="nav">\n')
+  out.write('\n</div>\n')
+  out.write('<div class="nav">\n')
   out.write(content_nav_str)
-  out.write('\n</div></div>\n')
+  out.write('\n</div>\n')
   out.write(html_tail)
 
 # returns (pagetitle, intro_block), [(tactic_name, tactic_block)]
@@ -455,9 +451,9 @@ def write_tactic_doc_file(intro, entries, name, loc_map, dir_list):
   entries.sort(key = lambda p: (str.lower(p['name']), str.lower(p['category'])))
   out = open_outfile(html_root + name + '.html', 'w')
   out.write(html_head(name))
-  out.write('<div class="column left"><div class="internal_nav">\n' )
-  out.write('<h1>Lean <a href="https://leanprover-community.github.io">mathlib</a> docs</h1>')
-  out.write('<h2><a href="#top">{0}</a></h2>'.format(name))
+  out.write('<div class="internal_nav">\n' )
+  # out.write('<h1>Lean <a href="https://leanprover-community.github.io">mathlib</a> docs</h1>')
+  out.write('<h3><a href="#top">{0}</a></h3>'.format(name))
   tagset = set()
   for e in entries:
     tagset.update(e['tags'])
@@ -465,11 +461,11 @@ def write_tactic_doc_file(intro, entries, name, loc_map, dir_list):
   out.write('<label><input type="checkbox" id="tagfilter-selectall" name="tagfilter-selectall">Select/deselect all</label><br><hr>\n')
   for t in sorted(tagset):
     out.write('<label><input type="checkbox" class="tagfilter" name="{1}" value="{1}">{0}</label><br>\n'.format(t, escape_tag_name(t)))
-  out.write('</details><br>\n')
+  out.write('</details>\n')
   for e in entries:
     out.write('<div class="taclink {1}"><a href="#{0}">{0}</a></div>\n'.format(e['name'], ' '.join([escape_tag_name(t) for t in e['tags']])))
-  out.write('</div></div>\n')
-  out.write('<div class="column middle"><div class="content docfile">\n')
+  out.write('</div>\n')
+  out.write('<div class="content docfile">\n')
   out.write('<h1>{0}</h1>\n\n{1}'.format(intro['title'], convert_markdown(intro['body'])))
   for e in entries:
     out.write('<div class="tactic {}">\n'.format(' '.join([escape_tag_name(t) for t in e['tags']])))
@@ -484,10 +480,10 @@ def write_tactic_doc_file(intro, entries, name, loc_map, dir_list):
       out.write(decl_string)
       out.write(import_options(loc_map, e['decl_names'][0], e['import']))
     out.write('</div>\n')
-  out.write('\n</div></div>\n')
-  out.write('<div class="column right"><div class="nav">\n')
+  out.write('\n</div>\n')
+  out.write('<div class="nav">\n')
   out.write(content_nav(dir_list, 'index.html'))
-  out.write('\n</div></div>\n')
+  out.write('\n</div>\n')
   out.write(html_tail)
   out.close()
 
@@ -497,17 +493,17 @@ def write_pure_md_file(source, dest, name, loc_map, dir_list):
     infile.close()
   out = open_outfile(html_root + dest, 'w')
   out.write(html_head(name))
-  out.write('<div class="column left"><div class="internal_nav">\n' )
-  out.write('<h1>Lean <a href="https://leanprover-community.github.io">mathlib</a> docs</h1>')
-  out.write('<h2><a href="#top">{0}</a></h2>'.format(name))
+  out.write('<div class="internal_nav">\n' )
+  # out.write('<h1>Lean <a href="https://leanprover-community.github.io">mathlib</a> docs</h1>')
+  out.write('<h3><a href="#top">{0}</a></h3>'.format(name))
   out.write(body.toc_html)
-  out.write('</div></div>\n')
-  out.write('<div class="column middle"><div class="content">\n')
+  out.write('</div>\n')
+  out.write('<div class="content">\n')
   out.write(body)
   out.write('\n</div></div>\n')
-  out.write('<div class="column right"><div class="nav">\n')
+  out.write('<div class="nav">\n')
   out.write(content_nav(dir_list, 'index.html'))
-  out.write('\n</div></div>\n')
+  out.write('\n</div>\n')
   out.write(html_tail)
   out.close()
 
@@ -515,11 +511,7 @@ def write_pure_md_file(source, dest, name, loc_map, dir_list):
 
 
 index_body = """
-<h1>Lean mathlib documentation</h1>
-
-{4}
-
-<p>Navigate through mathlib files using the menu on the right.</p>
+<p>Navigate through mathlib files using the menu on the left.</p>
 
 <p>Declaration names link to their locations in the mathlib or core Lean source.
 Names inside code snippets link to their locations in this documentation.</p>
@@ -530,7 +522,7 @@ Names inside code snippets link to their locations in this documentation.</p>
 <p>Note: mathlib is still only partially documented, and this HTML display is still
 under development. We welcome pull requests on <a href="{1}">GitHub</a> to update misleading or
 badly formatted doc strings, or to add missing documentation.</p>
-""".format(mathlib_commit, mathlib_github_root, lean_root, lean_commit, search_snippet)
+""".format(mathlib_commit, mathlib_github_root, lean_root, lean_commit)
 
 notes_body = """
 <a id="top"></a>
@@ -550,17 +542,17 @@ def write_note(n, loc_map, out):
 def write_note_file(notes, loc_map, dir_list):
   out = open_outfile(html_root + 'notes.html', 'w')
   out.write(html_head('notes'))
-  out.write('<div class="column left"><div class="internal_nav">\n' )
+  out.write('<div class="internal_nav">\n' )
   write_notes_nav(notes, out)
-  out.write('</div></div>\n')
-  out.write('<div class="column middle"><div class="content">\n')
+  out.write('</div>\n')
+  out.write('<div class="content">\n')
   out.write(notes_body)
   for n in notes:
     write_note(n, loc_map, out)
-  out.write('\n</div></div>\n')
-  out.write('<div class="column right"><div class="nav">\n')
+  out.write('\n</div>\n')
+  out.write('<div class="nav">\n')
   out.write(content_nav(dir_list, 'index.html'))
-  out.write('\n</div></div>\n')
+  out.write('\n</div>\n')
   out.write(html_tail)
   out.close()
 
@@ -656,14 +648,14 @@ def write_html_files(partition, loc_map, notes, mod_docs, instances, entries):
     body_out.close()
   out = open_outfile(html_root + 'index.html', 'w')
   out.write(html_head('index'))
-  out.write('<div class="column left"><div class="internal_nav">\n' )
-  out.write('</div></div>\n')
-  out.write('<div class="column middle"><div class="content">\n')
+  out.write('<div class="internal_nav">\n' )
+  out.write('</div>\n')
+  out.write('<div class="content">\n')
   out.write(index_body)
-  out.write('\n</div></div>\n')
-  out.write('<div class="column right"><div class="nav">\n')
+  out.write('\n</div>\n')
+  out.write('<div class="nav">\n')
   out.write(content_nav(dir_list, 'index.html'))
-  out.write('\n</div></div>\n')
+  out.write('\n</div>\n')
   out.write(html_tail)
   out.close()
   write_note_file(notes, loc_map, dir_list)
@@ -722,9 +714,10 @@ def write_export_db(export_db):
     zout.write(json_str.encode('utf-8'))
     zout.close()
 
-file_map, loc_map, export_db, notes, mod_docs, instances, tactic_docs = load_json()
-write_html_files(file_map, loc_map, notes, mod_docs, instances, tactic_docs)
-write_redirects(loc_map, file_map)
-copy_css(html_root, use_symlinks=cl_args.l)
-write_export_db(export_db)
-write_site_map(file_map)
+if __name__ == '__main__':
+  file_map, loc_map, export_db, notes, mod_docs, instances, tactic_docs = load_json()
+  write_html_files(file_map, loc_map, notes, mod_docs, instances, tactic_docs)
+  write_redirects(loc_map, file_map)
+  copy_css(html_root, use_symlinks=cl_args.l)
+  write_export_db(export_db)
+  write_site_map(file_map)
