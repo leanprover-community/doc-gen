@@ -694,7 +694,10 @@ def write_redirects(loc_map, file_map):
 def copy_css(path, use_symlinks):
   def cp(a, b):
     if use_symlinks:
-      os.remove(b)
+      try:
+        os.remove(b)
+      except FileNotFoundError:
+        pass
       os.symlink(os.path.relpath(a, os.path.dirname(b)), b)
     else:
       shutil.copyfile(a, b)
