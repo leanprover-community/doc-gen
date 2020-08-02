@@ -162,6 +162,10 @@ h1, h2, h3, h4, h5, h6 {
 .decl, .inductive {
     margin-top: 20px;
     margin-bottom: 20px;
+    /* sometimes declarations arguments are way too long
+       and would continue into the right column,
+       so put a scroll bar there: */
+    overflow-x: auto;
 }
 
 /* Make `#id` links appear below header. */
