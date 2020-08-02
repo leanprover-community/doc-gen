@@ -25,6 +25,10 @@ for (const elem of document.getElementsByClassName('nav_sect')) {
   });
 }
 
+for (const currentFileLink of document.getElementsByClassName('visible')) {
+  setTimeout(() => currentFileLink.scrollIntoView(), 0);
+}
+
 
 
 
