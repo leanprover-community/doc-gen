@@ -23,7 +23,7 @@ import gzip
 root = os.getcwd()
 
 parser = argparse.ArgumentParser('Options to print_docs.py')
-parser.add_argument('-w', help = 'Generate docs for web. (Default local)', action = "store_true")
+parser.add_argument('-w', help = 'Specify site root URL')
 parser.add_argument('-l', help = 'Symlink CSS and JS instead of copying', action = "store_true")
 parser.add_argument('-r', help = 'relative path to mathlib root directory')
 parser.add_argument('-t', help = 'relative path to html output directory')
@@ -46,12 +46,8 @@ html_root = os.path.join(root, cl_args.t if cl_args.t else 'html') + '/'
 # TODO: make sure nothing is left in html_root
 
 # root of the site, for display purposes.
-# for local testing, use `html_root` or the address of a local server.
 # override this setting with the `-w` flag.
 site_root = "/"
-
-# web root, used in place of `site_root` if the `-w` flag is used
-web_root = "https://leanprover-community.github.io/mathlib_docs/"
 
 # root directory of mathlib.
 local_lean_root = os.path.join(root, cl_args.r if cl_args.r else '_target/deps/mathlib') + '/'
@@ -68,7 +64,7 @@ with open('leanpkg.toml') as f:
   mathlib_github_root = ml_data['git'].strip('/')
 
 if cl_args.w:
-  site_root = web_root
+  site_root = cl_args.w
 
 mathlib_github_src_root = "{0}/blob/{1}/src/".format(mathlib_github_root, mathlib_commit)
 

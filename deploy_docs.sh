@@ -32,7 +32,8 @@ rm -rf mathlib_docs/docs/
 # but this is better than trying to recompile all of mathlib.
 elan override set "$lean_version"
 
-./gen_docs -w -r "$3/" -t "mathlib_docs/docs/"
+./gen_docs -w 'https://leanprover-community.github.io/mathlib_docs/' \
+  -r "$3/" -t "mathlib_docs/docs/"
 
 if [ "$github_repo" = "leanprover-community/doc-gen" ] && [ "$github_ref" = "refs/heads/master" ]; then
   cd mathlib_docs/docs
