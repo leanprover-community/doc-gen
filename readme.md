@@ -25,5 +25,5 @@ I typically host a server from the `html` directory with `python3 -m http.server
 If you intend to host the site somewhere else than the root,
 call for example `./gen_docs -w 'https://lean.com/my-documentation/'`.
 
-`gen_docs -l` will symlink the css file, so you can edit `style_js_frame.css` in the root directory
+`gen_docs -l` will symlink the css file, so you can edit `style.css` in the root directory
 without regenerating anything. This is useful for local development.
