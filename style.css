@@ -57,7 +57,7 @@ label[for="nav_toggle"] { /* The MENU button */
     }
     label[for="nav_toggle"] {
         display: block;
-        border: 1px solid #eee;
+        border: 1px solid #ccc;
         padding: 0.5ex 1ex;
         cursor: pointer;
         margin-left: 1em;
