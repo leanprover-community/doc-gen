@@ -423,3 +423,7 @@ a:hover {
     margin-top: 2em;
     margin-bottom: 2em;
 }
+
+.header_search input {
+    width: 20em;
+}
