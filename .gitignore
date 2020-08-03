@@ -1,6 +1,8 @@
 *.olean
 /_target
 /leanpkg.path
-/html/*
+/html
 /json_export.txt
 /.vscode
+/.venv
+/__pycache__

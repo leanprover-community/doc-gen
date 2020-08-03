@@ -1,61 +1,42 @@
-var expanded = [];
+// Persistent expansion cookie for the file tree
+// ---------------------------------------------
 
-function unexpand(name) {
-    expanded = expanded.filter(function(e) {return e != name;});
-    sessionStorage.setItem('expanded', expanded.join(','));
+let expanded = {};
+for (const e of (sessionStorage.getItem('expanded') || '').split(',')) {
+  if (e !== '' && document.getElementById('nav_sect_' + e)) {
+    expanded[e] = true;
+  }
 }
 
-function getExpandedCookie() {
-    var v = sessionStorage.getItem("expanded");
-    if (v) {
-        expanded = v.split(',').filter(function(e){return e != "";});
-    } else {
-        expanded = [];
-    }
+function saveExpanded() {
+  sessionStorage.setItem("expanded",
+    Object.getOwnPropertyNames(expanded).filter((e) => expanded[e]).join(","));
 }
 
-function showItem(item) {
-    item.className = "nav_sect_inner";
-    expanded.push(item.id);
-    sessionStorage.setItem("expanded", expanded.join(","));
+for (const elem of document.getElementsByClassName('nav_sect')) {
+  if (elem.tagName !== 'DETAILS') continue;
+  const id = elem.firstChild.textContent; // text in <summary> element
+  if (expanded[id]) {
+    elem.open = true;
+  }
+  elem.addEventListener('toggle', () => {
+    expanded[id] = elem.open;
+    saveExpanded();
+  });
 }
 
-function hideItem(item) {
-    //item.style.display = "none";
-    item.className = "nav_sect_inner hidden";
-    unexpand(item.id);
+for (const currentFileLink of document.getElementsByClassName('visible')) {
+  setTimeout(() => currentFileLink.scrollIntoView(), 0);
 }
 
-function expandExpanded() {
-    for (var i = 0; i < expanded.length; i++) {
-        document.getElementById(expanded[i]).className = "nav_sect_inner";
-    }
-}
 
-function showNav(path) {
-    var items = path.split("/");
-    var i;
-    for (i = 0; i < items.length - 1; i++) {
-        d = document.getElementById(items.slice(0, i + 1).join("/"));
-        showItem(d);
-    }
-}
 
-var coll = document.getElementsByClassName("nav_sect");
-var i;
-for (i = 0; i < coll.length; i++) {
-    coll[i].addEventListener("click", function () {
-        var content = this.nextElementSibling;
-        if (content.className === "nav_sect_inner") {
-            hideItem(content);
-        } else {
-            showItem(content);
-        }
-    });
-}
 
-getExpandedCookie();
-expandExpanded();
+
+
+// Expansion of implicit arguments ({...})
+// ---------------------------------------
+
 
 for (const impl_collapsed of document.getElementsByClassName('impl_collapsed')) {
     const impl_args = impl_collapsed.getElementsByClassName('impl_arg');
@@ -67,6 +48,13 @@ for (const impl_collapsed of document.getElementsByClassName('impl_collapsed')) 
 
 
 
+
+
+
+
+// Tactic list tag filter
+// ----------------------
+
 function filterSelectionClass(tagNames, classname) {
     if (tagNames.length == 0) {
       for (const elem of document.getElementsByClassName(classname)) {
@@ -76,7 +64,7 @@ function filterSelectionClass(tagNames, classname) {
       // Add the "show" class (display:block) to the filtered elements, and remove the "show" class from the elements that are not selected
       for (const elem of document.getElementsByClassName(classname)) {
         elem.classList.add("hide");
-        for (const tagName of tagNames) { 
+        for (const tagName of tagNames) {
             if (elem.classList.contains(tagName)) {
               elem.classList.remove("hide");
             }
@@ -93,15 +81,14 @@ function filterSelectionClass(tagNames, classname) {
 var filterBoxes = document.getElementsByClassName("tagfilter");
 
 function updateDisplay() {
-    //alert(getSelectValues(select));
     filterSelection(getSelectValues());
 }
 
 function getSelectValues() {
     var result = [];
-  
+
     for (const opt of filterBoxes) {
-  
+
       if (opt.checked) {
         result.push(opt.value);
       }
@@ -128,8 +115,3 @@ if (tse != null) {
     updateDisplay();
   });
 }
-
-//select.addEventListener("click", function() { updateDisplay(); });
-
-//select_input.addEventListener("click", function(event) { updateDisplay(); }, false);
-// select.addEventListener("mouseover", function() { updateDisplay(); });

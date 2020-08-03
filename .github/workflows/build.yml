@@ -4,7 +4,7 @@ on:
   schedule:
     - cron: '0 */2 * * *' # every 2 hours
   push:
-      
+
 jobs:
   build:
     name: build and deploy docs
@@ -30,7 +30,7 @@ jobs:
           python-version: 3.8
 
       - name: install Python dependencies
-        run: python -m pip install --upgrade pip requests markdown2 toml mathlibtools
+        run: python -m pip install --upgrade pip requests markdown2 toml mathlibtools 'git+https://github.com/pygments/pygments@master#egg=Pygments'
 
       - name: run leanproject
         run: |

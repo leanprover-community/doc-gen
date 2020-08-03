@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
 link=0
-web=0
+site_root='/'
 while [ "$1" != "" ]; do
     case $1 in
         -t | --target )           shift
@@ -9,7 +9,8 @@ while [ "$1" != "" ]; do
         -r | --source )           shift
                                 source=$1
                                 ;;
-        -w | --web )    web=1
+        -w | --web )            shift
+                                site_root=$1
                                 ;;
         -l | --link )    link=1
                                 ;;
@@ -27,17 +28,12 @@ if [ -n "$target" ]; then
   args+=( '-t' )
   args+=( "$target" )
 fi
-if [ "$web" -eq "1" ]; then
-  args+=('-w')
-fi
 if [ "$link" -eq "1" ]; then
   args+=('-l')
 fi
 
-find "$source"src | grep "[.]olean$" | xargs touch
-bash "$source"scripts/rm_all.sh
 bash "$source"scripts/mk_all.sh
 lean --run src/export_json.lean
 bash "$source"scripts/rm_all.sh
 
-python3 print_docs.py -r "$source" "${args[@]}"
+python3 print_docs.py -r "$source" -w "$site_root" "${args[@]}"

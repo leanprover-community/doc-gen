@@ -10,9 +10,11 @@ It depends on features of Lean 3.5c added in
 <https://github.com/leanprover-community/lean/pull/81>.
 
 ```
-pip install markdown2 toml mathlibtools
+pip install markdown2 toml mathlibtools 'git+https://github.com/pygments/pygments@master#egg=Pygments'
 leanproject up
 ```
+
+We require a pre-release version of `pygments` for syntax highlighting because the latest release does not include support for Lean 3 yet.  You can also use an older `pygments` for testing if you need to, but then the syntax highlighting will be off.
 
 Make sure that olean files are generated for mathlib in `_target`, otherwise this will be extremely slow.
 
@@ -20,9 +22,10 @@ Make sure that olean files are generated for mathlib in `_target`, otherwise thi
 
 `./gen_docs` will create a directory `html` with the generated documentation.
 
-The links will point to `http://localhost:8000` as the root of the site.
+The links will point to `/` as the root of the site.
 I typically host a server from the `html` directory with `python3 -m http.server`.
-If you intend to host the site elsewhere, edit `web_root` in `print_docs.py` and use `./gen_docs -w`.
+If you intend to host the site somewhere else than the root,
+call for example `./gen_docs -w 'https://lean.com/my-documentation/'`.
 
-`gen_docs -l` will symlink the css file, so you can edit `style_js_frame.css` in the root directory
+`gen_docs -l` will symlink the css file, so you can edit `style.css` in the root directory
 without regenerating anything. This is useful for local development.

@@ -1,0 +1,425 @@
+@import url('https://fonts.googleapis.com/css2?family=Merriweather&family=Open+Sans&family=Source+Code+Pro&family=Source+Code+Pro:wght@600&display=swap');
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Open Sans', sans-serif;
+}
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Merriweather', serif;
+}
+
+:root {
+    --header-height: 3em;
+    --fragment-offset: calc(var(--header-height) + 1em);
+    --content-width: 55vw;
+}
+@supports (width: min(10px, 5vw)) {
+    :root {
+        --content-width: clamp(20em, 55vw, 60em);
+    }
+}
+
+#nav_toggle {
+    display: none;
+}
+label[for="nav_toggle"] { /* The MENU button */
+    display: none;
+}
+
+@media screen and (max-width: 600px) {
+    :root {
+        --header-height: 4em;
+    }
+}
+
+@media screen and (max-width: 1000px) {
+    :root {
+        --content-width: 100vw;
+    }
+
+    .internal_nav {
+        display: none;
+    }
+
+    body .nav {
+        width: 100vw;
+        max-width: 100vw;
+        margin-left: 1em;
+        z-index: 1;
+    }
+
+    body .content {
+        width: unset;
+        max-width: unset;
+        margin-left: unset;
+        margin-right: unset;
+    }
+    body .decl > div {
+        overflow-x: unset;
+    }
+
+    #nav_toggle:not(:checked) ~ .nav {
+        display: none;
+    }
+    #nav_toggle:checked ~ .content {
+        visibility: hidden;
+    }
+
+    label[for="nav_toggle"]::before {
+        content: '🐙';
+    }
+    label[for="nav_toggle"] {
+        display: block;
+        border: 1px solid #ccc;
+        padding: 0.5ex 1ex;
+        cursor: pointer;
+        margin-left: 1em;
+    }
+    #nav_toggle:checked ~ * label[for="nav_toggle"] {
+        background: white;
+    }
+
+    body .header h1 {
+        font-size: 100%;
+    }
+
+    body .header {
+        padding: 0 2ex;
+    }
+}
+
+.header {
+    height: var(--header-height);
+    float: left;
+    position: fixed;
+    width: 100vw;
+    left: 0;
+    right: 0;
+    top: 0;
+    padding: 0 2em;
+    background: #f8f8f8;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+@supports (width: min(10px, 5vw)) {
+    .header {
+        padding: 0 calc(max(2em, (100vw - var(--content-width) - 30em) / 2));
+    }
+}
+
+.header > * {
+    display: inline-block;
+    padding: 0;
+    margin: 0;
+    vertical-align: middle;
+}
+
+.header h1 {
+    font-weight: normal;
+    font-size: 160%;
+}
+
+.header .header_filename {
+    font-size: 150%;
+}
+@media (max-width: 80em) {
+    .header .header_filename {
+        display: none;
+    }
+}
+
+.content, .nav, .internal_nav {
+    margin-top: calc(var(--header-height) + 1em);
+}
+
+/* extra space for scrolling things to the top */
+.content {
+    margin-bottom: 90vh;
+}
+
+.content {
+    max-width: var(--content-width);
+    /* center it: */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.nav, .internal_nav {
+    float: left;
+    height: calc(100vh - var(--header-height) - 1em);
+    position: fixed;
+    top: 0;
+    overflow: auto;
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+}
+
+.nav:hover, .internal_nav:hover {
+    scrollbar-color: gray transparent;
+}
+
+.nav, .internal_nav {
+    --column-available-space: calc((100vw - var(--content-width) - 5em)/2);
+    --column-width: calc(var(--column-available-space) - 1ex);
+    --dist-to-edge: 1ex;
+    width: var(--content-width);
+    max-width: var(--column-width);
+}
+@supports (width: min(10px, 5vw)) {
+    .nav { --desired-column-width: 20em; }
+    .internal_nav { --desired-column-width: 30em; }
+    .nav, .internal_nav {
+        --column-available-space: calc(max(0px, (100vw - var(--content-width) - 5em)/2));
+        --column-width: calc(clamp(0px, var(--column-available-space) - 1ex, var(--desired-column-width)));
+        --dist-to-edge: calc(max(1ex, var(--column-available-space) - var(--column-width)));
+    }
+}
+
+.nav { left: var(--dist-to-edge); }
+.internal_nav { right: var(--dist-to-edge); }
+
+.internal_nav .nav_link, .taclink {
+    /* indent everything but first line by 2ex */
+    text-indent: -2ex; padding-left: 2ex;
+}
+
+.internal_nav .gh_nav_link {
+    padding-bottom: 1.5em;
+}
+
+.tagfilter-div {
+    margin-bottom: 1em;
+}
+.tagfilter-div > summary {
+    margin-bottom: 1ex;
+}
+
+.nav details > * {
+    padding-left: 2ex;
+}
+.nav summary {
+    cursor: pointer;
+    padding-left: 0;
+}
+.nav summary::marker {
+    font-size: 85%;
+}
+
+.nav .nav_file {
+    display: inline-block;
+}
+
+.nav h3 {
+    margin-block-end: 4px;
+}
+
+/* People use way too long declaration names. */
+.internal_nav, .decl_name {
+    overflow-wrap: break-word;
+}
+
+.decl > div, .mod_doc {
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+.decl {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.decl > div {
+    /* sometimes declarations arguments are way too long
+       and would continue into the right column,
+       so put a scroll bar there: */
+    overflow-x: auto;
+}
+
+/* Make `#id` links appear below header. */
+.decl::before, h2[id]::before, a[id]::before {
+    content: "";
+    display: block;
+    height:      var(--fragment-offset);
+    margin-top:  calc(-1 * var(--fragment-offset));
+    box-sizing: inherit;
+    visibility: hidden;
+}
+
+.content h2, .content h3, .content h4, .content h5, .content h6 {
+    margin-top: 2rem;
+}
+.decl + .mod_doc > h2,
+        .decl + .mod_doc > h3,
+        .decl + .mod_doc > h4,
+        .decl + .mod_doc > h5,
+        .decl + .mod_doc > h6 {
+    margin-top: 4rem;
+}
+
+.def {
+    border-left: 10px solid #92dce5;
+    border-top: 2px solid #92dce5;
+}
+
+.theorem {
+    border-left: 10px solid #8fe388;
+    border-top: 2px solid #8fe388;
+}
+
+.axiom, .constant {
+    border-left: 10px solid #f44708;
+    border-top: 2px solid #f44708;
+}
+
+.structure, .inductive {
+    border-left: 10px solid #f0a202;
+    border-top: 2px solid #f0a202;
+}
+
+.decl_args {
+    white-space: nowrap;
+}
+
+.decl_args, .decl_type {
+    font-weight: normal;
+}
+
+ul {
+    padding-inline-start: 25px;
+}
+
+.implicits, .impl_arg {
+    color: black;
+    white-space: nowrap;
+}
+
+.decl_header, .attributes {
+    line-height: 1.5;
+}
+
+.decl_kind, .decl_name {
+    font-weight: bold;
+}
+
+.decl_header {
+    /* indent everything but first line twice as much as decl_type */
+    text-indent: -8ex; padding-left: 8ex;
+}
+
+.decl_type {
+    margin-top: 2px;
+    margin-left: 4ex; /* extra indentation */
+}
+
+.imports li, code, .decl_header, .attributes, .structure_field,
+        .constructor, .instances li, .equation {
+    font-family: 'Source Code Pro', monospace;
+}
+
+pre {
+    white-space: break-spaces;
+}
+
+code, pre { background: #f3f3f3; }
+code { padding: 1px 3px; }
+pre { padding: 1ex; }
+pre code { padding: 0 0; }
+
+.structure_fields, .constructors {
+    display: block;
+    padding-inline-start: 0;
+    margin-top: 1ex;
+}
+
+.structure_field {
+    display: block;
+}
+.structure_field:before {
+    content: '(';
+    color: gray;
+}
+.structure_field:after {
+    content: ')';
+    color: gray;
+}
+
+.constructor {
+    display: block;
+}
+.constructor:before {
+    content: '| ';
+    color: gray;
+}
+
+/** Don't show underline on types, to prevent the ≤ vs < confusion. **/
+a:link, a:visited, a:active {
+    color:hsl(210, 100%, 30%);
+    text-decoration: none;
+}
+
+/** Show it on hover though. **/
+a:hover {
+    text-decoration: underline;
+}
+
+.decl_header.impl_collapsed .impl_arg > span {
+    display: none;
+}
+.decl_header.impl_collapsed .impl_arg ~ .impl_arg {
+    display: none;
+}
+.decl_header.impl_collapsed .impl_arg:after {
+    cursor: pointer;
+    content: '{…}';
+}
+.impl_arg {
+    font-style: italic;
+    font-weight: normal;
+}
+
+.gh_link {
+    float: right;
+    margin-left: 20px;
+}
+
+.content.docfile h2, .note h2 {
+    margin-block-start: 3px;
+    margin-block-end: 0px;
+}
+
+.content.docfile h2 a {
+    color: black;
+}
+
+.tags ul {
+    display: inline-block;
+    padding-left: 10px;
+    margin-bottom: 3px;
+}
+
+.tags li {
+    border-style: solid;
+    border-width: 1px;
+    list-style-type: none;
+    padding-left: 5px;
+    padding-right: 5px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    margin-right: 10px;
+    display: inline-block;
+}
+
+/* used by nav.js */
+.hide { display: none; }
+
+.tactic, .note {
+    border-top: 3px solid #0479c7;
+    padding-top: 2em;
+    margin-top: 2em;
+    margin-bottom: 2em;
+}
