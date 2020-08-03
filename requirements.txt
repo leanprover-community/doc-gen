@@ -1,0 +1,4 @@
+markdown2
+toml
+mathlibtools
+git+https://github.com/pygments/pygments@master#egg=Pygments
