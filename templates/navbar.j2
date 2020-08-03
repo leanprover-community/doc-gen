@@ -1,0 +1,30 @@
+<h3>General documentation</h3>
+<div class="nav_link"><a href="{{site_root}}">index</a></div>
+<div class="nav_link"><a href="{{site_root}}tactics.html">tactics</a></div>
+<div class="nav_link"><a href="{{site_root}}commands.html">commands</a></div>
+<div class="nav_link"><a href="{{site_root}}hole_commands.html">hole commands</a></div>
+<div class="nav_link"><a href="{{site_root}}attributes.html">attributes</a></div>
+<div class="nav_link"><a href="{{site_root}}notes.html">notes</a></div>
+
+<h3>Tutorials</h3>
+{% for (filename, displayname, _, community_site_url) in extra_doc_files %}
+  <div class="nav_link">
+    <a href="https://leanprover-community.github.io/{{community_site_url}}.html">{{ displayname }}</a>
+  </div>
+{% endfor %}
+
+<h3>Library</h3>
+{%- for item in site_tree recursive %}
+    {%- if item['kind'] == 'dir' %}
+        {%- set is_open = 'open' if active_path.startswith(item.path+'/') else '' %}
+        <details class="nav_sect" data-path="{{ item.path }}" {{is_open}}>
+            <summary>{{item.name}}</summary>
+            {{ loop(item.children) }}
+        </details>
+    {%- endif %}
+    {%- if item['kind'] == 'file' %}
+        <div class="nav_link {{'visible' if item.path == active_path else ''}}">
+            <a href="{{site_root}}{{item.path}}">{{ item.name }}</a>
+        </div>
+    {%- endif %}
+{%- endfor %}

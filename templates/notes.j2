@@ -1,0 +1,23 @@
+{% extends "base.j2" %}
+{% block title %}notes{% endblock %}
+
+{% block content %}
+<h1>Lean mathlib notes</h1>
+
+<p>Various implementation details are noted in the mathlib source, and referenced later on.
+We collect these notes here.</p>
+
+{% for note_name, note_markdown in notes %}
+    <div class="note" id="{{note_name}}">
+        <h2>{{note_name}}</h2>
+        {{ note_markdown | convert_markdown }}
+    </div>
+{% endfor %}
+{% endblock %}
+
+{% block internal_nav %}
+<h3><a href="#top">Library notes</a></h3>
+{% for note_name, _ in notes %}
+    <div class="nav_link"><a href="#{{note_name}}">{{note_name}}</a></div>
+{% endfor %}
+{% endblock %}

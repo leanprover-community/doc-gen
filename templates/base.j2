@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="{{ site_root }}style.css">
+    <link rel="stylesheet" href="{{ site_root }}pygments.css">
+    <link rel="shortcut icon" href="https://leanprover-community.github.io/archive/assets/img/lean.ico">
+    <title>mathlib docs: {% block title %}{% endblock %}</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+
+<input id="nav_toggle" type="checkbox">
+
+<div class="header">
+    <h1><a href="https://leanprover-community.github.io">mathlib</a> documentation</h1>
+    <p class="header_filename">{{ self.title() }}</p>
+    <form class="header_search" action="https://google.com/search" method="get">
+        <input type="hidden" name="sitesearch" value="https://leanprover-community.github.io/mathlib_docs">
+        <input type="text" name="q">
+        <button>search</button>
+    </form>
+    <label for="nav_toggle"></label>
+</div>
+
+<div class="internal_nav">{% block internal_nav %}{% endblock %}</div>
+
+<div class="content">
+    <a id="top"></a>
+    {% block content %}{% endblock %}
+</div>
+
+<div class="nav">
+    {% include "navbar.j2" %}
+</div>
+
+</body>
+
+<script src="{{ site_root }}nav.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+{#
+MathJax configuration docs:
+  http://docs.mathjax.org/en/latest/options/document.html#the-configuration-block
+MathJax inlineMath/displayMath docs:
+  http://docs.mathjax.org/en/latest/options/input/tex.html#tex-extension-options
+StackOverflow link on why to avoid \(..\) and \[..\] when markdown is in the loop:
+  https://math.meta.stackexchange.com/a/18714
+#}
+<script>
+MathJax = {
+    tex: {
+    inlineMath: [['$', '$']],
+    displayMath: [['$$', '$$']]
+    },
+    options: {
+        skipHtmlTags: [
+            'script', 'noscript', 'style', 'textarea', 'pre',
+            'code', 'annotation', 'annotation-xml',
+            'decl', 'decl_meta', 'attributes', 'decl_args', 'decl_header', 'decl_name',
+            'decl_type', 'equation', 'equations', 'structure_field', 'structure_fields',
+            'constructor', 'constructors', 'instances'
+        ],
+        ignoreHtmlClass: 'tex2jax_ignore',
+        processHtmlClass: 'tex2jax_process',
+    },
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</html>

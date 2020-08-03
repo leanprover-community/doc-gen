@@ -1,0 +1,67 @@
+{% set kind = kind_of_decl(decl) %}
+<div class="decl" id="{{ decl.name }}">
+<div class="{{ kind }}">
+
+<div class="gh_link"><a href="{{ library_link(filename, line) }}">source</a></div>
+
+{% if decl.attributes | length %}
+    <div class="attributes">@[{{ ', '.join(decl.attributes) }}]</div>
+{% endif %}
+
+<div class="decl_header impl_collapsed">
+    {% if decl.is_meta %}<span class="decl_meta">meta</span>{% endif %}
+    <span class="decl_kind">{{ kind }}</span>
+    <span class="decl_name"><a href="{{ decl.name | link_to_decl }}">{{ decl.name | htmlify_name }}</a></span>
+    {% for arg in decl.args %}
+        {% if arg.implicit %}<span class="impl_arg">{% endif %}
+        <span class="decl_args">{{ arg.arg | linkify_linked }}</span>
+        {% if arg.implicit %}</span>{% endif %}
+    {% endfor %}
+    <span class="decl_args">:</span>
+    <div class="decl_type">{{ decl.type | linkify_linked }}</div>
+</div>
+
+{% if decl.structure_fields | length %}
+    <ul class="structure_fields" id="{{ decl.name }}.mk">
+        {% for name, tp in decl.structure_fields %}
+            {% set field_name = name.split('.')[-1] %}
+            <li class="structure_field" id="{{name}}">{{field_name}} : {{ tp | linkify_linked }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
+{% if decl.constructors | length %}
+    <ul class="constructors">
+        {% for name, tp in decl.constructors %}
+            {% set ctor_name = name.split('.')[-1] %}
+            <li class="constructor" id="{{name}}">{{ctor_name}} : {{ tp | linkify_linked }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
+{{ decl.doc_string | convert_markdown }}
+
+{% if decl.equations | length %}
+    <details>
+        <summary>Equations</summary>
+        <ul class="equations">
+            {% for eqn in decl.equations %}
+                <li class="equation">{{ eqn | linkify_linked }}</li>
+            {% endfor %}
+        </ul>
+    </details>
+{% endif %}
+
+{% if decl.name in instances %}
+    <details class="instances">
+        <summary>Instances</summary>
+        <ul>
+            {% for inst in instances[decl.name] %}
+                <li>{{ inst | linkify_type }}</li>
+            {% endfor %}
+        </ul>
+    </details>
+{% endif %}
+
+</div>
+</div>

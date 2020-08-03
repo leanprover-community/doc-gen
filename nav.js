@@ -3,7 +3,7 @@
 
 let expanded = {};
 for (const e of (sessionStorage.getItem('expanded') || '').split(',')) {
-  if (e !== '' && document.getElementById('nav_sect_' + e)) {
+  if (e !== '') {
     expanded[e] = true;
   }
 }
@@ -14,8 +14,8 @@ function saveExpanded() {
 }
 
 for (const elem of document.getElementsByClassName('nav_sect')) {
-  if (elem.tagName !== 'DETAILS') continue;
-  const id = elem.firstChild.textContent; // text in <summary> element
+  const id = elem.getAttribute('data-path');
+  if (!id) continue;
   if (expanded[id]) {
     elem.open = true;
   }
