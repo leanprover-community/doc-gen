@@ -18,7 +18,8 @@
     <p class="header_filename">{{ self.title() }}</p>
     <form class="header_search" action="https://google.com/search" method="get">
         <input type="hidden" name="sitesearch" value="https://leanprover-community.github.io/mathlib_docs">
-        <input type="text" name="q">
+        <input type="text" name="q" list="search_suggestions" autocomplete="off">
+        <datalist id="search_suggestions"></datalist>
         <button>search</button>
     </form>
     <label for="nav_toggle"></label>
@@ -37,8 +38,6 @@
 
 </body>
 
-<script src="{{ site_root }}nav.js"></script>
-<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
 {#
 MathJax configuration docs:
   http://docs.mathjax.org/en/latest/options/document.html#the-configuration-block
@@ -65,7 +64,12 @@ MathJax = {
         processHtmlClass: 'tex2jax_process',
     },
 };
+
+siteRoot = "{{ site_root }}";
 </script>
+<script src="{{ site_root }}nav.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/minisearch@2.4.1/dist/umd/index.min.js" id="minisearch-script" async></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
 </html>
