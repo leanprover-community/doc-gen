@@ -11,7 +11,8 @@ It depends on features of Lean 3.5c added in
 
 ```
 pip install -r requirements.txt
-leanproject up
+rm -rf _target
+leanproject get-mathlib-cache
 ```
 
 We require a pre-release version of `pygments` for syntax highlighting because the latest release does not include support for Lean 3 yet.  You can also use an older `pygments` for testing if you need to, but then the syntax highlighting will be off.
