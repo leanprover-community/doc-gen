@@ -1,0 +1,12 @@
+{% extends "base.j2" %}
+{% block title %}{{ name }}{% endblock %}
+
+{% block content %}
+{{ body }}
+{% endblock %}
+
+{% block internal_nav %}
+<h3><a href="#top">{{ self.title() }}</a></h3>
+
+{{ body.toc_html }}
+{% endblock %}

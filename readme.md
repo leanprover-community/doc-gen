@@ -10,8 +10,9 @@ It depends on features of Lean 3.5c added in
 <https://github.com/leanprover-community/lean/pull/81>.
 
 ```
-pip install markdown2 toml mathlibtools 'git+https://github.com/pygments/pygments@master#egg=Pygments'
-leanproject up
+pip install -r requirements.txt
+rm -rf _target
+leanproject get-mathlib-cache
 ```
 
 We require a pre-release version of `pygments` for syntax highlighting because the latest release does not include support for Lean 3 yet.  You can also use an older `pygments` for testing if you need to, but then the syntax highlighting will be off.

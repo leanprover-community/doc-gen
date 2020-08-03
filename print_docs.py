@@ -22,6 +22,13 @@ import gzip
 
 root = os.getcwd()
 
+from jinja2 import Environment, FileSystemLoader, select_autoescape
+env = Environment(
+    loader=FileSystemLoader('templates', 'utf-8'),
+    autoescape=select_autoescape(['html', 'xml'])
+)
+env.globals['sorted'] = sorted
+
 parser = argparse.ArgumentParser('Options to print_docs.py')
 parser.add_argument('-w', help = 'Specify site root URL')
 parser.add_argument('-l', help = 'Symlink CSS and JS instead of copying', action = "store_true")
@@ -39,6 +46,7 @@ extra_doc_files = [('overview', 'mathlib overview', 'docs/mathlib-overview.md', 
                    ('conv', 'conv mode', 'docs/extras/conv.md', 'extras/conv'),
                    ('simp', 'simplification', 'docs/extras/simp.md', 'extras/simp'),
                    ('well_founded_recursion', 'well founded recursion', 'docs/extras/well_founded_recursion.md','extras/well_founded_recursion')]
+env.globals['extra_doc_files'] = extra_doc_files
 
 # path to put generated html
 html_root = os.path.join(root, cl_args.t if cl_args.t else 'html') + '/'
@@ -71,6 +79,11 @@ mathlib_github_src_root = "{0}/blob/{1}/src/".format(mathlib_github_root, mathli
 lean_commit = subprocess.check_output(['lean', '--run', 'src/lean_commit.lean']).decode()[:7]
 lean_root = 'https://github.com/leanprover-community/lean/blob/{}/library/'.format(lean_commit)
 
+env.globals['mathlib_github_root'] = mathlib_github_root
+env.globals['mathlib_commit'] = mathlib_commit
+env.globals['lean_commit'] = lean_commit
+env.globals['site_root'] = site_root
+
 note_regex = re.compile(r'Note \[(.*)\]', re.I)
 target_url_regex = site_root + r'notes.html#\1'
 link_patterns = [(note_regex, target_url_regex)]
@@ -80,6 +93,7 @@ def convert_markdown(ds, toc=False):
   if toc:
     extras.append('toc')
   return markdown2.markdown(ds, extras=extras, link_patterns = link_patterns)
+env.filters['convert_markdown'] = lambda x: convert_markdown(x)
 
 def filename_core(root, filename, ext):
   if 'lean/library' in filename:
@@ -91,12 +105,15 @@ def filename_core(root, filename, ext):
 
 def filename_import(filename):
   return filename_core('', filename, '')[:-1].replace('/', '.')
+env.filters['filename_import'] = filename_import
 
 def library_link(filename, line=None):
   root = lean_root + filename.split('lean/library/', 1)[1] \
            if 'lean/library' in filename \
            else mathlib_github_src_root + filename.split('mathlib/src/', 1)[1]
   return root + ('#L' + str(line) if line is not None else '')
+env.globals['library_link'] = library_link
+env.filters['library_link'] = library_link
 
 def name_in_decl(decl_name, dmap):
   if dmap['name'] == decl_name:
@@ -106,7 +123,6 @@ def name_in_decl(decl_name, dmap):
   if decl_name in [sf[0] for sf in dmap['constructors']]:
     return True
   return False
-
 
 def library_link_from_decl_name(decl_name, decl_loc, file_map):
   try:
@@ -119,7 +135,8 @@ def library_link_from_decl_name(decl_name, decl_loc, file_map):
     raise e
   return library_link(decl_loc, e['line'])
 
-def open_outfile(filename, mode):
+def open_outfile(filename, mode = 'w'):
+    filename = os.path.join(html_root, filename)
     if not os.path.exists(os.path.dirname(filename)):
         os.makedirs(os.path.dirname(filename))
     return open(filename, mode, encoding='utf-8')
@@ -194,224 +211,22 @@ def linkify_linked(string, loc_map):
 def linkify_markdown(string, loc_map):
   return re.sub(r'<code>([\s\S]*?)<\/code>', lambda p: linkify_type(p.group(), loc_map), string)
 
-def write_decl_html(obj, loc_map, instances, out):
-  doc_string = markdown2.markdown(obj['doc_string'], extras=["code-friendly", 'cuddled-lists', 'fenced-code-blocks', 'link-patterns'], link_patterns = link_patterns)
+def link_to_decl(decl_name, loc_map):
+  return filename_core(site_root, loc_map[decl_name], 'html') + '#' + decl_name
 
-  kind = 'structure' if len(obj['structure_fields']) > 0 else 'inductive' if len(obj['constructors']) > 0 else obj['kind']
+def kind_of_decl(decl):
+  kind = 'structure' if len(decl['structure_fields']) > 0 else 'inductive' if len(decl['constructors']) > 0 else decl['kind']
   if kind == 'thm': kind = 'theorem'
   elif kind == 'cnst': kind = 'constant'
   elif kind == 'ax': kind = 'axiom'
-
-  is_meta = '<span class="decl_meta">meta</span>' if obj['is_meta'] else ''
-  attr_string = '<div class="attributes">@[' + ', '.join(obj['attributes']) + ']</div>' if len(obj['attributes']) > 0 else ''
-  name = '<a href="{0}#{1}">{2}</a>'.format(
-    filename_core(site_root, obj['filename'], 'html'), obj['name'], htmlify_name(obj['name']))
-  args = []
-  for s in obj['args']:
-    arg = '<span class="decl_args">{}</span>'.format(linkify_linked(s['arg'], loc_map))
-    if s['implicit']: arg = '<span class="impl_arg">{}</span>'.format(arg)
-    args.append(arg)
-  args = ' '.join(args)
-  type = linkify_linked(obj['type'], loc_map)
-  decl_code = '{attr_string} \
-    <div class="decl_header impl_collapsed"> \
-      {is_meta} <span class="decl_kind">{kind}</span> \
-      <span class="decl_name">{name}</span> {args} <span class="decl_args">:</span> \
-    <div class="decl_type">{type}</div></div>\n'.format(
-      name = name,
-      is_meta = is_meta,
-      kind = kind,
-      attr_string = attr_string,
-      args = args,
-      type = type,
-    )
-
-  eqns = ['<li class="equation">{}</li>'.format(linkify_linked(eqn, loc_map)) for eqn in obj['equations']]
-  eqns = '<details><summary>Equations</summary><ul class="equations">{}</ul></details>'.format(''.join(eqns)) if len(eqns) > 0 else ''
-
-  sf = ['<li class="structure_field" id="{2}.{0}">{0} : {1}</li>'.format(name.split('.')[-1], linkify_linked(tp, loc_map), obj['name']) for (name, tp) in obj['structure_fields']]
-  sfs = '<ul class="structure_fields" id="{1}.mk">\n{0}\n</ul>'.format('\n'.join(sf), obj['name']) if len(sf) > 0 else ''
-
-  cstr = ['<li class="constructor" id="{2}.{0}">{0} : {1}</li>'.format(name.split('.')[-1], linkify_linked(tp, loc_map), obj['name']) for (name, tp) in obj['constructors']]
-  cstrs = '<ul class="constructors">\n{}\n</ul>'.format('\n'.join(cstr)) if len(cstr) > 0 else ''
-
-  if obj['name'] in instances:
-    insts = instances[obj['name']]
-    insts = ['<li>{}</li>'.format(linkify_type(n, loc_map)) for n in insts]
-    inst_string = '<details class="instances"><summary>Instances</summary><ul>{}</ul></details>'.format('\n'.join(insts))
-  else:
-    inst_string = ''
-
-  gh_link = '<div class="gh_link"><a href="{0}">source</a></div>'.format(library_link(obj['filename'], obj['line']))
-
-  out.write('<div class="decl" id="{raw_name}"><div class="{kind}">{gh_link} {decl_code} {sfs} {cstrs} {doc_string} {eqns} {inst_string}</ul></div></div>'.format(
-      decl_code = decl_code,
-      raw_name = obj['name'],
-      doc_string = doc_string,
-      kind = kind,
-      eqns = eqns,
-      sfs = sfs,
-      cstrs = cstrs,
-      inst_string = inst_string,
-      gh_link = gh_link
-  ))
+  return kind
+env.globals['kind_of_decl'] = kind_of_decl
 
 # Inserts zero-width spaces after dots
 def htmlify_name(n):
   # TODO: html escape
   return '.&#8203;'.join(n.split('.'))
-
-def write_internal_nav(objs, filename, out):
-  # out.write('<h1>Lean <a href="https://leanprover-community.github.io">mathlib</a> docs</h1>')
-  out.write('<h3><a href="#top">{0}</a></h3>'.format(htmlify_name(filename_import(filename))))
-  out.write('<div class="gh_nav_link"><a href="{}">source</a></div>'.format(library_link(filename)))
-  for o in sorted([o['name'] for o in objs]):
-    out.write('<div class="nav_link"><a href="#{0}">{1}</a></div>\n'.format(o, htmlify_name(o)))
-
-def write_notes_nav(notes, out):
-  # out.write('<h1>Lean <a href="https://leanprover-community.github.io">mathlib</a> docs</h1>')
-  out.write('<h3><a href="#top">Library notes</a></h3>')
-  for o in sorted([o[0] for o in notes]):
-    out.write('<div class="nav_link"><a href="#{0}">{0}</a></div>\n'.format(o))
-
-def write_mod_doc(obj, loc_map, out):
-  doc = linkify_markdown(convert_markdown(obj['doc']), loc_map)
-  out.write('<div class="mod_doc">\n' + doc + '</div>')
-
-
-def write_body_content(objs, loc_map, filename, mod_docs, instances, body_out):
-  body_out.write('<a id="top"></a>')
-  for o in sorted(objs + mod_docs, key = lambda d: d['line']):
-    if 'name' in o:
-      write_decl_html(o, loc_map, instances, body_out)
-    else:
-      write_mod_doc(o, loc_map, body_out)
-
-# MathJax configuration docs:
-#   http://docs.mathjax.org/en/latest/options/document.html#the-configuration-block
-# MathJax inlineMath/displayMath docs:
-#   http://docs.mathjax.org/en/latest/options/input/tex.html#tex-extension-options
-# StackOverflow link on why to avoid \(..\) and \[..\] when markdown is in the loop:
-#   https://math.meta.stackexchange.com/a/18714
-def html_head(title):
-  return """<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <link rel="stylesheet" href="{0}style.css">
-        <link rel="stylesheet" href="{0}pygments.css">
-        <link rel="shortcut icon" href="https://leanprover-community.github.io/archive/assets/img/lean.ico">
-        <title>mathlib docs: {1}</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-    </head>
-    <body>
-    <input id="nav_toggle" type="checkbox">
-    <div class="header">
-      <h1><a href="https://leanprover-community.github.io">mathlib</a> documentation</h1>
-      <p class="header_filename">{1}</p>
-      <form class="header_search" action="https://google.com/search" method="get">
-        <input type="hidden" name="sitesearch" value="https://leanprover-community.github.io/mathlib_docs">
-        <input type="text" name="q">
-        <button>search</button>
-      </form>
-      <label for="nav_toggle"></label>
-    </div>
-""".format(site_root, title)
-
-html_tail = """
-    </body>
-    <script src="{0}nav.js"></script>
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-    <script>
-    MathJax = {{
-      tex: {{
-        inlineMath: [['$', '$']],
-        displayMath: [['$$', '$$']]
-      }},
-      options: {{
-          skipHtmlTags: [
-              'script', 'noscript', 'style', 'textarea', 'pre',
-              'code', 'annotation', 'annotation-xml',
-              'decl', 'decl_meta', 'attributes', 'decl_args', 'decl_header', 'decl_name',
-              'decl_type', 'equation', 'equations', 'structure_field', 'structure_fields',
-              'constructor', 'constructors', 'instances'
-          ],
-          ignoreHtmlClass: 'tex2jax_ignore',
-          processHtmlClass: 'tex2jax_process',
-      }},
-    }};
-    </script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-</html>
-""".format(site_root)
-
-def is_displayable_html(name):
-    fn, ext = os.path.splitext(name)
-    return fn != 'index' and ext in ['.html', '.lean']
-
-def add_to_dir_tree(lst):
-  dct, fil = {}, []
-  for l in lst:
-    if len(l) == 0:
-      pass
-    elif len(l) == 1:
-      fil.append(l[0])
-    elif l[0] in dct:
-      dct[l[0]].append(l[1:])
-    else:
-      dct[l[0]] = [l[1:]]
-  dct2 = {}
-  for key in dct:
-    dct2[key] = add_to_dir_tree(dct[key])
-  return {'dirs':dct2, 'files':fil}
-
-def print_dir_tree(path, active_path, tree):
-  s = ''
-  for name in sorted(tree['dirs'].keys()):
-    new_path = os.path.join(path, name)
-    s += '<details class="nav_sect" id="nav_sect_{0}" {1}><summary>{0}</summary>\n'.format(name,
-      'open' if active_path.startswith(new_path + '/') else '')
-    # s += '<div class="nav_sect_inner{1}" id="{0}">\n'.format(new_path, '' if active_path.startswith(new_path + '/') else ' hidden')
-    s += print_dir_tree(new_path, active_path, tree['dirs'][name])
-    s += '\n</details>'
-  for name in sorted(tree['files']):
-    p = os.path.join(path, name)
-    s += '<div class="nav_link"><a class="nav_file{3}" href="{2}{0}">{1}</a></div>\n'.format(
-          p,
-          name[:-5],
-          site_root,
-          ' visible' if p == active_path else ''
-      )
-  s += '\n'
-  return s
-
-def content_nav(dir_list, active_path):
-  s = '<h3>General documentation</h3>'
-  s += '<div class="nav_link"><a href="{0}">index</a></div>\n'.format(site_root)
-  s += '<div class="nav_link"><a href="{0}tactics.html">tactics</a></div>\n'.format(site_root)
-  s += '<div class="nav_link"><a href="{0}commands.html">commands</a></div>\n'.format(site_root)
-  s += '<div class="nav_link"><a href="{0}hole_commands.html">hole commands</a></div>\n'.format(site_root)
-  s += '<div class="nav_link"><a href="{0}attributes.html">attributes</a></div>\n'.format(site_root)
-  s += '<div class="nav_link"><a href="{0}notes.html">notes</a></div>\n'.format(site_root)
-  s += '<h3>Tutorials</h3>'
-  for (filename, displayname, _, community_site_url) in extra_doc_files:
-    s += '<div class="nav_link"><a href="https://leanprover-community.github.io/{0}.html">{1}</a></div>\n'.format(community_site_url, displayname)
-  s += '<h3>Library</h3>'
-  s += print_dir_tree('', active_path, dir_list)
-  return s
-
-def write_html_file(content_nav_str, objs, loc_map, filename, mod_docs, instances, out):
-  out.write(html_head(filename_import(filename)))
-  out.write('<div class="internal_nav">\n' )
-  write_internal_nav(objs, filename, out)
-  out.write('</div>\n')
-  out.write('<div class="content">\n')
-  write_body_content(objs, loc_map, filename, mod_docs, instances, out)
-  out.write('\n</div>\n')
-  out.write('<div class="nav">\n')
-  out.write(content_nav_str)
-  out.write('\n</div>\n')
-  out.write(html_tail)
+env.filters['htmlify_name'] = htmlify_name
 
 # returns (pagetitle, intro_block), [(tactic_name, tactic_block)]
 def split_tactic_list(markdown):
@@ -442,258 +257,115 @@ def import_options(loc_map, decl_name, import_string):
 
 def split_on_hr(description):
   return description.split('\n---\n', 1)[-1]
+env.filters['split_on_hr'] = split_on_hr
 
-def escape_tag_name(tag):
+def tag_id_of_name(tag):
   return tag.strip().replace(' ', '-')
+env.globals['tag_id_of_name'] = tag_id_of_name
+env.globals['tag_ids_of_names'] = lambda ns: ' '.join(tag_id_of_name(n) for n in ns)
 
-# entries has the structure:
-# [{name: "", category: "", decl_names: [], tags: [], description: "", import: ""}]
-def write_tactic_doc_file(intro, entries, name, loc_map, dir_list):
-  entries.sort(key = lambda p: (str.lower(p['name']), str.lower(p['category'])))
-  out = open_outfile(html_root + name + '.html', 'w')
-  out.write(html_head(name))
-  out.write('<div class="internal_nav">\n' )
-  # out.write('<h1>Lean <a href="https://leanprover-community.github.io">mathlib</a> docs</h1>')
-  out.write('<h3><a href="#top">{0}</a></h3>'.format(name))
-  tagset = set()
-  for e in entries:
-    tagset.update(e['tags'])
-  out.write('\n<details class="tagfilter-div">\n<summary>Filter by tag</summary>\n')
-  out.write('<label><input type="checkbox" id="tagfilter-selectall" name="tagfilter-selectall">Select/deselect all</label><br><hr>\n')
-  for t in sorted(tagset):
-    out.write('<label><input type="checkbox" class="tagfilter" name="{1}" value="{1}">{0}</label><br>\n'.format(t, escape_tag_name(t)))
-  out.write('</details>\n')
-  for e in entries:
-    out.write('<div class="taclink {1}"><a href="#{0}">{0}</a></div>\n'.format(e['name'], ' '.join([escape_tag_name(t) for t in e['tags']])))
-  out.write('</div>\n')
-  out.write('<div class="content docfile">\n')
-  out.write('<h1>{0}</h1>\n\n{1}'.format(intro['title'], convert_markdown(intro['body'])))
-  for e in entries:
-    out.write('<div class="tactic {}">\n'.format(' '.join([escape_tag_name(t) for t in e['tags']])))
-    out.write('<h2 id="{0}"><a href="#{0}">{0}</a></h2>\n'.format(e['name']))
-    out.write(convert_markdown(split_on_hr(e['description'])))
-    if len(e['tags']) > 0:
-      tags = ['<li>{}</li>'.format(t) for t in e['tags']]
-      out.write('<div class="tags">Tags:<ul>{}</ul></div>'.format('\n'.join(tags)))
-    if len(e['decl_names']) > 0:
-      rel_decls = ['<li>{}</li>'.format(linkify_type(d, loc_map)) for d in e['decl_names']]
-      decl_string = '<details class="rel_decls"><summary>Related declarations</summary><ul>{}</ul></details>'.format('\n'.join(rel_decls))
-      out.write(decl_string)
-      out.write(import_options(loc_map, e['decl_names'][0], e['import']))
-    out.write('</div>\n')
-  out.write('\n</div>\n')
-  out.write('<div class="nav">\n')
-  out.write(content_nav(dir_list, 'index.html'))
-  out.write('\n</div>\n')
-  out.write(html_tail)
-  out.close()
-
-def write_pure_md_file(source, dest, name, loc_map, dir_list):
-  with open(source, 'r') as infile:
+def write_pure_md_file(source, dest, name, loc_map):
+  with open(source) as infile:
     body = convert_markdown(infile.read(), True)
-    infile.close()
-  out = open_outfile(html_root + dest, 'w')
-  out.write(html_head(name))
-  out.write('<div class="internal_nav">\n' )
-  # out.write('<h1>Lean <a href="https://leanprover-community.github.io">mathlib</a> docs</h1>')
-  out.write('<h3><a href="#top">{0}</a></h3>'.format(name))
-  out.write(body.toc_html)
-  out.write('</div>\n')
-  out.write('<div class="content">\n')
-  out.write(body)
-  out.write('\n</div></div>\n')
-  out.write('<div class="nav">\n')
-  out.write(content_nav(dir_list, 'index.html'))
-  out.write('\n</div>\n')
-  out.write(html_tail)
-  out.close()
 
+  with open_outfile(dest) as out:
+    out.write(env.get_template('pure_md.j2').render(
+      active_path = '',
+      name = name,
+      body = body,
+    ))
 
+def mk_site_tree(partition):
+  filenames = [ filename_core('', filename, 'html').split('/') for filename in partition ]
+  return mk_site_tree_core(filenames)
 
+def mk_site_tree_core(filenames, path=''):
+  entries = []
 
-index_body = """
-<p>Navigate through mathlib files using the menu on the left.</p>
+  for dirname in sorted(set(dirname for dirname, *rest in filenames if rest != [])):
+    new_path = dirname if path == '' else path+'/'+dirname
+    entries.append({
+      "kind": "dir",
+      "name": dirname,
+      "path": new_path,
+      "children": mk_site_tree_core([rest for dn, *rest in filenames if rest != [] and dn == dirname], new_path)
+    })
 
-<p>Declaration names link to their locations in the mathlib or core Lean source.
-Names inside code snippets link to their locations in this documentation.</p>
+  for filename in sorted(filename for filename, *rest in filenames if rest == []):
+    new_path = filename if path == '' else path+'/'+filename
+    entries.append({
+      "kind": "file",
+      "name": filename[:-5],
+      "path": new_path
+    })
 
-<p>This documentation has been generated with mathlib commit
-<a href="{1}/tree/{0}">{0}</a> and Lean commit <a href="{2}">{3}</a>.</p>
+  return entries
 
-<p>Note: mathlib is still only partially documented, and this HTML display is still
-under development. We welcome pull requests on <a href="{1}">GitHub</a> to update misleading or
-badly formatted doc strings, or to add missing documentation.</p>
-""".format(mathlib_commit, mathlib_github_root, lean_root, lean_commit)
+def setup_jinja_globals(file_map, loc_map):
+  env.globals['site_tree'] = mk_site_tree(file_map)
+  env.globals['instances'] = instances
+  env.globals['import_options'] = lambda d, i: import_options(loc_map, d, i)
+  env.globals['find_import_path'] = lambda d: find_import_path(loc_map, d)
+  env.filters['linkify_type'] = lambda x: linkify_type(x, loc_map)
+  env.filters['linkify_linked'] = lambda x: linkify_linked(x, loc_map)
+  env.filters['convert_markdown'] = lambda x: linkify_markdown(convert_markdown(x), loc_map) # TODO: this is probably very broken
+  env.filters['link_to_decl'] = lambda x: link_to_decl(x, loc_map)
 
-notes_body = """
-<a id="top"></a>
-<h1>Lean mathlib notes</h1>
+def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs):
+  with open_outfile('index.html') as out:
+    out.write(env.get_template('index.j2').render(
+      active_path=''))
 
-<p>Various implementation details are noted in the mathlib source, and referenced later on.
-We collect these notes here.</p>
-"""
+  with open_outfile('notes.html') as out:
+    out.write(env.get_template('notes.j2').render(
+      active_path='',
+      notes = sorted(notes, key = lambda n: n[0])))
 
-def write_note(n, loc_map, out):
-  note_id, note_body = n[0], linkify_markdown(convert_markdown(n[1]), loc_map)
-  out.write('<div class="note" id="{}">'.format(note_id))
-  out.write('<h2>{}</h2>'.format(note_id))
-  out.write(note_body)
-  out.write('</div>')
-
-def write_note_file(notes, loc_map, dir_list):
-  out = open_outfile(html_root + 'notes.html', 'w')
-  out.write(html_head('notes'))
-  out.write('<div class="internal_nav">\n' )
-  write_notes_nav(notes, out)
-  out.write('</div>\n')
-  out.write('<div class="content">\n')
-  out.write(notes_body)
-  for n in notes:
-    write_note(n, loc_map, out)
-  out.write('\n</div>\n')
-  out.write('<div class="nav">\n')
-  out.write(content_nav(dir_list, 'index.html'))
-  out.write('\n</div>\n')
-  out.write(html_tail)
-  out.close()
-
-tactic_doc_intros = {
-  'tactic': {'title': 'Mathlib tactics',
-             'body':
-             """In addition to the [tactics found in the core library](https://leanprover.github.io/reference/tactics.html),
-mathlib provides a number of specific interactive tactics.
-Here we document the mostly commonly used ones, as well as some underdocumented tactics from core."""},
-  'command': {'title': 'Commands',
-               'body':
-               """Commands provide a way to interact with and modify a Lean environment outside of the context of a proof.
-Familiar commands from core Lean include `#check`, `#eval`, and `run_cmd`.
-
-Mathlib provides a number of commands that offer customized behavior. These commands fall into two
-categories:
-
-* *Transient* commands are used to query the environment for information, but do not modify it,
-  and have no effect on the following proofs. These are useful as a user to get information from Lean.
-  They should not appear in "finished" files.
-  Transient commands typically begin with the symbol `#`.
-  `#check` is a standard example of a transient command.
-
-* *Permanent* commands modify the environment. Removing a permanent command from a file may affect
-  the following proofs. `set_option class.instance_max_depth 500` is a standard example of a
-  permanent command.
-
-User-defined commands can have unintuitive interactions with the parser. For the most part, this is
-not something to worry about. However, you may occasionally see strange error messages when using
-mathlib commands: for instance, running these commands immediately after `import file.name` will
-produce an error. An easy solution is to run a built-in no-op command in between, for example:
-
-```
-import data.nat.basic
-
-run_cmd tactic.skip -- this serves as a "barrier" between `import` and `#find`
-
-#find _ + _ = _ + _
-```"""},
-  'hole_command': {'title': 'Hole commands',
-               'body':"""Both VS Code and emacs support integration for 'hole commands'.
-
-In VS Code, if you enter `{! !}`, a small light bulb symbol will appear, and
-clicking on it gives a drop down menu of available hole commands. Running one
-of these will replace the `{! !}` with whatever text that hole command provides.
-
-As of Lean 3.16.0c, hole commands can also be activated at underscores `_`.
-
-In emacs, you can do something similar with `C-c SPC`.
-
-Many of these commands are available whenever `tactic.core` is imported.
-Commands that require additional imports are noted below.
-All should be available with `import tactic`."""},
-  'attribute': {'title': 'Attributes',
-               'body':"""
-*Attributes* are a tool for associating information with declarations.
-
-In the simplest case, an attribute is a tag that can be applied to a declaration.
-`simp` is a common example of this. A lemma
-```lean
-@[simp] lemma foo : ...
-```
-has been tagged with the `simp` attribute.
-When the simplifier runs, it will collect all lemmas that have been tagged with this attribute.
-
-More complicated attributes take *parameters*. An example of this is the `nolint` attribute.
-It takes a list of linter names when it is applied, and for each declaration tagged with `@[nolint linter_1 linter_2]`,
-this list can be accessed by a metaprogram.
-
-Attributes can also be applied to declarations with the syntax:
-```lean
-attribute [attr_name] decl_name_1 decl_name_2 decl_name 3
-```
-
-The core API for creating and using attributes can be found in
-[core.init.meta.attribute](core/init/meta/attribute.html).
-"""}
-}
-
-def write_tactic_doc_files(local_lean_root, entries, loc_map, dir_list):
   kinds = [('tactic', 'tactics'), ('command', 'commands'), ('hole_command', 'hole_commands'), ('attribute', 'attributes')]
   for (kind, filename) in kinds:
-    restr_entries = [e for e in entries if e['category'] == kind]
-    write_tactic_doc_file(tactic_doc_intros[kind], restr_entries, filename, loc_map, dir_list)
+    entries = [e for e in tactic_docs if e['category'] == kind]
+    with open_outfile(filename + '.html') as out:
+      out.write(env.get_template(filename + '.j2').render(
+        active_path='',
+        entries = entries,
+        tagset = sorted(set(t for e in entries for t in e['tags']))))
 
-def write_html_files(partition, loc_map, notes, mod_docs, instances, entries):
-  dir_list = add_to_dir_tree([filename_core('', filename, 'html').split('/') for filename in partition])
-  for filename in partition:
-    content_nav_str = content_nav(dir_list, filename_core('', filename, 'html'))
-    body_out = open_outfile(filename_core(html_root, filename, 'html'), 'w')
+  for filename, decls in partition.items():
     md = mod_docs[filename] if filename in mod_docs else []
-    write_html_file(content_nav_str, partition[filename], loc_map, filename, md, instances, body_out)
-    body_out.close()
-  out = open_outfile(html_root + 'index.html', 'w')
-  out.write(html_head('index'))
-  out.write('<div class="internal_nav">\n' )
-  out.write('</div>\n')
-  out.write('<div class="content">\n')
-  out.write(index_body)
-  out.write('\n</div>\n')
-  out.write('<div class="nav">\n')
-  out.write(content_nav(dir_list, 'index.html'))
-  out.write('\n</div>\n')
-  out.write(html_tail)
-  out.close()
-  write_note_file(notes, loc_map, dir_list)
-  #write_tactic_doc_file(local_lean_root + 'docs/tactics.md', 'tactics', loc_map, dir_list)
-  #write_tactic_doc_file(local_lean_root + 'docs/commands.md', 'commands', loc_map, dir_list)
-  #write_tactic_doc_file(local_lean_root + 'docs/holes.md', 'hole_commands', loc_map, dir_list)
-  write_tactic_doc_files(local_lean_root, entries, loc_map, dir_list)
+    with open_outfile(filename_core(html_root, filename, 'html')) as out:
+      out.write(env.get_template('module.j2').render(
+        active_path = filename_core('', filename, 'html'),
+        filename = filename,
+        items = sorted(md + decls, key = lambda d: d['line']),
+        decl_names = sorted(d['name'] for d in decls),
+      ))
+
   for (filename, displayname, source, _) in extra_doc_files:
-    write_pure_md_file(local_lean_root + source, filename + '.html', displayname, loc_map, dir_list)
+    write_pure_md_file(local_lean_root + source, filename + '.html', displayname, loc_map)
 
 def write_site_map(partition):
-  out = open_outfile(html_root + 'sitemap.txt', 'w')
-  for filename in partition:
-    out.write(filename_core(site_root, filename, 'html') + '\n')
-  for n in ['index', 'tactics', 'commands', 'hole_commands', 'notes']:
-    out.write(site_root + n + '.html\n')
-  for (filename, _, _, _) in extra_doc_files:
-    out.write(site_root + filename + '.html\n')
-  out.close()
+  with open_outfile('sitemap.txt') as out:
+    for filename in partition:
+      out.write(filename_core(site_root, filename, 'html') + '\n')
+    for n in ['index', 'tactics', 'commands', 'hole_commands', 'notes']:
+      out.write(site_root + n + '.html\n')
+    for (filename, _, _, _) in extra_doc_files:
+      out.write(site_root + filename + '.html\n')
 
 def write_docs_redirect(decl_name, decl_loc):
-  out = open_outfile(html_root + 'find/' + decl_name + '/index.html', 'w')
   url = filename_core(site_root, decl_loc, 'html')
-  out.write(f'<meta http-equiv="refresh" content="0;url={url}#{decl_name}">')
-  out.close()
+  with open_outfile('find/' + decl_name + '/index.html') as out:
+    out.write(f'<meta http-equiv="refresh" content="0;url={url}#{decl_name}">')
 
 def write_src_redirect(decl_name, decl_loc, file_map):
-  out = open_outfile(html_root + 'find/' + decl_name + '/src/index.html', 'w')
   url = library_link_from_decl_name(decl_name, decl_loc, file_map)
-  out.write(f'<meta http-equiv="refresh" content="0;url={url}">')
-  out.close()
+  with open_outfile('find/' + decl_name + '/src/index.html') as out:
+    out.write(f'<meta http-equiv="refresh" content="0;url={url}">')
 
 def write_redirects(loc_map, file_map):
   for decl_name in loc_map:
     write_docs_redirect(decl_name, loc_map[decl_name])
     write_src_redirect(decl_name, loc_map[decl_name], file_map)
-
 
 def copy_css(path, use_symlinks):
   def cp(a, b):
@@ -711,16 +383,15 @@ def copy_css(path, use_symlinks):
   cp('nav.js', path+'nav.js')
 
 def write_export_db(export_db):
-  out = open_outfile(html_root + 'export_db.json', 'w')
   json_str = json.dumps(export_db)
-  out.write(json_str)
-  out.close()
+  with open_outfile('export_db.json') as out:
+    out.write(json_str)
   with gzip.GzipFile(html_root + 'export_db.json.gz', 'w') as zout:
     zout.write(json_str.encode('utf-8'))
-    zout.close()
 
 if __name__ == '__main__':
   file_map, loc_map, export_db, notes, mod_docs, instances, tactic_docs = load_json()
+  setup_jinja_globals(file_map, loc_map)
   write_html_files(file_map, loc_map, notes, mod_docs, instances, tactic_docs)
   write_redirects(loc_map, file_map)
   copy_css(html_root, use_symlinks=cl_args.l)

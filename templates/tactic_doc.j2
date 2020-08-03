@@ -1,0 +1,54 @@
+{% extends "base.j2" %}
+
+{% block internal_nav %}
+<h3><a href="#top">{{ self.title() }}</a></h3>
+
+<details class="tagfilter-div">
+    <summary>Filter by tag</summary>
+    <label><input type="checkbox" id="tagfilter-selectall" name="tagfilter-selectall">Select/deselect all</label>
+    <br><hr>
+    {% for tag_name in tagset %}
+        <label><input type="checkbox" class="tagfilter" name="{{ tag_id_of_name(tag_name) }}" value="{{ tag_id_of_name(tag_name) }}">{{ tag_name }}</label>
+        <br>
+    {% endfor %}
+</details>
+{% for e in entries %}
+    <div class="taclink {{ tag_ids_of_names(e.tags) }}"><a href="#{{e.name}}">{{e.name}}</a></div>
+{% endfor %}
+{% endblock %}
+
+{% block content %}
+<div class="docfile">
+
+<h1>{{ self.title() }}</h1>
+
+{% block body %}{% endblock %}
+
+{% for e in entries %}
+<div class="tactic {{ tag_ids_of_names(e.tags) }}">
+    <h2 id="{{e.name}}"><a href="#{{e.name}}">{{e.name}}</a></h2>
+    {{ e.description | split_on_hr | convert_markdown }}
+    {% if e.tags | length %}
+      <div class="tags">Tags:
+        <ul>
+            {% for t in e['tags'] %}
+                <li>{{t}}</li> {# TODO integrate with tag selection #}
+            {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+    {% if e.decl_names | length %}
+      <details class="rel_decls"><summary>Related declarations</summary>
+        <ul>
+            {% for d in e.decl_names %}
+                <li>{{ d | linkify_type }}</li>
+            {% endfor %}
+        </ul>
+      </details>
+
+      {# TODO reimplement in template #}
+      {{ import_options(e.decl_names[0], e.import) }}
+    {% endif %}
+</div>
+{% endfor %}
+{% endblock %}

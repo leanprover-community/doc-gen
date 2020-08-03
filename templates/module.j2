@@ -1,0 +1,25 @@
+{% extends "base.j2" %}
+{% block title %}{{ filename | filename_import | htmlify_name }}{% endblock %}
+
+{% block content %}
+{% for item in items %}
+    {% if 'name' in item %}
+        {% set decl = item %}
+        {% include "decl.j2" %}
+    {% else %}
+        <div class="mod_doc">
+            {{ item.doc | convert_markdown }}
+        </div>
+    {% endif %}
+{% endfor %}
+{% endblock %}
+
+{% block internal_nav %}
+<h3><a href="#top">{{ self.title() }}</a></h3>
+
+<div class="gh_nav_link"><a href="{{ filename | library_link }}">source</a></div>
+
+{% for decl_name in decl_names %}
+    <div class="nav_link"><a href="#{{ decl_name }}">{{ decl_name | htmlify_name }}</a></div>
+{% endfor %}
+{% endblock %}
