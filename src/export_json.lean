@@ -174,6 +174,8 @@ expr.const d.to_name lvls
 meta def get_constructor_type (type_name constructor_name : name) : tactic string :=
 do d ← get_decl type_name,
    (locs, _) ← infer_type (mk_const_with_params d) >>= mk_local_pis,
+   env ← get_env,
+   let locs := locs.take (env.inductive_num_params type_name),
    proj_tp ← mk_const constructor_name >>= infer_type,
    do t ← pis locs (proj_tp.instantiate_pis locs), --.abstract_locals (locs.map expr.local_uniq_name),
    to_string <$> pp t
