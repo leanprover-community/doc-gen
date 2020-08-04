@@ -2,7 +2,7 @@
 <div class="decl" id="{{ decl.name }}">
 <div class="{{ kind }}">
 
-<div class="gh_link"><a href="{{ library_link(filename, line) }}">source</a></div>
+<div class="gh_link"><a href="{{ library_link(decl.filename, decl.line) }}">source</a></div>
 
 {% if decl.attributes | length %}
     <div class="attributes">@[{{ ', '.join(decl.attributes) }}]</div>
