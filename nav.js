@@ -122,38 +122,9 @@ if (tse != null) {
 // Simple declaration search
 // -------------------------
 
-function memo(thunk) {
-  let val = null;
-  return () => val || (val = thunk());
-}
+const searchWorkerURL = new URL(`${siteRoot}searchWorker.js`, window.location)
 
-const loadDeclTxt = memo(() => new Promise((resolve, reject) => {
-  const req = new XMLHttpRequest();
-  req.onload = () => resolve(req.responseText.split('\n'));
-  req.onerror = req.onabort = () => reject('failed to load file');
-  req.open('GET', siteRoot + 'decl.txt');
-  req.responseType = 'text';
-  req.send();
-}));
-
-const mkDeclIndex = memo(async () => {
-  const docs = (await loadDeclTxt()).map((decl, id) => ({decl, id}));
-  const miniSearch = new MiniSearch({
-    fields: ['decl'],
-    storeFields: ['decl'],
-  });
-  await miniSearch.addAllAsync(docs);
-  return miniSearch;
-});
-const declsMatching = async (pat) =>
-  (await mkDeclIndex()).search(pat, {
-      prefix: (term) => term.length > 3,
-      fuzzy: (term) => term.length > 3 && 0.2,
-    });
-
-const headerSearchInput = document.querySelector('.header_search input[name=q]');
-
-headerSearchInput.addEventListener('input', async (ev) => {
+document.querySelector('.header_search input[name=q]').addEventListener('input', (ev) => {
   const text = ev.target.value;
 
   // Super hack: there's no way to know whether a user selected a suggestion, so
@@ -163,15 +134,21 @@ headerSearchInput.addEventListener('input', async (ev) => {
     return;
   }
 
-  const decls = await declsMatching(text);
-  if (ev.target.value != text) return;
+  const worker = new SharedWorker(searchWorkerURL);
+  worker.port.start();
+  worker.port.onmessage = ({data}) => {
+    console.log(text, data);
+    if (ev.target.value != text) return;
 
-  const oldDatalist = document.querySelector('datalist#search_suggestions');
-  const datalist = oldDatalist.cloneNode(false);
-  for (const {decl} of decls.slice(0, 10)) {
-    const option = document.createElement('option');
-    option.value = decl + '\u200b';
-    datalist.appendChild(option);
-  }
-  oldDatalist.replaceWith(datalist);
+    const oldDatalist = document.querySelector('datalist#search_suggestions');
+    const datalist = oldDatalist.cloneNode(false);
+    for (const {decl} of data) {
+      const option = document.createElement('option');
+      option.value = decl + '\u200b';
+      datalist.appendChild(option);
+    }
+    oldDatalist.replaceWith(datalist);
+  };
+  worker.port.onmessageerror = (e) => console.warn('search worker: ', e);
+  worker.port.postMessage({q: text});
 });
