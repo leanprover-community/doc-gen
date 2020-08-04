@@ -131,25 +131,78 @@ const declSearch = (q) => new Promise((resolve, reject) => {
   worker.port.postMessage({q});
 });
 
-document.querySelector('.header_search input[name=q]').addEventListener('input', async (ev) => {
+const srId = 'search_results';
+document.getElementById('search_form')
+  .appendChild(document.createElement('div'))
+  .id = srId;
+
+function goToDecl(d) { window.location.href = `${siteRoot}find/${d}`; }
+
+function handleSearchCursorUpDown(down) {
+  const sel = document.querySelector(`#${srId} .selected`);
+  const sr = document.getElementById(srId);
+  if (sel) {
+    sel.classList.remove('selected');
+    const toSelect = down ?
+      sel.nextSibling || sr.firstChild:
+      sel.previousSibling || sr.lastChild;
+    toSelect && toSelect.classList.add('selected');
+  } else {
+    const toSelect = down ? sr.firstChild : sr.lastChild;
+    toSelect && toSelect.classList.add('selected');
+  }
+}
+
+function handleSearchEnter() {
+  const sel = document.querySelector(`#${srId} .selected`)
+    || document.getElementById(srId).firstChild;
+  goToDecl(sel.innerText);
+}
+
+const searchInput = document.querySelector('#search_form input[name=q]');
+
+searchInput.addEventListener('keydown', (ev) => {
+  switch (ev.key) {
+    case 'Down':
+    case 'ArrowDown':
+      ev.preventDefault();
+      handleSearchCursorUpDown(true);
+      break;
+    case 'Up':
+    case 'ArrowUp':
+      ev.preventDefault();
+      handleSearchCursorUpDown(false);
+      break;
+    case 'Enter':
+      ev.preventDefault();
+      handleSearchEnter();
+      break;
+  }
+});
+
+searchInput.addEventListener('input', async (ev) => {
   const text = ev.target.value;
 
-  // Super hack: there's no way to know whether a user selected a suggestion, so
-  // we append a zero-width space to the suggestion.
-  if (text.endsWith('\u200b')) {
-    window.location.href = `${siteRoot}find/` + text.slice(0, -1);
+  if (!text) {
+    const sr = document.getElementById(srId);
+    sr.removeAttribute('state');
+    sr.replaceWith(sr.cloneNode(false));
     return;
   }
+
+  document.getElementById(srId).setAttribute('state', 'loading');
 
   const result = await declSearch(text);
   if (ev.target.value != text) return;
 
-  const oldDatalist = document.querySelector('datalist#search_suggestions');
-  const datalist = oldDatalist.cloneNode(false);
+  const oldSR = document.getElementById('search_results');
+  const sr = oldSR.cloneNode(false);
   for (const {decl} of result) {
-    const option = document.createElement('option');
-    option.value = decl + '\u200b';
-    datalist.appendChild(option);
+    const d = sr.appendChild(document.createElement('div'));
+    d.innerText = decl;
+    d.title = decl;
+    d.onclick = () => goToDecl(decl);
   }
-  oldDatalist.replaceWith(datalist);
+  sr.setAttribute('state', 'done');
+  oldSR.replaceWith(sr);
 });
