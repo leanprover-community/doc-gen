@@ -19,6 +19,7 @@ import shutil
 import argparse
 import html
 import gzip
+from urllib.parse import quote
 
 root = os.getcwd()
 
@@ -355,7 +356,7 @@ def write_site_map(partition):
 def write_docs_redirect(decl_name, decl_loc):
   url = filename_core(site_root, decl_loc, 'html')
   with open_outfile('find/' + decl_name + '/index.html') as out:
-    out.write(f'<meta http-equiv="refresh" content="0;url={url}#{decl_name}">')
+    out.write(f'<meta http-equiv="refresh" content="0;url={url}#{quote(decl_name)}">')
 
 def write_src_redirect(decl_name, decl_loc, file_map):
   url = library_link_from_decl_name(decl_name, decl_loc, file_map)
