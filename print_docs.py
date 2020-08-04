@@ -328,7 +328,7 @@ def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs
     with open_outfile(filename + '.html') as out:
       out.write(env.get_template(filename + '.j2').render(
         active_path='',
-        entries = entries,
+        entries = sorted(entries, key = lambda n: n['name']),
         tagset = sorted(set(t for e in entries for t in e['tags']))))
 
   for filename, decls in partition.items():
