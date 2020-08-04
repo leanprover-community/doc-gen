@@ -330,6 +330,9 @@ code { padding: 1px 3px; }
 pre { padding: 1ex; }
 pre code { padding: 0 0; }
 
+#howabout code { background: inherit; }
+#howabout li { margin-bottom: 0.5ex; }
+
 .structure_fields, .constructors {
     display: block;
     padding-inline-start: 0;

@@ -12,9 +12,7 @@ const miniSearch = new MiniSearch({
 });
 miniSearch.addAll(declNames.map((decl, id) => ({decl, id})));
 
-onconnect = (e) => {
-    const port = e.ports[0];
-
+onconnect = ({ports: [port]}) =>
     port.onmessage = ({data}) => {
         const results = miniSearch.search(data.q, {
             prefix: (term) => term.length > 3,
@@ -22,4 +20,3 @@ onconnect = (e) => {
         });
         port.postMessage(results.slice(0, 20));
     };
-};
