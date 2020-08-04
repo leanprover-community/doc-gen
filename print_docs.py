@@ -381,6 +381,7 @@ def copy_css(path, use_symlinks):
   cp('style.css', path+'style.css')
   cp('pygments.css', path+'pygments.css')
   cp('nav.js', path+'nav.js')
+  cp('searchWorker.js', path+'searchWorker.js')
 
 def write_export_db(export_db):
   json_str = json.dumps(export_db)
