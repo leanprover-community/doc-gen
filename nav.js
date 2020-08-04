@@ -122,9 +122,16 @@ if (tse != null) {
 // Simple declaration search
 // -------------------------
 
-const searchWorkerURL = new URL(`${siteRoot}searchWorker.js`, window.location)
+const searchWorkerURL = new URL(`${siteRoot}searchWorker.js`, window.location);
+const declSearch = (q) => new Promise((resolve, reject) => {
+  const worker = new SharedWorker(searchWorkerURL);
+  worker.port.start();
+  worker.port.onmessage = ({data}) => resolve(data);
+  worker.port.onmessageerror = (e) => reject(e);
+  worker.port.postMessage({q});
+});
 
-document.querySelector('.header_search input[name=q]').addEventListener('input', (ev) => {
+document.querySelector('.header_search input[name=q]').addEventListener('input', async (ev) => {
   const text = ev.target.value;
 
   // Super hack: there's no way to know whether a user selected a suggestion, so
@@ -134,21 +141,15 @@ document.querySelector('.header_search input[name=q]').addEventListener('input',
     return;
   }
 
-  const worker = new SharedWorker(searchWorkerURL);
-  worker.port.start();
-  worker.port.onmessage = ({data}) => {
-    console.log(text, data);
-    if (ev.target.value != text) return;
+  const result = await declSearch(text);
+  if (ev.target.value != text) return;
 
-    const oldDatalist = document.querySelector('datalist#search_suggestions');
-    const datalist = oldDatalist.cloneNode(false);
-    for (const {decl} of data) {
-      const option = document.createElement('option');
-      option.value = decl + '\u200b';
-      datalist.appendChild(option);
-    }
-    oldDatalist.replaceWith(datalist);
-  };
-  worker.port.onmessageerror = (e) => console.warn('search worker: ', e);
-  worker.port.postMessage({q: text});
+  const oldDatalist = document.querySelector('datalist#search_suggestions');
+  const datalist = oldDatalist.cloneNode(false);
+  for (const {decl} of result) {
+    const option = document.createElement('option');
+    option.value = decl + '\u200b';
+    datalist.appendChild(option);
+  }
+  oldDatalist.replaceWith(datalist);
 });

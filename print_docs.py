@@ -317,6 +317,10 @@ def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs
     out.write(env.get_template('index.j2').render(
       active_path=''))
 
+  with open_outfile('404.html') as out:
+    out.write(env.get_template('404.j2').render(
+      active_path=''))
+
   with open_outfile('notes.html') as out:
     out.write(env.get_template('notes.j2').render(
       active_path='',

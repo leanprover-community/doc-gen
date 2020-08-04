@@ -1,0 +1,34 @@
+{% extends "base.j2" %}
+{% block title %}404{% endblock %}
+
+{% block content %}
+<h1>404 Not Found</h1>
+
+<p> Unfortunately, the page you were looking for is no longer here. </p>
+
+<div id="howabout"></div>
+
+<script>
+const howabout = document.getElementById('howabout');
+howabout.innerText = "Please wait a second.  I'll try to help you.";
+
+howabout.parentNode
+    .insertBefore(document.createElement('pre'), howabout)
+    .appendChild(document.createElement('code'))
+    .innerText = window.location.href.replaceAll('/', '/\u200b');
+
+setTimeout(async () => {
+    let query = window.location.href.match(/[/]([^/]+)(?:\.html|[/])?$/)[1];
+    const results = await declSearch(query);
+    howabout.innerText = 'How about one of these instead:';
+    const ul = howabout.appendChild(document.createElement('ul'));
+    for (const {decl} of results) {
+        const li = ul.appendChild(document.createElement('li'));
+        const a = li.appendChild(document.createElement('a'));
+        a.href = `${siteRoot}find/${decl}`;
+        a.appendChild(document.createElement('code')).innerText = decl;
+    }
+});
+</script>
+
+{% endblock %}
