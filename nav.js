@@ -206,3 +206,33 @@ searchInput.addEventListener('input', async (ev) => {
   sr.setAttribute('state', 'done');
   oldSR.replaceWith(sr);
 });
+
+
+
+
+
+
+// 404 page goodies
+// ----------------
+
+const howabout = document.getElementById('howabout');
+if (howabout) {
+  howabout.innerText = "Please wait a second.  I'll try to help you.";
+
+  howabout.parentNode
+      .insertBefore(document.createElement('pre'), howabout)
+      .appendChild(document.createElement('code'))
+      .innerText = window.location.href.replace(/[/]/g, '/\u200b');
+
+  const query = window.location.href.match(/[/]([^/]+)(?:\.html|[/])?$/)[1];
+  declSearch(query).then((results) => {
+      howabout.innerText = 'How about one of these instead:';
+      const ul = howabout.appendChild(document.createElement('ul'));
+      for (const {decl} of results) {
+          const li = ul.appendChild(document.createElement('li'));
+          const a = li.appendChild(document.createElement('a'));
+          a.href = `${siteRoot}find/${decl}`;
+          a.appendChild(document.createElement('code')).innerText = decl;
+      }
+  });
+}
