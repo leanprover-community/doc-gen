@@ -15,7 +15,7 @@ howabout.innerText = "Please wait a second.  I'll try to help you.";
 howabout.parentNode
     .insertBefore(document.createElement('pre'), howabout)
     .appendChild(document.createElement('code'))
-    .innerText = window.location.href.replaceAll('/', '/\u200b');
+    .innerText = window.location.href.replace(/[/]/g, '/\u200b');
 
 setTimeout(async () => {
     let query = window.location.href.match(/[/]([^/]+)(?:\.html|[/])?$/)[1];
