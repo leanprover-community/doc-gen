@@ -201,7 +201,7 @@ def linkify(string, file_map):
 def linkify_type(string, loc_map):
   splitstr = re.split(r'([\s\[\]\(\)\{\}])', string)
   tks = map(lambda s: linkify(s, loc_map), splitstr)
-  return "".join(tks)
+  return f'<code>{"".join(tks)}</code>'
 
 def linkify_linked(string, loc_map):
   return ''.join(
@@ -210,7 +210,7 @@ def linkify_linked(string, loc_map):
     for match in re.findall(r'\ue000(.+?)\ue001(\s*)(.*?)(\s*)\ue002|([^\ue000]+)', string))
 
 def linkify_markdown(string, loc_map):
-  return re.sub(r'<code>([\s\S]*?)<\/code>', lambda p: linkify_type(p.group(), loc_map), string)
+  return re.sub(r'<code>([\s\S]*?)<\/code>', lambda p: linkify_type(p.group(1), loc_map), string)
 
 def link_to_decl(decl_name, loc_map):
   return filename_core(site_root, loc_map[decl_name], 'html') + '#' + decl_name
