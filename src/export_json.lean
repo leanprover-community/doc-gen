@@ -68,9 +68,6 @@ let decl_names := decl_names.map (repr ∘ to_string),
 "{" ++ to_string (format!"\"name\": {repr name}, \"category\": \"{category}\", \"decl_names\":{decl_names}, \"tags\": {tags}, \"description\": {repr description}, \"import\": {repr imported}") ++ "}"
 end
 
-meta def escape_quotes (s : string) : string :=
-s.fold "" (λ s x, s ++ if x = '"' then '\\'.to_string ++ '"'.to_string else x.to_string)
-
 meta def print_arg : bool × string → string
 | (b, s) := let bstr := if b then "true" else "false" in
 "{" ++ (to_string $ format!"\"arg\":{repr s}, \"implicit\":{bstr}") ++ "}"
@@ -202,7 +199,6 @@ do ff ← d.in_current_file | return none,
    some ⟨line, _⟩ ← return (e.decl_pos decl_name) | return none,
    doc_string ← (some <$> doc_string decl_name) <|> return none,
    (args, type) ← get_args_and_type d.type,
---   type ← escape_quotes <$> to_string <$> pp d.type,
    attributes ← attributes_of decl_name,
    equations ← get_equations decl_name,
    structure_fields ← mk_structure_fields decl_name e,
