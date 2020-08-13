@@ -203,6 +203,28 @@ def linkify_linked(string, loc_map):
     match[1] + linkify_core(match[0], match[2], loc_map) + match[3]
     for match in re.findall(r'\ue000(.+?)\ue001(\s*)(.*?)(\s*)\ue002|([^\ue000]+)', string))
 
+def linkify_efmt(f, loc_map, indent=0):
+  def has_only_ws_outside_n(f):
+    if isinstance(f, str):
+      return re.match(r'^\s+$', f)
+    elif f[0] == 'n':
+      return True
+    elif f[0] == 'c':
+      return has_only_ws_outside_n(f[1]) and has_only_ws_outside_n(f[2])
+  def go(f):
+    if isinstance(f, str):
+      f = f.replace('\n', ' ')
+      # f = f.replace(' ', '&nbsp;')
+      return linkify_linked(f, loc_map)
+    elif f[0] == 'n':
+      if has_only_ws_outside_n(f[1]): return go(f[1])
+      return f'<span class="fn">{go(f[1])}</span>'
+    elif f[0] == 'c':
+      return go(f[1]) + go(f[2])
+    else:
+      raise Exception('unknown efmt object')
+  return go(['n', f])
+
 def linkify_markdown(string, loc_map):
   def linkify_type(string):
     splitstr = re.split(r'([\s\[\]\(\)\{\}])', string)
@@ -311,7 +333,7 @@ def setup_jinja_globals(file_map, loc_map):
   env.globals['import_options'] = lambda d, i: import_options(loc_map, d, i)
   env.globals['find_import_path'] = lambda d: find_import_path(loc_map, d)
   env.filters['linkify'] = lambda x: linkify(x, loc_map)
-  env.filters['linkify_linked'] = lambda x: linkify_linked(x, loc_map)
+  env.filters['linkify_efmt'] = lambda x: linkify_efmt(x, loc_map)
   env.filters['convert_markdown'] = lambda x: linkify_markdown(convert_markdown(x), loc_map) # TODO: this is probably very broken
   env.filters['link_to_decl'] = lambda x: link_to_decl(x, loc_map)
 

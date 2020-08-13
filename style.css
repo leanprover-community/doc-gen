@@ -343,8 +343,12 @@ label[for="nav_toggle"] { /* The MENU button */
     border-top: 2px solid #f0a202;
 }
 
-.decl_args {
-    white-space: nowrap;
+.fn {
+    display: inline-block;
+    /* border: 1px dashed red; */
+    text-indent: -1ch;
+    padding-left: 1ch;
+    white-space: pre-wrap;
 }
 
 .decl_args, .decl_type {
@@ -399,6 +403,7 @@ pre code { padding: 0 0; }
     display: block;
     padding-inline-start: 0;
     margin-top: 1ex;
+    text-indent: -2ex; padding-left: 2ex;
 }
 
 .structure_field {
