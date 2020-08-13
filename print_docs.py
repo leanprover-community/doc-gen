@@ -203,7 +203,9 @@ def linkify_linked(string, loc_map):
     match[1] + linkify_core(match[0], match[2], loc_map) + match[3]
     for match in re.findall(r'\ue000(.+?)\ue001(\s*)(.*?)(\s*)\ue002|([^\ue000]+)', string))
 
-def linkify_efmt(f, loc_map, indent=0):
+def linkify_efmt(f, loc_map):
+  # do not produce directly nested <span class="fn"> elements
+  # these break the css
   def has_only_ws_outside_n(f):
     if isinstance(f, str):
       return re.match(r'^\s+$', f)
@@ -211,6 +213,17 @@ def linkify_efmt(f, loc_map, indent=0):
       return True
     elif f[0] == 'c':
       return has_only_ws_outside_n(f[1]) and has_only_ws_outside_n(f[2])
+
+  # ignore nesting whose content starts with a comma:
+  # ∀ x[, x = x]
+  def starts_with_comma(f):
+    if isinstance(f, str):
+      return f.startswith(',')
+    elif f[0] == 'n':
+      return starts_with_comma(f[1])
+    elif f[0] == 'c':
+      return starts_with_comma(f[1])
+
   def go(f):
     if isinstance(f, str):
       f = f.replace('\n', ' ')
@@ -218,11 +231,13 @@ def linkify_efmt(f, loc_map, indent=0):
       return linkify_linked(f, loc_map)
     elif f[0] == 'n':
       if has_only_ws_outside_n(f[1]): return go(f[1])
+      if starts_with_comma(f[1]): return go(f[1])
       return f'<span class="fn">{go(f[1])}</span>'
     elif f[0] == 'c':
       return go(f[1]) + go(f[2])
     else:
       raise Exception('unknown efmt object')
+
   return go(['n', f])
 
 def linkify_markdown(string, loc_map):

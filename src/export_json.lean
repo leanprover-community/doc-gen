@@ -57,7 +57,7 @@ meta def compose' : efmt → efmt → efmt
 | a b := compose a b
 
 meta def of_eformat : eformat → efmt
-| (tagged_format.group g) := of_eformat g
+| (tagged_format.group g) := nest (of_eformat g)
 | (tagged_format.nest i g) := nest (of_eformat g)
 | (tagged_format.tag _ g) := of_eformat g
 | (tagged_format.highlight _ g) := of_eformat g
