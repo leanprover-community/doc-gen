@@ -94,7 +94,6 @@ def convert_markdown(ds, toc=False):
   if toc:
     extras.append('toc')
   return markdown2.markdown(ds, extras=extras, link_patterns = link_patterns)
-env.filters['convert_markdown'] = lambda x: convert_markdown(x)
 
 def filename_core(root, filename, ext):
   if 'lean/library' in filename:
@@ -198,11 +197,6 @@ def linkify_core(decl_name, text, file_map):
 def linkify(string, file_map):
   return linkify_core(string, string, file_map)
 
-def linkify_type(string, loc_map):
-  splitstr = re.split(r'([\s\[\]\(\)\{\}])', string)
-  tks = map(lambda s: linkify(s, loc_map), splitstr)
-  return f'<code>{"".join(tks)}</code>'
-
 def linkify_linked(string, loc_map):
   return ''.join(
     match[4] if match[0] == '' else
@@ -210,7 +204,16 @@ def linkify_linked(string, loc_map):
     for match in re.findall(r'\ue000(.+?)\ue001(\s*)(.*?)(\s*)\ue002|([^\ue000]+)', string))
 
 def linkify_markdown(string, loc_map):
-  return re.sub(r'<code>([\s\S]*?)<\/code>', lambda p: linkify_type(p.group(1), loc_map), string)
+  def linkify_type(string):
+    splitstr = re.split(r'([\s\[\]\(\)\{\}])', string)
+    tks = map(lambda s: linkify(s, loc_map), splitstr)
+    return "".join(tks)
+
+  string = re.sub(r'<code>([^<]+)</code>',
+    lambda p: '<code>{}</code>'.format(linkify_type(p.group(1))), string)
+  string = re.sub(r'<span class="n">([^<]+)</span>',
+    lambda p: '<span class="n">{}</span>'.format(linkify_type(p.group(1))), string)
+  return string
 
 def link_to_decl(decl_name, loc_map):
   return filename_core(site_root, loc_map[decl_name], 'html') + '#' + decl_name
@@ -307,7 +310,7 @@ def setup_jinja_globals(file_map, loc_map):
   env.globals['instances'] = instances
   env.globals['import_options'] = lambda d, i: import_options(loc_map, d, i)
   env.globals['find_import_path'] = lambda d: find_import_path(loc_map, d)
-  env.filters['linkify_type'] = lambda x: linkify_type(x, loc_map)
+  env.filters['linkify'] = lambda x: linkify(x, loc_map)
   env.filters['linkify_linked'] = lambda x: linkify_linked(x, loc_map)
   env.filters['convert_markdown'] = lambda x: linkify_markdown(convert_markdown(x), loc_map) # TODO: this is probably very broken
   env.filters['link_to_decl'] = lambda x: link_to_decl(x, loc_map)
