@@ -457,8 +457,6 @@ def mk_export_db(loc_map, file_map):
 
 def write_export_db(export_db):
   json_str = json.dumps(export_db)
-  with open_outfile('export_db.json') as out:
-    out.write(json_str)
   with gzip.GzipFile(html_root + 'export_db.json.gz', 'w') as zout:
     zout.write(json_str.encode('utf-8'))
 
