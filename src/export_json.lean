@@ -345,3 +345,7 @@ do handle ← mk_file_handle filename mode.write,
 meta def main : io unit :=
 export_json "json_export.txt"
 
+-- HACK: print gadgets with less fluff
+notation x ` := `:10 y := opt_param x y
+-- HACKIER: print last component of name as string (because we can't do any better...)
+notation x ` . `:10 y := auto_param x (name.mk_string y _)
