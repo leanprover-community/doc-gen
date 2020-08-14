@@ -349,6 +349,7 @@ label[for="nav_toggle"] { /* The MENU button */
     text-indent: -1ch;
     padding-left: 1ch;
     white-space: pre-wrap;
+    vertical-align: top;
 }
 
 .decl_args, .decl_type {
