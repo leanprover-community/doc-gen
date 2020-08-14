@@ -141,20 +141,9 @@ def open_outfile(filename, mode = 'w'):
         os.makedirs(os.path.dirname(filename))
     return open(filename, mode, encoding='utf-8')
 
-def mk_export_map_entry(decl_name, filename, kind, is_meta, line, args, tp):
-  return {'filename': filename,
-          'kind': kind,
-          'is_meta': is_meta,
-          'line': line,
-          'args': args,
-          'type': tp,
-          'src_link': library_link(filename, line),
-          'docs_link': filename_core(site_root, filename, 'html') + f'#{decl_name}'}
-
 def separate_results(objs):
   file_map = {}
   loc_map = {}
-  export_db = {}
   for obj in objs:
     if 'lean/library' not in obj['filename'] and 'mathlib/src' not in obj['filename']:
       continue
@@ -163,26 +152,23 @@ def separate_results(objs):
     else:
       file_map[obj['filename']].append(obj)
     loc_map[obj['name']] = obj['filename']
-    export_db[obj['name']] = mk_export_map_entry(obj['name'], obj['filename'], obj['kind'], obj['is_meta'], obj['line'], obj['args'], obj['type'])
     for (cstr_name, tp) in obj['constructors']:
       loc_map[cstr_name] = obj['filename']
-      export_db[cstr_name] = mk_export_map_entry(cstr_name, obj['filename'], obj['kind'], obj['is_meta'], obj['line'], [], tp)
     for (sf_name, tp) in obj['structure_fields']:
       loc_map[sf_name] = obj['filename']
-      export_db[sf_name] = mk_export_map_entry(sf_name, obj['filename'],  obj['kind'], obj['is_meta'], obj['line'], [], tp)
     if len(obj['structure_fields']) > 0:
       loc_map[obj['name'] + '.mk'] = obj['filename']
-  return (file_map, loc_map, export_db)
+  return file_map, loc_map
 
 def load_json():
   f = open('json_export.txt', 'r', encoding='utf-8')
   decls = json.load(f, strict=False)
   f.close()
-  file_map, loc_map, export_db = separate_results(decls['decls'])
+  file_map, loc_map = separate_results(decls['decls'])
   for entry in decls['tactic_docs']:
     if len(entry['tags']) == 0:
       entry['tags'] = ['untagged']
-  return file_map, loc_map, export_db, decls['notes'], decls['mod_docs'], decls['instances'], decls['tactic_docs']
+  return file_map, loc_map, decls['notes'], decls['mod_docs'], decls['instances'], decls['tactic_docs']
 
 def linkify_core(decl_name, text, file_map):
   if decl_name in file_map:
@@ -443,6 +429,32 @@ def copy_css(path, use_symlinks):
   cp('nav.js', path+'nav.js')
   cp('searchWorker.js', path+'searchWorker.js')
 
+def write_decl_txt(loc_map):
+  with open_outfile('decl.txt') as out:
+    out.write('\n'.join(loc_map.keys()))
+
+def mk_export_map_entry(decl_name, filename, kind, is_meta, line, args, tp):
+  return {'filename': filename,
+          'kind': kind,
+          'is_meta': is_meta,
+          'line': line,
+          # 'args': args,
+          # 'type': tp,
+          'src_link': library_link(filename, line),
+          'docs_link': filename_core(site_root, filename, 'html') + f'#{decl_name}'}
+
+def mk_export_db(loc_map, file_map):
+  export_db = {}
+  for fn, decls in file_map.items():
+    for obj in decls:
+      export_db[obj['name']] = mk_export_map_entry(obj['name'], obj['filename'], obj['kind'], obj['is_meta'], obj['line'], obj['args'], obj['type'])
+      export_db[obj['name']]['decl_header_html'] = env.get_template('decl_header.j2').render(decl=obj)
+      for (cstr_name, tp) in obj['constructors']:
+        export_db[cstr_name] = mk_export_map_entry(cstr_name, obj['filename'], obj['kind'], obj['is_meta'], obj['line'], [], tp)
+      for (sf_name, tp) in obj['structure_fields']:
+        export_db[sf_name] = mk_export_map_entry(sf_name, obj['filename'],  obj['kind'], obj['is_meta'], obj['line'], [], tp)
+  return export_db
+
 def write_export_db(export_db):
   json_str = json.dumps(export_db)
   with open_outfile('export_db.json') as out:
@@ -450,16 +462,12 @@ def write_export_db(export_db):
   with gzip.GzipFile(html_root + 'export_db.json.gz', 'w') as zout:
     zout.write(json_str.encode('utf-8'))
 
-def write_decl_txt(loc_map):
-  with open_outfile('decl.txt') as out:
-    out.write('\n'.join(loc_map.keys()))
-
 if __name__ == '__main__':
-  file_map, loc_map, export_db, notes, mod_docs, instances, tactic_docs = load_json()
+  file_map, loc_map, notes, mod_docs, instances, tactic_docs = load_json()
   setup_jinja_globals(file_map, loc_map)
   write_decl_txt(loc_map)
   write_html_files(file_map, loc_map, notes, mod_docs, instances, tactic_docs)
   write_redirects(loc_map, file_map)
   copy_css(html_root, use_symlinks=cl_args.l)
-  write_export_db(export_db)
+  write_export_db(mk_export_db(loc_map, file_map))
   write_site_map(file_map)
