@@ -203,27 +203,42 @@ def linkify_linked(string, loc_map):
     match[1] + linkify_core(match[0], match[2], loc_map) + match[3]
     for match in re.findall(r'\ue000(.+?)\ue001(\s*)(.*?)(\s*)\ue002|([^\ue000]+)', string))
 
+# do not produce directly nested <span class="fn"> elements
+# these break the css
+def has_only_ws_outside_n(f):
+  if isinstance(f, str):
+    return re.match(r'^\s+$', f)
+  elif f[0] == 'n':
+    return True
+  elif f[0] == 'c':
+    return has_only_ws_outside_n(f[1]) and has_only_ws_outside_n(f[2])
+
+# ignore nesting whose content starts with a comma:
+# ∀ x[, x = x]
+def starts_with_comma(f):
+  if isinstance(f, str):
+    return f.startswith(',')
+  elif f[0] == 'n':
+    return starts_with_comma(f[1])
+  elif f[0] == 'c':
+    return starts_with_comma(f[1])
+
+def is_c(f): return isinstance(f, list) and f[0] == 'c'
+def is_n(f): return isinstance(f, list) and f[0] == 'n'
+
+def strip_n(f):
+  while is_n(f): f = f[1]
+  return f
+
+# ["c", ["c", "(", ["n", x]], ")"] ->
+# ["c", ["c", "(",       x ], ")"]
+def remove_nesting_inside_parens(f):
+  if is_c(f) and f[2] == ')' and is_c(f[1]) and f[1][1] == '(' and is_n(f[1][2]):
+    return ['c', ['c', '(', strip_n(f[1][2])], ')']
+  else:
+    return f
+
 def linkify_efmt(f, loc_map):
-  # do not produce directly nested <span class="fn"> elements
-  # these break the css
-  def has_only_ws_outside_n(f):
-    if isinstance(f, str):
-      return re.match(r'^\s+$', f)
-    elif f[0] == 'n':
-      return True
-    elif f[0] == 'c':
-      return has_only_ws_outside_n(f[1]) and has_only_ws_outside_n(f[2])
-
-  # ignore nesting whose content starts with a comma:
-  # ∀ x[, x = x]
-  def starts_with_comma(f):
-    if isinstance(f, str):
-      return f.startswith(',')
-    elif f[0] == 'n':
-      return starts_with_comma(f[1])
-    elif f[0] == 'c':
-      return starts_with_comma(f[1])
-
   def go(f):
     if isinstance(f, str):
       f = f.replace('\n', ' ')
@@ -232,7 +247,7 @@ def linkify_efmt(f, loc_map):
     elif f[0] == 'n':
       if has_only_ws_outside_n(f[1]): return go(f[1])
       if starts_with_comma(f[1]): return go(f[1])
-      return f'<span class="fn">{go(f[1])}</span>'
+      return f'<span class="fn">{go(remove_nesting_inside_parens(f[1]))}</span>'
     elif f[0] == 'c':
       return go(f[1]) + go(f[2])
     else:
