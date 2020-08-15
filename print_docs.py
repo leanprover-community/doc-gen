@@ -46,7 +46,10 @@ extra_doc_files = [('overview', 'mathlib overview', 'docs/mathlib-overview.md', 
                    ('calc', 'calc mode', 'docs/extras/calc.md', 'extras/calc'),
                    ('conv', 'conv mode', 'docs/extras/conv.md', 'extras/conv'),
                    ('simp', 'simplification', 'docs/extras/simp.md', 'extras/simp'),
-                   ('well_founded_recursion', 'well founded recursion', 'docs/extras/well_founded_recursion.md','extras/well_founded_recursion')]
+                   ('well_founded_recursion', 'well founded recursion', 'docs/extras/well_founded_recursion.md','extras/well_founded_recursion'),
+                   ('style', 'style guide', 'docs/contribute/style.md','contribute/style'),
+                   ('doc_style', 'documentation style guide', 'docs/contribute/doc.md','contribute/doc'),
+                   ('naming', 'naming conventions', 'docs/contribute/naming.md','contribute/naming')]
 env.globals['extra_doc_files'] = extra_doc_files
 
 # path to put generated html
