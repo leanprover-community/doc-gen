@@ -148,7 +148,7 @@ meta def binder_info.is_inst_implicit : binder_info → bool
 
 meta def count_named_intros : expr → tactic ℕ
 | e@(expr.pi _ bi _ _) :=
-  do ([_], b) ← mk_local_pisn e 1,
+  do ([_], b) ← open_n_pis e 1,
      v ← count_named_intros b,
      return $ if v = 0 ∧ e.is_arrow ∧ ¬ bi.is_inst_implicit then v else v + 1
 | _ := return 0
@@ -194,7 +194,7 @@ do o ← get_options, set_options $ o.set_bool `pp.links tt
 meta def get_proj_type (struct_name proj_name : name) : tactic efmt :=
 do (locs, _) ← mk_const struct_name >>= infer_type >>= mk_local_pis,
    proj_tp ← mk_const proj_name >>= infer_type,
-   (_, t) ← mk_local_pisn (proj_tp.instantiate_pis locs) 1,
+   (_, t) ← open_n_pis (proj_tp.instantiate_pis locs) 1,
    efmt.pp t
 
 meta def mk_structure_fields (decl : name) (e : environment) : tactic (list (string × efmt)) :=
