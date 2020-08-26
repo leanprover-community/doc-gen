@@ -146,23 +146,19 @@ meta def binder_info.is_inst_implicit : binder_info → bool
 | binder_info.inst_implicit := tt
 | _ := ff
 
-meta def count_named_intros : expr → tactic ℕ
-| e@(expr.pi _ bi _ _) :=
-  do ([_], b) ← open_n_pis e 1,
-     v ← count_named_intros b,
-     return $ if v = 0 ∧ e.is_arrow ∧ ¬ bi.is_inst_implicit then v else v + 1
-| _ := return 0
-
-/- meta def count_named_intros : expr → ℕ
-| e@(expr.pi _ _ _ b) :=
-  let v := count_named_intros b in
-  if v = 0 ∧ e.is_arrow then v else v + 1
-| _ := 0 -/
+-- Determines how many pis should be shown as named arguments.
+meta def count_named_intros : expr → ℕ
+| e@(expr.pi n bi d b) :=
+  if e.is_arrow ∧ n = `a then
+    0
+  else
+    count_named_intros (b.instantiate_var `(Prop)) + 1
+| _ := 0
 
 -- tt means implicit
 meta def get_args_and_type (e : expr) : tactic (list (bool × efmt) × efmt) :=
 prod.fst <$> solve_aux e (
-do count_named_intros e >>= intron,
+do intron $ count_named_intros e,
    cxt ← local_context >>= tactic.interactive.compact_decl,
    cxt' ← cxt.mmap (λ t, do ft ← format_binders t.1 t.2.1 t.2.2, return (ft.1, ft.2)),
    tgt ← target >>= efmt.pp,
