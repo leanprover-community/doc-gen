@@ -438,19 +438,14 @@ a:hover {
     text-decoration: underline;
 }
 
-.decl_header.impl_collapsed .impl_arg > span {
-    display: none;
-}
-.decl_header.impl_collapsed .impl_arg ~ .impl_arg {
-    display: none;
-}
-.decl_header.impl_collapsed .impl_arg:after {
-    cursor: pointer;
-    content: '{…}';
-}
 .impl_arg {
     font-style: italic;
-    font-weight: normal;
+    transition: opacity 300ms ease-in;
+}
+
+.decl_header:not(:hover) .impl_arg {
+    opacity: 30%;
+    transition: opacity 1000ms ease-out;
 }
 
 .gh_link {
