@@ -352,6 +352,21 @@ label[for="nav_toggle"] { /* The MENU button */
     vertical-align: top;
 }
 
+.fn { --fn: 1; }
+.fn .fn { --fn: 2; }
+.fn .fn .fn { --fn: 3; }
+.fn .fn .fn .fn { --fn: 4; }
+.fn .fn .fn .fn .fn { --fn: 5; }
+.fn .fn .fn .fn .fn .fn { --fn: 6; }
+.fn .fn .fn .fn .fn .fn .fn { --fn: 7; }
+.fn .fn .fn .fn .fn .fn .fn .fn { --fn: 8; }
+.fn {
+    transition: background-color 100ms ease-in-out;
+}
+.fn:hover {
+    background-color: hsla(calc(75 - var(--fn) * 10), 80%, calc(100% - 3%*var(--fn)));
+}
+
 .decl_args, .decl_type {
     font-weight: normal;
 }
