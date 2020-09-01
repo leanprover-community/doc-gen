@@ -397,7 +397,7 @@ def copy_css(path, use_symlinks):
 
 def copy_yaml_files(path):
   for fn in ['100.yaml', 'undergrad.yaml', 'overview.yaml']:
-    shutil.copyfile(f'_target/deps/mathlib/docs/{fn}', path+fn)
+    shutil.copyfile(f'mathlib/docs/{fn}', path+fn)
 
 def write_decl_txt(loc_map):
   with open_outfile('decl.txt') as out:
