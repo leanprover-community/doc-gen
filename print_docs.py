@@ -395,6 +395,10 @@ def copy_css(path, use_symlinks):
   cp('nav.js', path+'nav.js')
   cp('searchWorker.js', path+'searchWorker.js')
 
+def copy_yaml_files(path):
+  for fn in ['100.yaml', 'undergrad.yaml', 'overview.yaml']:
+    shutil.copyfile(f'{local_lean_root}docs/{fn}', path+fn)
+
 def write_decl_txt(loc_map):
   with open_outfile('decl.txt') as out:
     out.write('\n'.join(loc_map.keys()))
@@ -433,5 +437,6 @@ if __name__ == '__main__':
   write_html_files(file_map, loc_map, notes, mod_docs, instances, tactic_docs)
   write_redirects(loc_map, file_map)
   copy_css(html_root, use_symlinks=cl_args.l)
+  copy_yaml_files(html_root)
   write_export_db(mk_export_db(loc_map, file_map))
   write_site_map(file_map)
