@@ -373,6 +373,15 @@ ul {
     font-weight: bold;
 }
 
+/* break long declaration names at periods where possible */
+.decl_name > a {
+    word-break: break-all;
+}
+
+.decl_name > a > span {
+    word-break: normal;
+}
+
 .decl_header {
     /* indent everything but first line twice as much as decl_type */
     text-indent: -8ex; padding-left: 8ex;

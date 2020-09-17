@@ -233,7 +233,7 @@ env.globals['kind_of_decl'] = kind_of_decl
 # Inserts zero-width spaces after dots
 def htmlify_name(n):
   # TODO: html escape
-  return '.&#8203;'.join(n.split('.'))
+  return '.'.join([f'<span>{ part }</span>' for part in n.split('.')])
 env.filters['htmlify_name'] = htmlify_name
 
 # returns (pagetitle, intro_block), [(tactic_name, tactic_block)]
