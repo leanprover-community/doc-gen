@@ -15,8 +15,6 @@ rm -rf _target
 leanproject get-mathlib-cache
 ```
 
-We require a pre-release version of `pygments` for syntax highlighting because the latest release does not include support for Lean 3 yet.  You can also use an older `pygments` for testing if you need to, but then the syntax highlighting will be off.
-
 Make sure that olean files are generated for mathlib in `_target`, otherwise this will be extremely slow.
 
 ## Usage

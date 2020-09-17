@@ -1,5 +1,5 @@
 markdown2
 toml
 mathlibtools
-git+https://github.com/pygments/pygments@master#egg=Pygments
+pygments >= 2.7.1
 jinja2
