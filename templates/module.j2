@@ -1,5 +1,5 @@
 {% extends "base.j2" %}
-{% block title %}{{ filename | filename_import | htmlify_name }}{% endblock %}
+{% block title %}{{ filename | filename_import | e }}{% endblock %}
 
 {% block content %}
 {% for item in items %}
