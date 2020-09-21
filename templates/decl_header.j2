@@ -1,7 +1,7 @@
 {% set kind = kind_of_decl(decl) %}
 {% if decl.is_meta %}<span class="decl_meta">meta</span>{% endif %}
 <span class="decl_kind">{{ kind }}</span>
-<span class="decl_name"><a href="{{ decl.name | link_to_decl }}">{{ decl.name | htmlify_name }}</a></span>
+<span class="decl_name"><a class="break_within" href="{{ decl.name | link_to_decl }}">{{ decl.name | htmlify_name }}</a></span>
 {% for arg in decl.args %}
     {% if arg.implicit %}<span class="impl_arg">{% endif -%}
     <span class="decl_args">{{ arg.arg | linkify_efmt }}</span>
