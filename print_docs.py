@@ -164,7 +164,7 @@ def separate_results(objs):
   return file_map, loc_map
 
 def load_json():
-  f = open('json_export.txt', 'r', encoding='utf-8')
+  f = open('export.json', 'r', encoding='utf-8')
   decls = json.load(f, strict=False)
   f.close()
   file_map, loc_map = separate_results(decls['decls'])
