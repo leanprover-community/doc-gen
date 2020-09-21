@@ -231,7 +231,7 @@ def kind_of_decl(decl):
 env.globals['kind_of_decl'] = kind_of_decl
 
 def htmlify_name(n):
-  return '.'.join([f'<span>{ html.escape(part) }</span>' for part in n.split('.')])
+  return '.'.join([f'<span class="name">{ html.escape(part) }</span>' for part in n.split('.')])
 env.filters['htmlify_name'] = htmlify_name
 
 # returns (pagetitle, intro_block), [(tactic_name, tactic_block)]
