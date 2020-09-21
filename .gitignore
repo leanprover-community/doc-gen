@@ -2,7 +2,7 @@
 /_target
 /leanpkg.path
 /html
-/json_export.txt
+/export.json
 /.vscode
 /.venv
 /__pycache__
