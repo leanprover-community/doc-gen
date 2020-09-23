@@ -1,6 +1,11 @@
 {% extends "base.j2" %}
 {% block title %}notes{% endblock %}
 
+{%- block metadesc -%}
+  {{ "Various implementation details are noted in the mathlib source, and referenced later on.
+  We collect these notes here." | plaintext_summary }}
+{%- endblock -%}
+
 {% block content %}
 <h1>Lean mathlib notes</h1>
 

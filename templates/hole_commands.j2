@@ -2,6 +2,11 @@
 
 {% block title %}Hole commands{% endblock %}
 
+{%- block metadesc -%}
+  {{ "Both VS Code and emacs support integration for 'hole commands'.
+  In VS Code, if you enter `{! !}`, a small light bulb symbol will appear, and clicking on it gives a drop down menu of available hole commands." | plaintext_summary }}
+{%- endblock -%}
+
 {% block body %}
 {% filter convert_markdown %}
 Both VS Code and emacs support integration for 'hole commands'.
