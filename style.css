@@ -363,8 +363,18 @@ label[for="nav_toggle"] { /* The MENU button */
 .fn {
     transition: background-color 100ms ease-in-out;
 }
-.fn:hover {
-    background-color: hsla(calc(75 - var(--fn) * 10), 80%, calc(100% - 3%*var(--fn)));
+
+.def .fn:hover {
+    background-color: hsla(calc(187 - var(--fn) * 10), 61%, calc(100% - 3%*var(--fn)));
+}
+.theorem .fn:hover {
+    background-color: hsla(calc(115 - var(--fn) * 10), 62%, calc(100% - 3%*var(--fn)));
+}
+.axiom .fn:hover, .constant .fn:hover {
+    background-color: hsla(calc(16 - var(--fn) * 10), 94%, calc(100% - 3%*var(--fn)));
+}
+.structure .fn:hover, .inductive .fn:hover {
+    background-color: hsla(calc(40 - var(--fn) * 10), 98%, calc(100% - 3%*var(--fn)));
 }
 
 .decl_args, .decl_type {
