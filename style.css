@@ -352,6 +352,39 @@ label[for="nav_toggle"] { /* The MENU button */
     vertical-align: top;
 }
 
+.fn { --fn: 1; }
+.fn .fn { --fn: 2; }
+.fn .fn .fn { --fn: 3; }
+.fn .fn .fn .fn { --fn: 4; }
+.fn .fn .fn .fn .fn { --fn: 5; }
+.fn .fn .fn .fn .fn .fn { --fn: 6; }
+.fn .fn .fn .fn .fn .fn .fn { --fn: 7; }
+.fn .fn .fn .fn .fn .fn .fn .fn { --fn: 8; }
+.fn {
+    transition: background-color 100ms ease-in-out;
+}
+
+.def .fn:hover {
+    background-color: hsla(187, 61%, calc(100% - 5%*var(--fn)));
+    box-shadow: 0 0 0 1px hsla(187, 61%, calc(100% - 5%*(var(--fn) + 1)));
+    border-radius: 5px;
+}
+.theorem .fn:hover {
+    background-color: hsla(115, 62%, calc(100% - 5%*var(--fn)));
+    box-shadow: 0 0 0 1px hsla(115, 62%, calc(100% - 5%*(var(--fn) + 1)));
+    border-radius: 5px;
+}
+.axiom .fn:hover, .constant .fn:hover {
+    background-color: hsla(16, 94%, calc(100% - 5%*var(--fn)));
+    box-shadow: 0 0 0 1px hsla(16, 94%, calc(100% - 5%*(var(--fn) + 1)));
+    border-radius: 5px;
+}
+.structure .fn:hover, .inductive .fn:hover {
+    background-color: hsla(40, 98%, calc(100% - 5%*var(--fn)));
+    box-shadow: 0 0 0 1px hsla(40, 98%, calc(100% - 5%*(var(--fn) + 1)));
+    border-radius: 5px;
+}
+
 .decl_args, .decl_type {
     font-weight: normal;
 }
