@@ -2,6 +2,13 @@
 
 {% block title %}Mathlib tactics{% endblock %}
 
+{%- block metadesc -%}
+  {{ "In addition to the tactics found in
+  the core library mathlib provides a number of specific interactive
+  tactics. Here we document the mostly commonly used ones, as well as some
+  underdocumented tactics from core." | plaintext_summary }}
+{%- endblock -%}
+
 {% block body %}
 In addition to the <a
 href="https://leanprover.github.io/reference/tactics.html"> tactics found in

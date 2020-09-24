@@ -15,6 +15,12 @@
 {% endfor %}
 {% endblock %}
 
+{%- block metadesc -%}
+{%- if not 'name' in items[0] -%}
+  {{ items[0].doc | plaintext_summary }}
+{%- endif -%}
+{%- endblock -%}
+
 {% block internal_nav %}
 <h3><a class="break_within" href="#top">{{ self.doctitle() }}</a></h3>
 

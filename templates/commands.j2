@@ -2,6 +2,11 @@
 
 {% block title %}Commands{% endblock %}
 
+{%- block metadesc -%}
+  {{ "Commands provide a way to interact with and modify a Lean environment outside of the context of a proof.
+  Familiar commands from core Lean include `#check`, `#eval`, and `run_cmd`." | plaintext_summary }}
+{%- endblock -%}
+
 {% block body %}
 {% filter convert_markdown %}
 Commands provide a way to interact with and modify a Lean environment outside of the context of a proof.

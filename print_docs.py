@@ -20,6 +20,8 @@ import argparse
 import html
 import gzip
 from urllib.parse import quote
+from functools import reduce
+import textwrap
 
 root = os.getcwd()
 
@@ -219,6 +221,31 @@ def linkify_markdown(string, loc_map):
     lambda p: '<span class="n">{}</span>'.format(linkify_type(p.group(1))), string)
   return string
 
+def plaintext_summary(markdown, max_chars = 200):
+  # collapse lines
+  text = re.compile('([a-zA-Z`(),;\$\-]) *\n *([a-zA-Z`()\$])').sub(r'\1 \2', markdown)
+
+  # adapted from https://github.com/writeas/go-strip-markdown/blob/master/strip.go
+  remove_keep_contents_patterns = [
+    '(?m)^([\s\t]*)([\*\-\+]|\d\.)\s+',
+    '\*\*([^*]+)\*\*',
+    '\*([^*]+)\*',
+    '(?m)^\#{1,6}\s*([^#]+)\s*(\#{1,6})?$',
+    '__([^_]+)__',
+    '_([^_]+)_',
+    '\!\[(.*?)\]\s?[\[\(].*?[\]\)]',
+    '\[(.*?)\][\[\(].*?[\]\)]'
+  ]
+  remove_patterns = ['^\s{0,3}>\s?', '^={2,}', '`{3}.*$', '~~', '^[=\-]{2,}\s*$', '^-{3,}\s*$', '^\s*']
+
+  text = reduce(lambda text, p: re.compile(p, re.MULTILINE).sub(r'\1', text), remove_keep_contents_patterns, text)
+  text = reduce(lambda text, p: re.compile(p, re.MULTILINE).sub('', text), remove_patterns, text)
+
+  # collapse lines again
+  text = re.compile('\s*\.?\n').sub('. ', text)
+
+  return textwrap.shorten(text, width = max_chars, placeholder="…")
+
 def link_to_decl(decl_name, loc_map):
   return filename_core(site_root, loc_map[decl_name], 'html') + '#' + decl_name
 
@@ -316,6 +343,7 @@ def setup_jinja_globals(file_map, loc_map):
   env.filters['linkify_efmt'] = lambda x: linkify_efmt(x, loc_map)
   env.filters['convert_markdown'] = lambda x: linkify_markdown(convert_markdown(x), loc_map) # TODO: this is probably very broken
   env.filters['link_to_decl'] = lambda x: link_to_decl(x, loc_map)
+  env.filters['plaintext_summary'] = lambda x: plaintext_summary(x)
 
 def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs):
   with open_outfile('index.html') as out:
@@ -397,6 +425,10 @@ def copy_yaml_files(path):
   for fn in ['100.yaml', 'undergrad.yaml', 'overview.yaml']:
     shutil.copyfile(f'{local_lean_root}docs/{fn}', path+fn)
 
+def copy_static_files(path):
+  for filename in glob.glob(os.path.join(root, 'static', '*.*')):
+    shutil.copy(filename, path)
+
 def write_decl_txt(loc_map):
   with open_outfile('decl.txt') as out:
     out.write('\n'.join(loc_map.keys()))
@@ -436,5 +468,6 @@ if __name__ == '__main__':
   write_redirects(loc_map, file_map)
   copy_css(html_root, use_symlinks=cl_args.l)
   copy_yaml_files(html_root)
+  copy_static_files(html_root)
   write_export_db(mk_export_db(loc_map, file_map))
   write_site_map(file_map)

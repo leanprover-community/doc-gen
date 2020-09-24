@@ -2,6 +2,11 @@
 
 {% block title %}Attributes{% endblock %}
 
+{%- block metadesc -%}
+  {{ "Attributes are a tool for associating information with declarations. 
+  In the simplest case, an attribute is a tag that can be applied to a declaration. simp is a common example of this." | plaintext_summary }}
+{%- endblock -%}
+
 {% block body %}
 {% filter convert_markdown %}
 *Attributes* are a tool for associating information with declarations.
