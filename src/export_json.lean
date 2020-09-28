@@ -164,16 +164,12 @@ json.object [
   ("import", imported)]
 end
 
-meta def print_arg : bool × efmt → json
-| (b, s) := let bstr := if b then "true" else "false" in
-  json.object [("arg", s.to_json), ("implicit", bstr)]
-
 meta def decl_info.to_json : decl_info → json
 | ⟨name, is_meta, args, type, doc_string, filename, line, attributes, equations, kind, structure_fields, constructors⟩ :=
 json.object [
   ("name", to_string name),
   ("is_meta", is_meta),
-  ("args", args.map print_arg),
+  ("args", json.array $ args.map $ λ ⟨b, s⟩, json.object [("arg", s.to_json), ("implicit", b)]),
   ("type", type.to_json),
   ("doc_string", doc_string.get_or_else ""),
   ("filename", filename),
