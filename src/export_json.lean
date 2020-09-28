@@ -382,9 +382,23 @@ pure $ json.object [
   ("instances", instl)
 ]
 
+open lean.parser
+@[user_command]
+meta def open_all_locales (_ : interactive.parse (tk "open_all_local")): lean.parser unit :=
+do m ← of_tactic localized_attr.get_cache,
+   let m := (m.erase `interval).erase `dioph,
+   cmds ← of_tactic $ get_localized m.keys,
+   cmds.mmap' $ λ m, lean.parser.emit_code_here m <|> skip
+.
+
+open_all_local
+
+
 meta def main : io unit := do
 json ← run_tactic mk_export_json,
 put_str json.unparse
+
+run_cmd tactic.unsafe_run_io main
 
 -- HACK: print gadgets with less fluff
 notation x ` := `:10 y := opt_param x y

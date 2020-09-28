@@ -33,7 +33,7 @@ if [ "$link" -eq "1" ]; then
 fi
 
 bash "$source"scripts/mk_all.sh
-lean --run src/export_json.lean >export.json
+lean src/export_json.lean >export.json
 bash "$source"scripts/rm_all.sh
 
 python3 print_docs.py -r "$source" -w "$site_root" "${args[@]}"
