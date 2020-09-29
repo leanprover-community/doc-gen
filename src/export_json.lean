@@ -387,7 +387,7 @@ open lean.parser
 meta def open_all_locales (_ : interactive.parse (tk "open_all_local")): lean.parser unit :=
 do m ← of_tactic localized_attr.get_cache,
    cmds ← of_tactic $ get_localized m.keys,
-   cmds.mmap' lean.parser.emit_code_here <|> skip
+   cmds.mmap' (λ m, lean.parser.emit_code_here m <|> skip)
 .
 
 meta def main : io unit := do
