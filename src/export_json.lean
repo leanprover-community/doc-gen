@@ -284,11 +284,14 @@ do d ← get_decl decl, ns ← get_constructors_for (mk_const_with_params d),
    ns.mmap $ λ n, do tp ← get_constructor_type decl n, return (to_string n, tp)
 
 meta def get_equations (decl : name) : tactic (list efmt) := do
-ns ← get_eqn_lemmas_for tt decl,
-ns.mmap $ λ n, do
-d ← get_decl n,
-(_, ty) ← mk_local_pis d.type,
-efmt.pp ty
+decl_is_proof ← mk_const decl >>= is_proof,
+if decl_is_proof then return []
+else do
+  ns ← get_eqn_lemmas_for tt decl,
+  ns.mmap $ λ n, do
+  d ← get_decl n,
+  (_, ty) ← mk_local_pis d.type,
+  efmt.pp ty
 
 /-- extracts `decl_info` from `d`. Should return `none` instead of failing. -/
 meta def process_decl (d : declaration) : tactic (option decl_info) :=
