@@ -387,11 +387,13 @@ pure $ json.object [
 
 open lean.parser
 @[user_command]
-meta def open_all_locales (_ : interactive.parse (tk "open_all_local")): lean.parser unit :=
+meta def open_all_locales (_ : interactive.parse (tk "open_all_locales")): lean.parser unit :=
 do m ← of_tactic localized_attr.get_cache,
    cmds ← of_tactic $ get_localized m.keys,
-   cmds.mmap' (λ m, lean.parser.emit_code_here m <|> skip)
-.
+   cmds.mmap' $ λ m,
+    when (¬ ∃ tok ∈ m.split_on '`', by exact
+        (tok.length = 1 ∧ tok.front.is_alphanum) ∨ tok ∈ ["ε", "φ", "ψ", "W_"]) $
+    lean.parser.emit_code_here m <|> skip
 
 meta def main : io unit := do
 json ← run_tactic mk_export_json,
