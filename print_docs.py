@@ -95,7 +95,7 @@ target_url_regex = site_root + r'notes.html#\1'
 link_patterns = [(note_regex, target_url_regex)]
 
 def convert_markdown(ds, toc=False):
-  extras = ['code-friendly', 'cuddled-lists', 'fenced-code-blocks', 'link-patterns']
+  extras = ['code-friendly', 'cuddled-lists', 'fenced-code-blocks', 'link-patterns', 'tables']
   if toc:
     extras.append('toc')
   return markdown2.markdown(ds, extras=extras, link_patterns = link_patterns)
