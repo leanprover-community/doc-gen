@@ -24,7 +24,7 @@
 
 <input id="nav_toggle" type="checkbox">
 
-<div class="header">
+<header>
     <h1><a href="https://leanprover-community.github.io">mathlib</a> <span>documentation</span></h1>
     <p class="header_filename break_within">{% block doctitle %}{{ self.title() }}{% endblock %}</p>
     <form action="https://google.com/search" method="get" id="search_form">
@@ -33,18 +33,18 @@
         <button>search</button>
     </form>
     <label for="nav_toggle"></label>
-</div>
+</header>
 
-<div class="internal_nav">{% block internal_nav %}{% endblock %}</div>
+<nav class="internal_nav">{% block internal_nav %}{% endblock %}</nav>
 
-<div class="content">
+<main>
     <a id="top"></a>
     {% block content %}{% endblock %}
-</div>
+</main>
 
-<div class="nav">
+<nav class="nav">
     {% include "navbar.j2" %}
-</div>
+</nav>
 
 </body>
 
