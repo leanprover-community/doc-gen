@@ -3,13 +3,13 @@ Created using: pygmentize -S friendly -f html -a .codehilite >pygments.css
 
 The first line needs to be commented out:
    vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv */
-/* pre { line-height: 125%; margin: 0; } */
+/* pre { line-height: 125%; margin: 0; }
 td.linenos pre { color: #000000; background-color: #f0f0f0; padding: 0 5px 0 5px; }
 span.linenos { color: #000000; background-color: #f0f0f0; padding: 0 5px 0 5px; }
 td.linenos pre.special { color: #000000; background-color: #ffffc0; padding: 0 5px 0 5px; }
-span.linenos.special { color: #000000; background-color: #ffffc0; padding: 0 5px 0 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding: 0 5px 0 5px; } */
 .codehilite .hll { background-color: #ffffcc }
-.codehilite { background: #f0f0f0; }
+/* .codehilite { background: #f0f0f0; } */
 .codehilite .c { color: #60a0b0; font-style: italic } /* Comment */
 .codehilite .err { border: 1px solid #FF0000 } /* Error */
 .codehilite .k { color: #007020; font-weight: bold } /* Keyword */
