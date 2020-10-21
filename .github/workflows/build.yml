@@ -23,7 +23,7 @@ jobs:
           curl https://raw.githubusercontent.com/Kha/elan/master/elan-init.sh -sSf | sh -s -- --default-toolchain none -y
           cd mathlib
           ~/.elan/bin/lean --version
-          echo "::add-path::$HOME/.elan/bin"
+          echo "$HOME/.elan/bin" >> $GITHUB_PATH
 
       - name: install Python
         uses: actions/setup-python@v1
