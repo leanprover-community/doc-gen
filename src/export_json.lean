@@ -392,7 +392,7 @@ do m ← of_tactic localized_attr.get_cache,
    cmds ← of_tactic $ get_localized m.keys,
    cmds.mmap' $ λ m,
     when (¬ ∃ tok ∈ m.split_on '`', by exact
-        (tok.length = 1 ∧ tok.front.is_alphanum) ∨ tok ∈ ["ε", "φ", "ψ", "W_"]) $
+        (tok.length = 1 ∧ tok.front.is_alphanum) ∨ tok ∈ ["ε", "φ", "ψ", "W_", "σ", "ζ"]) $
     lean.parser.emit_code_here m <|> skip
 
 meta def main : io unit := do
