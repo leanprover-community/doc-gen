@@ -11,7 +11,7 @@ set -x
 cd $1
 lean_version="$(sed '/^lean_version/!d;s/.*"\(.*\)".*/\1/' leanpkg.toml)"
 mathlib_short_git_hash="$(git log -1 --pretty=format:%h)"
-mathlib_git_hash = "$(git rev-parse HEAD)"
+mathlib_git_hash="$(git rev-parse HEAD)"
 
 cd $2
 docgen_git_hash="$(git log -1 --pretty=format:%h)"
