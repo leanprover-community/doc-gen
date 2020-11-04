@@ -10,7 +10,8 @@ set -x
 
 cd $1
 lean_version="$(sed '/^lean_version/!d;s/.*"\(.*\)".*/\1/' leanpkg.toml)"
-mathlib_git_hash="$(git log -1 --pretty=format:%h)"
+mathlib_short_git_hash="$(git log -1 --pretty=format:%h)"
+mathlib_git_hash = "$(git rev-parse HEAD)"
 
 cd $2
 docgen_git_hash="$(git log -1 --pretty=format:%h)"
@@ -21,7 +22,7 @@ echo -e "builtin_path\npath ./src\npath $3/src" > leanpkg.path
 git clone "https://$DEPLOY_GITHUB_USER:$DEPLOY_GITHUB_TOKEN@github.com/leanprover-community/mathlib_docs.git"
 
 # skip if docs for this commit have already been generated
-if [ "$(cd mathlib_docs && git log -1 --pretty=format:%s)" == "automatic update to mathlib $mathlib_git_hash using doc-gen $docgen_git_hash" ]; then
+if [ "$(cd mathlib_docs && git log -1 --pretty=format:%s)" == "automatic update to mathlib $mathlib_short_git_hash using doc-gen $docgen_git_hash" ]; then
   exit 0
 fi
 
@@ -41,6 +42,6 @@ if [ "$github_repo" = "leanprover-community/doc-gen" ] && [ "$github_ref" = "ref
   git config user.name "leanprover-community-bot"
   git add -A .
   git checkout --orphan master2
-  git commit -m "automatic update to mathlib $mathlib_git_hash using doc-gen $docgen_git_hash"
+  git commit -m "automatic update to mathlib $mathlib_short_git_hash using doc-gen $docgen_git_hash"
   git push -f origin HEAD:master
 fi
