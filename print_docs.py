@@ -74,7 +74,7 @@ with open('leanpkg.toml') as f:
   parsed_toml = toml.loads(f.read())
   f.close()
   ml_data = parsed_toml['dependencies']['mathlib']
-  mathlib_commit = ml_data['rev'][:7]
+  mathlib_commit = ml_data['rev']
   mathlib_github_root = ml_data['git'].strip('/')
 
 if cl_args.w:
@@ -82,7 +82,7 @@ if cl_args.w:
 
 mathlib_github_src_root = "{0}/blob/{1}/src/".format(mathlib_github_root, mathlib_commit)
 
-lean_commit = subprocess.check_output(['lean', '--run', 'src/lean_commit.lean']).decode()[:7]
+lean_commit = subprocess.check_output(['lean', '--run', 'src/lean_commit.lean']).decode()
 lean_root = 'https://github.com/leanprover-community/lean/blob/{}/library/'.format(lean_commit)
 
 env.globals['mathlib_github_root'] = mathlib_github_root
