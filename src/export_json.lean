@@ -209,7 +209,7 @@ meta def binder_info.is_inst_implicit : binder_info → bool
 -- Determines how many pis should be shown as named arguments.
 meta def count_named_intros : expr → ℕ
 | e@(expr.pi n bi d b) :=
-  if e.is_arrow ∧ n = `a then
+  if e.is_arrow ∧ n = `ᾰ then
     0
   else
     count_named_intros (b.instantiate_var `(Prop)) + 1
