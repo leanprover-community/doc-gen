@@ -116,23 +116,22 @@ const declSearch = (q) => new Promise((resolve, reject) => {
 const srId = 'search_results';
 document.getElementById('search_form')
   .appendChild(document.createElement('div'))
-  .id = srId;
+  .id = srId; // todo add on creation of page, not here
 
-function goToDecl(d) { window.location.href = `${siteRoot}find/${d}`; }
+function goToDecl(d) { 
+  window.location.href = `${siteRoot}find/${d}`; 
+}
 
 function handleSearchCursorUpDown(down) {
   const sel = document.querySelector(`#${srId} .selected`);
   const sr = document.getElementById(srId);
+
+  let toSelect = down ? sr.firstChild : sr.lastChild;
   if (sel) {
     sel.classList.remove('selected');
-    const toSelect = down ?
-      sel.nextSibling || sr.firstChild:
-      sel.previousSibling || sr.lastChild;
-    toSelect && toSelect.classList.add('selected');
-  } else {
-    const toSelect = down ? sr.firstChild : sr.lastChild;
-    toSelect && toSelect.classList.add('selected');
+    toSelect = down ? sel.nextSibling : sel.previousSibling;
   }
+  toSelect && toSelect.classList.add('selected');
 }
 
 function handleSearchEnter() {
@@ -175,7 +174,7 @@ searchInput.addEventListener('input', async (ev) => {
   document.getElementById(srId).setAttribute('state', 'loading');
 
   const result = await declSearch(text);
-  if (ev.target.value != text) return;
+  if (ev.target.value != text) return; // todo why?
 
   const oldSR = document.getElementById('search_results');
   const sr = oldSR.cloneNode(false);
