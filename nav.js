@@ -181,7 +181,7 @@ searchInput.addEventListener('input', async (ev) => {
     const d = sr.appendChild(document.createElement('a'));
     d.innerText = decl;
     d.title = decl;
-    d.href = () => `${siteRoot}find/${decl}`;
+    d.href = `${siteRoot}find/${decl}`;
   }
   sr.setAttribute('state', 'done');
   oldSR.replaceWith(sr);
