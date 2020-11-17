@@ -187,7 +187,9 @@ header header_filename {
     font-style: italic;
 }
 
-#search_results div {
+#search_results a {
+    display: block;
+    color: inherit;
     padding: 1ex;
     border-left: 0.5ex solid transparent;
     padding-left: 0.5ex;

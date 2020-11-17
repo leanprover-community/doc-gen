@@ -118,8 +118,6 @@ document.getElementById('search_form')
   .appendChild(document.createElement('div'))
   .id = srId;
 
-function goToDecl(d) { window.location.href = `${siteRoot}find/${d}`; }
-
 function handleSearchCursorUpDown(down) {
   const sel = document.querySelector(`#${srId} .selected`);
   const sr = document.getElementById(srId);
@@ -138,7 +136,7 @@ function handleSearchCursorUpDown(down) {
 function handleSearchEnter() {
   const sel = document.querySelector(`#${srId} .selected`)
     || document.getElementById(srId).firstChild;
-  goToDecl(sel.innerText);
+  sel.click();
 }
 
 const searchInput = document.querySelector('#search_form input[name=q]');
@@ -180,10 +178,10 @@ searchInput.addEventListener('input', async (ev) => {
   const oldSR = document.getElementById('search_results');
   const sr = oldSR.cloneNode(false);
   for (const {decl} of result) {
-    const d = sr.appendChild(document.createElement('div'));
+    const d = sr.appendChild(document.createElement('a'));
     d.innerText = decl;
     d.title = decl;
-    d.onclick = () => goToDecl(decl);
+    d.href = `${siteRoot}find/${decl}`;
   }
   sr.setAttribute('state', 'done');
   oldSR.replaceWith(sr);
