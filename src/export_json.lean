@@ -391,9 +391,14 @@ do m ← of_tactic localized_attr.get_cache,
         (tok.length = 1 ∧ tok.front.is_alphanum) ∨ tok ∈ ["ε", "φ", "ψ", "W_", "σ", "ζ"]) $
     lean.parser.emit_code_here m <|> skip
 
+def write_file (fn : string) (cnts : string) (mode := io.mode.write) : io unit :=
+do h ← io.mk_file_handle fn io.mode.write,
+   io.fs.write h cnts.to_char_buffer,
+   io.fs.close h
+
 meta def main : io unit := do
 json ← run_tactic mk_export_json,
-put_str json.unparse
+write_file "export.json" json.unparse
 
 -- HACK: print gadgets with less fluff
 notation x ` := `:10 y := opt_param x y
