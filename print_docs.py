@@ -460,7 +460,7 @@ def write_export_db(export_db):
   with gzip.GzipFile(html_root + 'export_db.json.gz', 'w') as zout:
     zout.write(json_str.encode('utf-8'))
 
-if __name__ == '__main__':
+def main():
   file_map, loc_map, notes, mod_docs, instances, tactic_docs = load_json()
   setup_jinja_globals(file_map, loc_map)
   write_decl_txt(loc_map)
@@ -471,3 +471,6 @@ if __name__ == '__main__':
   copy_static_files(html_root)
   write_export_db(mk_export_db(loc_map, file_map))
   write_site_map(file_map)
+    
+if __name__ == '__main__':
+  main()
