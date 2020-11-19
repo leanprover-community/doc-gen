@@ -22,6 +22,7 @@ import gzip
 from urllib.parse import quote
 from functools import reduce
 import textwrap
+from collections import defaultdict
 
 root = os.getcwd()
 
@@ -147,15 +148,12 @@ def open_outfile(filename, mode = 'w'):
     return open(filename, mode, encoding='utf-8')
 
 def separate_results(objs):
-  file_map = {}
+  file_map = defaultdict(list)
   loc_map = {}
   for obj in objs:
     if 'lean/library' not in obj['filename'] and 'mathlib/src' not in obj['filename']:
       continue
-    if obj['filename'] not in file_map:
-      file_map[obj['filename']] = [obj]
-    else:
-      file_map[obj['filename']].append(obj)
+    file_map[obj['filename']].append(obj)
     loc_map[obj['name']] = obj['filename']
     for (cstr_name, tp) in obj['constructors']:
       loc_map[cstr_name] = obj['filename']
