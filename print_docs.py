@@ -359,7 +359,7 @@ def mk_site_tree_core(filenames, path=[]):
   for dirname in sorted(set(dirname for dirname, *rest in filenames if rest != [])):
     new_path = path + [dirname]
     entries.append({
-      "kind": "project" if path == '' else "dir",
+      "kind": "project" if not path else "dir",
       "name": dirname,
       "path": '/'.join(new_path[1:]),
       "children": mk_site_tree_core([rest for dn, *rest in filenames if rest != [] and dn == dirname], new_path)
