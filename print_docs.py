@@ -160,7 +160,7 @@ def separate_results(objs):
   return file_map, loc_map
 
 def load_json():
-  with open('export.json', 'r', encoding='utf-8'):
+  with open('export.json', 'r', encoding='utf-8') as f:
     decls = json.load(f, strict=False)
   file_map, loc_map = separate_results(decls['decls'])
   for entry in decls['tactic_docs']:
