@@ -68,15 +68,11 @@ site_root = "/"
 local_lean_root = os.path.join(root, cl_args.r if cl_args.r else '_target/deps/mathlib') + '/'
 
 
-
-mathlib_commit = 'lean-3.4.2' # default
-mathlib_github_root = 'https://github.com/leanprover-community/mathlib' # default
 with open('leanpkg.toml') as f:
   parsed_toml = toml.loads(f.read())
-  f.close()
-  ml_data = parsed_toml['dependencies']['mathlib']
-  mathlib_commit = ml_data['rev']
-  mathlib_github_root = ml_data['git'].strip('/')
+ml_data = parsed_toml['dependencies']['mathlib']
+mathlib_commit = ml_data['rev']
+mathlib_github_root = ml_data['git'].strip('/')
 
 if cl_args.w:
   site_root = cl_args.w
@@ -164,9 +160,8 @@ def separate_results(objs):
   return file_map, loc_map
 
 def load_json():
-  f = open('export.json', 'r', encoding='utf-8')
-  decls = json.load(f, strict=False)
-  f.close()
+  with open('export.json', 'r', encoding='utf-8'):
+    decls = json.load(f, strict=False)
   file_map, loc_map = separate_results(decls['decls'])
   for entry in decls['tactic_docs']:
     if len(entry['tags']) == 0:
@@ -221,26 +216,28 @@ def linkify_markdown(string, loc_map):
 
 def plaintext_summary(markdown, max_chars = 200):
   # collapse lines
-  text = re.compile('([a-zA-Z`(),;\$\-]) *\n *([a-zA-Z`()\$])').sub(r'\1 \2', markdown)
+  text = re.compile(r'([a-zA-Z`(),;\$\-]) *\n *([a-zA-Z`()\$])').sub(r'\1 \2', markdown)
 
   # adapted from https://github.com/writeas/go-strip-markdown/blob/master/strip.go
   remove_keep_contents_patterns = [
-    '(?m)^([\s\t]*)([\*\-\+]|\d\.)\s+',
-    '\*\*([^*]+)\*\*',
-    '\*([^*]+)\*',
-    '(?m)^\#{1,6}\s*([^#]+)\s*(\#{1,6})?$',
-    '__([^_]+)__',
-    '_([^_]+)_',
-    '\!\[(.*?)\]\s?[\[\(].*?[\]\)]',
-    '\[(.*?)\][\[\(].*?[\]\)]'
+    r'(?m)^([\s\t]*)([\*\-\+]|\d\.)\s+',
+    r'\*\*([^*]+)\*\*',
+    r'\*([^*]+)\*',
+    r'(?m)^\#{1,6}\s*([^#]+)\s*(\#{1,6})?$',
+    r'__([^_]+)__',
+    r'_([^_]+)_',
+    r'\!\[(.*?)\]\s?[\[\(].*?[\]\)]',
+    r'\[(.*?)\][\[\(].*?[\]\)]'
   ]
-  remove_patterns = ['^\s{0,3}>\s?', '^={2,}', '`{3}.*$', '~~', '^[=\-]{2,}\s*$', '^-{3,}\s*$', '^\s*']
+  remove_patterns = [
+    r'^\s{0,3}>\s?', r'^={2,}', r'`{3}.*$', r'~~', r'^[=\-]{2,}\s*$',
+    r'^-{3,}\s*$', r'^\s*']
 
   text = reduce(lambda text, p: re.compile(p, re.MULTILINE).sub(r'\1', text), remove_keep_contents_patterns, text)
   text = reduce(lambda text, p: re.compile(p, re.MULTILINE).sub('', text), remove_patterns, text)
 
   # collapse lines again
-  text = re.compile('\s*\.?\n').sub('. ', text)
+  text = re.compile(r'\s*\.?\n').sub('. ', text)
 
   return textwrap.shorten(text, width = max_chars, placeholder="…")
 
@@ -469,6 +466,6 @@ def main():
   copy_static_files(html_root)
   write_export_db(mk_export_db(loc_map, file_map))
   write_site_map(file_map)
-    
+
 if __name__ == '__main__':
   main()
