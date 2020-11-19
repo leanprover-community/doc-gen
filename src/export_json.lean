@@ -393,7 +393,7 @@ do m ← of_tactic localized_attr.get_cache,
 
 def write_file (fn : string) (cnts : string) (mode := io.mode.write) : io unit :=
 do h ← io.mk_file_handle fn io.mode.write,
-   io.fs.write h cnts.to_char_buffer,
+   io.fs.put_str h cnts,
    io.fs.close h
 
 meta def main : io unit := do
