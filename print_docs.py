@@ -22,6 +22,7 @@ import gzip
 from urllib.parse import quote
 from functools import reduce
 import textwrap
+from collections import defaultdict
 
 root = os.getcwd()
 
@@ -67,15 +68,11 @@ site_root = "/"
 local_lean_root = os.path.join(root, cl_args.r if cl_args.r else '_target/deps/mathlib') + '/'
 
 
-
-mathlib_commit = 'lean-3.4.2' # default
-mathlib_github_root = 'https://github.com/leanprover-community/mathlib' # default
 with open('leanpkg.toml') as f:
   parsed_toml = toml.loads(f.read())
-  f.close()
-  ml_data = parsed_toml['dependencies']['mathlib']
-  mathlib_commit = ml_data['rev']
-  mathlib_github_root = ml_data['git'].strip('/')
+ml_data = parsed_toml['dependencies']['mathlib']
+mathlib_commit = ml_data['rev']
+mathlib_github_root = ml_data['git'].strip('/')
 
 if cl_args.w:
   site_root = cl_args.w
@@ -147,15 +144,12 @@ def open_outfile(filename, mode = 'w'):
     return open(filename, mode, encoding='utf-8')
 
 def separate_results(objs):
-  file_map = {}
+  file_map = defaultdict(list)
   loc_map = {}
   for obj in objs:
     if 'lean/library' not in obj['filename'] and 'mathlib/src' not in obj['filename']:
       continue
-    if obj['filename'] not in file_map:
-      file_map[obj['filename']] = [obj]
-    else:
-      file_map[obj['filename']].append(obj)
+    file_map[obj['filename']].append(obj)
     loc_map[obj['name']] = obj['filename']
     for (cstr_name, tp) in obj['constructors']:
       loc_map[cstr_name] = obj['filename']
@@ -166,9 +160,8 @@ def separate_results(objs):
   return file_map, loc_map
 
 def load_json():
-  f = open('export.json', 'r', encoding='utf-8')
-  decls = json.load(f, strict=False)
-  f.close()
+  with open('export.json', 'r', encoding='utf-8') as f:
+    decls = json.load(f, strict=False)
   file_map, loc_map = separate_results(decls['decls'])
   for entry in decls['tactic_docs']:
     if len(entry['tags']) == 0:
@@ -223,26 +216,28 @@ def linkify_markdown(string, loc_map):
 
 def plaintext_summary(markdown, max_chars = 200):
   # collapse lines
-  text = re.compile('([a-zA-Z`(),;\$\-]) *\n *([a-zA-Z`()\$])').sub(r'\1 \2', markdown)
+  text = re.compile(r'([a-zA-Z`(),;\$\-]) *\n *([a-zA-Z`()\$])').sub(r'\1 \2', markdown)
 
   # adapted from https://github.com/writeas/go-strip-markdown/blob/master/strip.go
   remove_keep_contents_patterns = [
-    '(?m)^([\s\t]*)([\*\-\+]|\d\.)\s+',
-    '\*\*([^*]+)\*\*',
-    '\*([^*]+)\*',
-    '(?m)^\#{1,6}\s*([^#]+)\s*(\#{1,6})?$',
-    '__([^_]+)__',
-    '_([^_]+)_',
-    '\!\[(.*?)\]\s?[\[\(].*?[\]\)]',
-    '\[(.*?)\][\[\(].*?[\]\)]'
+    r'(?m)^([\s\t]*)([\*\-\+]|\d\.)\s+',
+    r'\*\*([^*]+)\*\*',
+    r'\*([^*]+)\*',
+    r'(?m)^\#{1,6}\s*([^#]+)\s*(\#{1,6})?$',
+    r'__([^_]+)__',
+    r'_([^_]+)_',
+    r'\!\[(.*?)\]\s?[\[\(].*?[\]\)]',
+    r'\[(.*?)\][\[\(].*?[\]\)]'
   ]
-  remove_patterns = ['^\s{0,3}>\s?', '^={2,}', '`{3}.*$', '~~', '^[=\-]{2,}\s*$', '^-{3,}\s*$', '^\s*']
+  remove_patterns = [
+    r'^\s{0,3}>\s?', r'^={2,}', r'`{3}.*$', r'~~', r'^[=\-]{2,}\s*$',
+    r'^-{3,}\s*$', r'^\s*']
 
   text = reduce(lambda text, p: re.compile(p, re.MULTILINE).sub(r'\1', text), remove_keep_contents_patterns, text)
   text = reduce(lambda text, p: re.compile(p, re.MULTILINE).sub('', text), remove_patterns, text)
 
   # collapse lines again
-  text = re.compile('\s*\.?\n').sub('. ', text)
+  text = re.compile(r'\s*\.?\n').sub('. ', text)
 
   return textwrap.shorten(text, width = max_chars, placeholder="…")
 
@@ -334,7 +329,7 @@ def mk_site_tree_core(filenames, path=''):
 
   return entries
 
-def setup_jinja_globals(file_map, loc_map):
+def setup_jinja_globals(file_map, loc_map, instances):
   env.globals['site_tree'] = mk_site_tree(file_map)
   env.globals['instances'] = instances
   env.globals['import_options'] = lambda d, i: import_options(loc_map, d, i)
@@ -460,9 +455,9 @@ def write_export_db(export_db):
   with gzip.GzipFile(html_root + 'export_db.json.gz', 'w') as zout:
     zout.write(json_str.encode('utf-8'))
 
-if __name__ == '__main__':
+def main():
   file_map, loc_map, notes, mod_docs, instances, tactic_docs = load_json()
-  setup_jinja_globals(file_map, loc_map)
+  setup_jinja_globals(file_map, loc_map, instances)
   write_decl_txt(loc_map)
   write_html_files(file_map, loc_map, notes, mod_docs, instances, tactic_docs)
   write_redirects(loc_map, file_map)
@@ -471,3 +466,6 @@ if __name__ == '__main__':
   copy_static_files(html_root)
   write_export_db(mk_export_db(loc_map, file_map))
   write_site_map(file_map)
+
+if __name__ == '__main__':
+  main()

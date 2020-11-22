@@ -25,14 +25,14 @@
 <input id="nav_toggle" type="checkbox">
 
 <header>
-    <h1><a href="https://leanprover-community.github.io">mathlib</a> <span>documentation</span></h1>
+    <h1><label for="nav_toggle"></label><a href="https://leanprover-community.github.io">mathlib</a>
+        <span>documentation</span></h1>
     <p class="header_filename break_within">{% block doctitle %}{{ self.title() }}{% endblock %}</p>
     <form action="https://google.com/search" method="get" id="search_form">
         <input type="hidden" name="sitesearch" value="https://leanprover-community.github.io/mathlib_docs">
         <input type="text" name="q" autocomplete="off">
         <button>search</button>
     </form>
-    <label for="nav_toggle"></label>
 </header>
 
 <nav class="internal_nav">{% block internal_nav %}{% endblock %}</nav>

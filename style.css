@@ -29,10 +29,32 @@ nav { line-height: normal; }
 #nav_toggle {
     display: none;
 }
-label[for="nav_toggle"] { /* The MENU button */
+label[for="nav_toggle"] {
     display: none;
 }
 
+header {
+    height: var(--header-height);
+    float: left;
+    position: fixed;
+    width: 100vw;
+    max-width: 100%;
+    left: 0;
+    right: 0;
+    top: 0;
+    --header-side-padding: 2em;
+    padding: 0 var(--header-side-padding);
+    background: var(--header-bg);
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+@supports (width: min(10px, 5vw)) {
+    header {
+        --header-side-padding: calc(max(2em, (100vw - var(--content-width) - 30em) / 2));
+    }
+}
 @media screen and (max-width: 1000px) {
     :root {
         --content-width: 100vw;
@@ -67,13 +89,15 @@ label[for="nav_toggle"] { /* The MENU button */
     }
 
     label[for="nav_toggle"]::before {
-        content: '🐙';
+        content: '≡';
     }
     label[for="nav_toggle"] {
-        display: block;
+        display: inline-block;
+        margin-right: 1em;
         border: 1px solid #ccc;
         padding: 0.5ex 1ex;
         cursor: pointer;
+        background: #eee;
     }
     #nav_toggle:checked ~ * label[for="nav_toggle"] {
         background: white;
@@ -83,33 +107,11 @@ label[for="nav_toggle"] { /* The MENU button */
         font-size: 100%;
     }
 
-    body header {
-        padding: 0;
-    }
-}
-
-header {
-    height: var(--header-height);
-    float: left;
-    position: fixed;
-    width: 100vw;
-    left: 0;
-    right: 0;
-    top: 0;
-    --header-side-padding: 2em;
-    padding: 0 var(--header-side-padding);
-    background: var(--header-bg);
-    z-index: 1;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-@supports (width: min(10px, 5vw)) {
     header {
-        --header-side-padding: calc(max(2em, (100vw - var(--content-width) - 30em) / 2));
+        --header-side-padding: 1ex;
     }
 }
-@media screen and (max-width: 600px) {
+@media screen and (max-width: 700px) {
     header h1 span { display: none; }
     :root { --header-side-padding: 1ex; }
     #search_form button { display: none; }
@@ -119,7 +121,7 @@ header {
         right: 1ex;
         width: inherit;
     }
-    body header > * { margin: 0 1ex; }
+    body header > * { margin: 0; }
 }
 
 header > * {
@@ -187,7 +189,9 @@ header header_filename {
     font-style: italic;
 }
 
-#search_results div {
+#search_results a {
+    display: block;
+    color: inherit;
     padding: 1ex;
     border-left: 0.5ex solid transparent;
     padding-left: 0.5ex;
