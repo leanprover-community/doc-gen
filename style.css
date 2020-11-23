@@ -287,6 +287,10 @@ nav {
     margin-block-end: 4px;
 }
 
+.nav h4 {
+    margin-bottom: 1ex;
+}
+
 /* People use way too long declaration names. */
 .internal_nav, .decl_name {
     overflow-wrap: break-word;

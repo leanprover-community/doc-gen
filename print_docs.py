@@ -3,8 +3,6 @@
 # Requires the `markdown2` and `toml` packages:
 #   `pip install markdown2 toml`
 #
-# This script is not Windows friendly.
-#
 
 import json
 import os
@@ -23,6 +21,9 @@ from urllib.parse import quote
 from functools import reduce
 import textwrap
 from collections import defaultdict
+from pathlib import Path
+from typing import NamedTuple, List
+import sys
 
 root = os.getcwd()
 
@@ -82,6 +83,62 @@ mathlib_github_src_root = "{0}/blob/{1}/src/".format(mathlib_github_root, mathli
 lean_commit = subprocess.check_output(['lean', '--run', 'src/lean_commit.lean']).decode()
 lean_root = 'https://github.com/leanprover-community/lean/blob/{}/library/'.format(lean_commit)
 
+def get_name_from_leanpkg_path(p: Path) -> str:
+  """ get the package name corresponding to a source path """
+  # lean core?
+  if p.parts[-5:] == Path('bin/../lib/lean/library').parts:
+    return "core"
+  if p.parts[-3:] == Path('bin/../library').parts:
+    return "core"
+
+  # try the toml
+  p_leanpkg = p / '..' / 'leanpkg.toml'
+  try:
+    f = p_leanpkg.open()
+  except FileNotFoundError:
+    pass
+  else:
+    with f:
+      parsed_toml = toml.loads(f.read())
+    return parsed_toml['package']['name']
+
+  return '<unknown>'
+
+lean_paths = [
+  Path(p)
+  for p in json.loads(subprocess.check_output(['lean', '--path']).decode())['path']
+]
+path_info = [(p.resolve(), get_name_from_leanpkg_path(p)) for p in lean_paths]
+
+class ImportName(NamedTuple):
+  project: str
+  parts: List[str]
+  raw_path: Path
+
+  @classmethod
+  def of(cls, fname: str):
+    fname = Path(fname)
+    for p, name in path_info:
+      try:
+        rel_path = fname.relative_to(p)
+      except ValueError:
+        pass
+      else:
+        return cls(name, rel_path.with_suffix('').parts, fname)
+    path_details = "".join(f" - {p.raw_path}\n" for p, _ in path_info)
+    raise RuntimeError(
+      f"Cannot determine import name for {fname}; it is not within any of the directories returned by `lean --path`:\n"
+      f"{path_details}"
+      f"Did you generate `export.json` using a different Lean installation to the one this script is running with?")
+
+  @property
+  def name(self):
+    return '.'.join(self.parts)
+
+  @property
+  def url(self):
+    return '/'.join(self.parts) + '.html'
+
 env.globals['mathlib_github_root'] = mathlib_github_root
 env.globals['mathlib_commit'] = mathlib_commit
 env.globals['lean_commit'] = lean_commit
@@ -97,23 +154,23 @@ def convert_markdown(ds, toc=False):
     extras.append('toc')
   return markdown2.markdown(ds, extras=extras, link_patterns = link_patterns)
 
-def filename_core(root, filename, ext):
-  if 'lean/library' in filename:
-    return root + 'core/' + filename.split('lean/library/', 1)[1][:-4] + ext
-  elif 'mathlib/src' in filename:
-    return root + filename.split('mathlib/src/', 1)[1][:-4] + ext
-  else:
-    return root + filename.split('mathlib/scripts/', 1)[1][:-4] + ext
+# TODO: allow extending this for third-party projects
+library_link_roots = {
+  'core': lean_root,
+  'mathlib': mathlib_github_src_root,
+}
 
-def filename_import(filename):
-  return filename_core('', filename, '')[:-1].replace('/', '.')
-env.filters['filename_import'] = filename_import
+def library_link(filename: ImportName, line=None):
+  try:
+    root = library_link_roots[filename.project]
+  except KeyError:
+    return ""  # empty string is handled as a self-link
 
-def library_link(filename, line=None):
-  root = lean_root + filename.split('lean/library/', 1)[1] \
-           if 'lean/library' in filename \
-           else mathlib_github_src_root + filename.split('mathlib/src/', 1)[1]
-  return root + ('#L' + str(line) if line is not None else '')
+  root += '/'.join(filename.parts) + '.lean'
+  if line is not None:
+    root += f'#L{line}'
+  return root
+
 env.globals['library_link'] = library_link
 env.filters['library_link'] = library_link
 
@@ -139,24 +196,25 @@ def library_link_from_decl_name(decl_name, decl_loc, file_map):
 
 def open_outfile(filename, mode = 'w'):
     filename = os.path.join(html_root, filename)
-    if not os.path.exists(os.path.dirname(filename)):
-        os.makedirs(os.path.dirname(filename))
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
     return open(filename, mode, encoding='utf-8')
 
 def separate_results(objs):
   file_map = defaultdict(list)
   loc_map = {}
   for obj in objs:
-    if 'lean/library' not in obj['filename'] and 'mathlib/src' not in obj['filename']:
-      continue
-    file_map[obj['filename']].append(obj)
-    loc_map[obj['name']] = obj['filename']
+    # replace the filenames in-place with parsed filename objects
+    i_name = obj['filename'] = ImportName.of(obj['filename'])
+    if i_name.project == '.':
+      continue  # this is doc-gen itself
+    file_map[i_name].append(obj)
+    loc_map[obj['name']] = i_name
     for (cstr_name, tp) in obj['constructors']:
-      loc_map[cstr_name] = obj['filename']
+      loc_map[cstr_name] = i_name
     for (sf_name, tp) in obj['structure_fields']:
-      loc_map[sf_name] = obj['filename']
+      loc_map[sf_name] = i_name
     if len(obj['structure_fields']) > 0:
-      loc_map[obj['name'] + '.mk'] = obj['filename']
+      loc_map[obj['name'] + '.mk'] = i_name
   return file_map, loc_map
 
 def load_json():
@@ -168,18 +226,18 @@ def load_json():
       entry['tags'] = ['untagged']
   return file_map, loc_map, decls['notes'], decls['mod_docs'], decls['instances'], decls['tactic_docs']
 
-def linkify_core(decl_name, text, file_map):
-  if decl_name in file_map:
+def linkify_core(decl_name, text, loc_map):
+  if decl_name in loc_map:
     tooltip = ' title="{}"'.format(decl_name) if text != decl_name else ''
     return '<a href="{0}#{1}"{3}>{2}</a>'.format(
-      filename_core(site_root, file_map[decl_name], 'html'), decl_name, text, tooltip)
+      site_root + loc_map[decl_name].url, decl_name, text, tooltip)
   elif text != decl_name:
     return '<span title="{0}">{1}</span>'.format(decl_name, text)
   else:
     return text
 
-def linkify(string, file_map):
-  return linkify_core(string, string, file_map)
+def linkify(string, loc_map):
+  return linkify_core(string, string, loc_map)
 
 def linkify_linked(string, loc_map):
   return ''.join(
@@ -242,7 +300,7 @@ def plaintext_summary(markdown, max_chars = 200):
   return textwrap.shorten(text, width = max_chars, placeholder="…")
 
 def link_to_decl(decl_name, loc_map):
-  return filename_core(site_root, loc_map[decl_name], 'html') + '#' + decl_name
+  return f'{site_root}{loc_map[decl_name].url}#{decl_name}'
 
 def kind_of_decl(decl):
   kind = 'structure' if len(decl['structure_fields']) > 0 else 'inductive' if len(decl['constructors']) > 0 else decl['kind']
@@ -261,18 +319,10 @@ def split_tactic_list(markdown):
   entries = re.findall(r'(?<=# )(.*)([\s\S]*?)(?=(##|\Z))', markdown)
   return entries[0], entries[1:]
 
-def find_import_path(loc_map, decl_name):
-  path = filename_import(loc_map[decl_name]) if decl_name in loc_map else ''
-  if path.startswith('core.'):
-    return path[5:]
-  else:
-    return path
-
 def import_options(loc_map, decl_name, import_string):
-  direct_import_path = find_import_path(loc_map, decl_name)
   direct_import_paths = []
-  if direct_import_path != "":
-    direct_import_paths.append(direct_import_path)
+  if decl_name in loc_map:
+    direct_import_paths.append(loc_map[decl_name].name)
   if import_string != '' and import_string not in direct_import_paths:
     direct_import_paths.append(import_string)
   if any(i.startswith('init.') for i in direct_import_paths):
@@ -303,28 +353,28 @@ def write_pure_md_file(source, dest, name, loc_map):
       body = body,
     ))
 
-def mk_site_tree(partition):
-  filenames = [ filename_core('', filename, 'html').split('/') for filename in partition ]
+def mk_site_tree(partition: List[ImportName]):
+  filenames = [ [filename.project] + list(filename.parts) for filename in partition ]
   return mk_site_tree_core(filenames)
 
-def mk_site_tree_core(filenames, path=''):
+def mk_site_tree_core(filenames, path=[]):
   entries = []
 
   for dirname in sorted(set(dirname for dirname, *rest in filenames if rest != [])):
-    new_path = dirname if path == '' else path+'/'+dirname
+    new_path = path + [dirname]
     entries.append({
-      "kind": "dir",
+      "kind": "project" if not path else "dir",
       "name": dirname,
-      "path": new_path,
+      "path": '/'.join(new_path[1:]),
       "children": mk_site_tree_core([rest for dn, *rest in filenames if rest != [] and dn == dirname], new_path)
     })
 
   for filename in sorted(filename for filename, *rest in filenames if rest == []):
-    new_path = filename if path == '' else path+'/'+filename
+    new_path = path + [filename]
     entries.append({
       "kind": "file",
-      "name": filename[:-5],
-      "path": new_path
+      "name": filename,
+      "path": '/'.join(new_path[1:]) + '.html',
     })
 
   return entries
@@ -364,10 +414,10 @@ def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs
         tagset = sorted(set(t for e in entries for t in e['tags']))))
 
   for filename, decls in partition.items():
-    md = mod_docs[filename] if filename in mod_docs else []
-    with open_outfile(filename_core(html_root, filename, 'html')) as out:
+    md = mod_docs.get(str(filename.raw_path), [])
+    with open_outfile(html_root + filename.url) as out:
       out.write(env.get_template('module.j2').render(
-        active_path = filename_core('', filename, 'html'),
+        active_path = filename.url,
         filename = filename,
         items = sorted(md + decls, key = lambda d: d['line']),
         decl_names = sorted(d['name'] for d in decls),
@@ -379,14 +429,14 @@ def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs
 def write_site_map(partition):
   with open_outfile('sitemap.txt') as out:
     for filename in partition:
-      out.write(filename_core(site_root, filename, 'html') + '\n')
+      out.write(site_root + filename.url + '\n')
     for n in ['index', 'tactics', 'commands', 'hole_commands', 'notes']:
       out.write(site_root + n + '.html\n')
     for (filename, _, _, _) in extra_doc_files:
       out.write(site_root + filename + '.html\n')
 
 def write_docs_redirect(decl_name, decl_loc):
-  url = filename_core(site_root, decl_loc, 'html')
+  url = site_root + decl_loc.url
   with open_outfile('find/' + decl_name + '/index.html') as out:
     out.write(f'<meta http-equiv="refresh" content="0;url={url}#{quote(decl_name)}">')
 
@@ -397,6 +447,8 @@ def write_src_redirect(decl_name, decl_loc, file_map):
 
 def write_redirects(loc_map, file_map):
   for decl_name in loc_map:
+    if decl_name.startswith('con.') and sys.platform == 'win32':
+      continue  # can't write these files on windows
     write_docs_redirect(decl_name, loc_map[decl_name])
     write_src_redirect(decl_name, loc_map[decl_name], file_map)
 
@@ -429,14 +481,14 @@ def write_decl_txt(loc_map):
     out.write('\n'.join(loc_map.keys()))
 
 def mk_export_map_entry(decl_name, filename, kind, is_meta, line, args, tp):
-  return {'filename': filename,
+  return {'filename': str(filename.raw_path),
           'kind': kind,
           'is_meta': is_meta,
           'line': line,
           # 'args': args,
           # 'type': tp,
           'src_link': library_link(filename, line),
-          'docs_link': filename_core(site_root, filename, 'html') + f'#{decl_name}'}
+          'docs_link': f'{site_root}{filename.url}#{decl_name}'}
 
 def mk_export_db(loc_map, file_map):
   export_db = {}
