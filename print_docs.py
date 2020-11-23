@@ -374,7 +374,7 @@ def mk_site_tree_core(filenames, path=[]):
     entries.append({
       "kind": "file",
       "name": filename,
-      "path": '/'.join(new_path[1:]),
+      "path": '/'.join(new_path[1:]) + '.html',
     })
 
   return entries
