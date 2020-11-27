@@ -15,6 +15,10 @@
 
 <h3>Library</h3>
 {%- for item in site_tree recursive %}
+    {%- if item['kind'] == 'project' %}
+        <h4>{{item.name}}</h4>
+        {{ loop(item.children) }}
+    {%- endif %}
     {%- if item['kind'] == 'dir' %}
         {%- set is_open = 'open' if active_path.startswith(item.path+'/') else '' %}
         <details class="nav_sect" data-path="{{ item.path }}" {{is_open}}>
