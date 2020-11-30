@@ -257,8 +257,8 @@ nav {
     text-indent: -2ex; padding-left: 2ex;
 }
 
-.internal_nav .gh_nav_link {
-    padding-bottom: 1.5em;
+.internal_nav .imports {
+    margin-bottom: 1rem;
 }
 
 .tagfilter-div {
