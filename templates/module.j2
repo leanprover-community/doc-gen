@@ -8,26 +8,6 @@
 {%- endblock %}
 
 {% block content %}
-<div class="imports">
-    <details>
-        <summary>Imports</summary>
-        <ul>
-        {%- for _, other_mod in sorted(import_graph.out_edges(filename)) %}
-            <li><a href="{{ site_root }}{{ other_mod.url }}">
-                {{ other_mod.name }}</a></li>
-        {% endfor -%}
-        </ul>
-    </details>
-    <details>
-        <summary>Imported by</summary>
-        <ul>
-        {%- for other_mod, _ in sorted(import_graph.in_edges(filename)) %}
-            <li><a href="{{ site_root }}{{ other_mod.url }}">
-                {{ other_mod.name }}</a></li>
-        {% endfor -%}
-        </ul>
-    </details>
-</div>
 {% for item in items %}
     {% if 'name' in item %}
         {% set decl = item %}
@@ -49,7 +29,9 @@
 {% block internal_nav %}
 <h3><a class="break_within" href="#top">{{ self.doctitle() }}</a></h3>
 
-<div class="gh_nav_link"><a href="{{ filename | library_link }}">source</a></div>
+<p class="gh_nav_link"><a href="{{ filename | library_link }}">source</a></p>
+
+{% include "imports.j2" %}
 
 {% for decl_name in decl_names %}
     <div class="nav_link"><a class="break_within" href="#{{ decl_name }}">{{ decl_name | htmlify_name }}</a></div>

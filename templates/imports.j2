@@ -1,0 +1,20 @@
+<div class="imports">
+    <details>
+        <summary>Imports</summary>
+        <ul>
+        {%- for _, other_mod in sorted(import_graph.out_edges(filename)) %}
+            <li><a href="{{ site_root }}{{ other_mod.url }}">
+                {{ other_mod.name }}</a></li>
+        {% endfor -%}
+        </ul>
+    </details>
+    <details>
+        <summary>Imported by</summary>
+        <ul>
+        {%- for other_mod, _ in sorted(import_graph.in_edges(filename)) %}
+            <li><a href="{{ site_root }}{{ other_mod.url }}">
+                {{ other_mod.name }}</a></li>
+        {% endfor -%}
+        </ul>
+    </details>
+</div>
