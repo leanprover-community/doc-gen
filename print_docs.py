@@ -125,7 +125,7 @@ class ImportName(NamedTuple):
         pass
       else:
         return cls(name, rel_path.with_suffix('').parts, fname)
-    path_details = "".join(f" - {p.raw_path}\n" for p, _ in path_info)
+    path_details = "".join(f" - {p}\n" for p, _ in path_info)
     raise RuntimeError(
       f"Cannot determine import name for {fname}; it is not within any of the directories returned by `lean --path`:\n"
       f"{path_details}"
