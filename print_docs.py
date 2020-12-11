@@ -25,6 +25,8 @@ from pathlib import Path
 from typing import NamedTuple, List
 import sys
 
+import networkx as nx
+
 root = os.getcwd()
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
@@ -125,7 +127,7 @@ class ImportName(NamedTuple):
         pass
       else:
         return cls(name, rel_path.with_suffix('').parts, fname)
-    path_details = "".join(f" - {p.raw_path}\n" for p, _ in path_info)
+    path_details = "".join(f" - {p}\n" for p, _ in path_info)
     raise RuntimeError(
       f"Cannot determine import name for {fname}; it is not within any of the directories returned by `lean --path`:\n"
       f"{path_details}"
@@ -217,6 +219,26 @@ def separate_results(objs):
       loc_map[obj['name'] + '.mk'] = i_name
   return file_map, loc_map
 
+def trace_deps(file_map):
+  graph = nx.DiGraph()
+  import_name_by_path = {k.raw_path: k for k in file_map}
+  n = 0
+  n_ok = 0
+  for k in file_map:
+    deps = subprocess.check_output(['lean', '--deps', str(k.raw_path)]).decode()
+    graph.add_node(k)
+    for p in deps.split():
+      n += 1
+      try:
+        p = import_name_by_path[Path(p).with_suffix('.lean')]
+      except KeyError:
+        print(f"trace_deps: Path not recognized: {p}")
+        continue
+      graph.add_edge(k, p)
+      n_ok += 1
+  print(f"trace_deps: Processed {n_ok} / {n} dependency links")
+  return graph
+
 def load_json():
   with open('export.json', 'r', encoding='utf-8') as f:
     decls = json.load(f, strict=False)
@@ -224,7 +246,15 @@ def load_json():
   for entry in decls['tactic_docs']:
     if len(entry['tags']) == 0:
       entry['tags'] = ['untagged']
-  return file_map, loc_map, decls['notes'], decls['mod_docs'], decls['instances'], decls['tactic_docs']
+
+  mod_docs = {ImportName.of(f): docs for f, docs in decls['mod_docs'].items()}
+  # ensure the key is present for `default.lean` modules with no declarations
+  for i_name in mod_docs:
+    if i_name.project == '.':
+      continue  # this is doc-gen itself
+    file_map[i_name]
+
+  return file_map, loc_map, decls['notes'], mod_docs, decls['instances'], decls['tactic_docs']
 
 def linkify_core(decl_name, text, loc_map):
   if decl_name in loc_map:
@@ -380,6 +410,7 @@ def mk_site_tree_core(filenames, path=[]):
   return entries
 
 def setup_jinja_globals(file_map, loc_map, instances):
+  env.globals['import_graph'] = trace_deps(file_map)
   env.globals['site_tree'] = mk_site_tree(file_map)
   env.globals['instances'] = instances
   env.globals['import_options'] = lambda d, i: import_options(loc_map, d, i)
@@ -414,7 +445,7 @@ def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs
         tagset = sorted(set(t for e in entries for t in e['tags']))))
 
   for filename, decls in partition.items():
-    md = mod_docs.get(str(filename.raw_path), [])
+    md = mod_docs.get(filename, [])
     with open_outfile(html_root + filename.url) as out:
       out.write(env.get_template('module.j2').render(
         active_path = filename.url,

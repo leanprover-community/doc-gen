@@ -3,3 +3,4 @@ toml
 mathlibtools
 pygments >= 2.7.1
 jinja2
+networkx

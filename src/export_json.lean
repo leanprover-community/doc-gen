@@ -312,7 +312,6 @@ meta def write_olean_docs : tactic (list (string × json)) :=
 do docs ← olean_doc_strings,
    return (docs.foldl (λ rest p, match p with
    | (none, _) := rest
-   | (_, []) := rest
    | (some filename, l) :=
      (filename, json.array $ l.map write_module_doc_pair) :: rest
    end) [])
