@@ -26,119 +26,109 @@ for (const elem of document.getElementsByClassName('nav_sect')) {
 }
 
 for (const currentFileLink of document.getElementsByClassName('visible')) {
-  currentFileLink.scrollIntoView({block: 'center'});
+  currentFileLink.scrollIntoView({ block: 'center' });
 }
 
-
-
-
-
-
 // Tactic list tag filter
-// ----------------------
+// ---------------------- 
 
-function filterSelectionClass(tagNames, classname) {
-    if (tagNames.length == 0) {
-      for (const elem of document.getElementsByClassName(classname)) {
-        elem.classList.remove("hide");
-      }
-    } else {
-      // Add the "show" class (display:block) to the filtered elements, and remove the "show" class from the elements that are not selected
-      for (const elem of document.getElementsByClassName(classname)) {
-        elem.classList.add("hide");
-        for (const tagName of tagNames) {
-            if (elem.classList.contains(tagName)) {
-              elem.classList.remove("hide");
-            }
+function filterSelectionClass(tagNames, className) {
+  if (tagNames.length === 0) {
+    for (const elem of document.getElementsByClassName(className)) {
+      elem.classList.remove("hide");
+    }
+  } else {
+    // Add the "show" class (display:block) to the filtered elements, and remove the "show" class from the elements that are not selected
+    for (const elem of document.getElementsByClassName(className)) {
+      elem.classList.add("hide");
+      for (const tagName of tagNames) {
+        if (elem.classList.contains(tagName)) {
+          elem.classList.remove("hide");
         }
       }
     }
   }
+}
 
-  function filterSelection(c) {
-    filterSelectionClass(c, "tactic");
-    filterSelectionClass(c, "taclink");
-  }
+function filterSelection(c) {
+  filterSelectionClass(c, "tactic");
+  filterSelectionClass(c, "taclink");
+}
 
-var filterBoxes = document.getElementsByClassName("tagfilter");
+var filterBoxesElmnts = document.getElementsByClassName("tagfilter");
 
 function updateDisplay() {
-    filterSelection(getSelectValues());
+  filterSelection(getSelectValues());
 }
 
 function getSelectValues() {
-    var result = [];
-
-    for (const opt of filterBoxes) {
-
-      if (opt.checked) {
-        result.push(opt.value);
-      }
+  var result = [];
+  for (const opt of filterBoxesElmnts) {
+    if (opt.checked) {
+      result.push(opt.value);
     }
-    return result;
   }
+  return result;
+}
 
 function setSelectVal(val) {
-  for (const opt of filterBoxes) {
+  for (const opt of filterBoxesElmnts) {
     opt.checked = val;
   }
 }
 
 updateDisplay();
 
-for (const opt of filterBoxes) {
+for (const opt of filterBoxesElmnts) {
   opt.addEventListener('change', updateDisplay);
 }
 
-const tse = document.getElementById("tagfilter-selectall")
-if (tse != null) {
-  tse.addEventListener('change', function() {
+const tse = document.getElementById("tagfilter-selectall");
+if (tse !== null) {
+  tse.addEventListener('change', function () {
     setSelectVal(this.checked);
     updateDisplay();
   });
 }
 
-
-
-
-// Simple declaration search
+// Simple search through declarations by name
 // -------------------------
 
 const searchWorkerURL = new URL(`${siteRoot}searchWorker.js`, window.location);
-const declSearch = (q) => new Promise((resolve, reject) => {
+const declSearch = (query) => new Promise((resolve, reject) => {
   const worker = new SharedWorker(searchWorkerURL);
   worker.port.start();
-  worker.port.onmessage = ({data}) => resolve(data);
+  worker.port.onmessage = ({ data }) => resolve(data);
   worker.port.onmessageerror = (e) => reject(e);
-  worker.port.postMessage({q});
+  worker.port.postMessage({ query });
 });
 
-const srId = 'search_results';
+const resultsElmntId = 'search_results';
 document.getElementById('search_form')
   .appendChild(document.createElement('div'))
-  .id = srId; // todo add on creation of page, not here
+  .id = resultsElmntId; // todo add on creation of page, not here
 
 function handleSearchCursorUpDown(down) {
-  const sel = document.querySelector(`#${srId} .selected`);
-  const sr = document.getElementById(srId);
+  const selectedResult = document.querySelector(`#${resultsElmntId} .selected`);
+  const resultsElmnt = document.getElementById(resultsElmntId);
 
-  let toSelect = down ? sr.firstChild : sr.lastChild;
-  if (sel) {
-    sel.classList.remove('selected');
-    toSelect = down ? sel.nextSibling : sel.previousSibling;
+  let toSelect = down ? resultsElmnt.firstChild : resultsElmnt.lastChild;
+  if (selectedResult) {
+    selectedResult.classList.remove('selected');
+    toSelect = down ? selectedResult.nextSibling : selectedResult.previousSibling;
   }
   toSelect && toSelect.classList.add('selected');
 }
 
-function handleSearchEnter() {
-  const sel = document.querySelector(`#${srId} .selected`)
-    || document.getElementById(srId).firstChild;
-  sel.click();
+function handleSearchItemSelected() {
+  const selectedResult = document.querySelector(`#${resultsElmntId} .selected`)
+  selectedResult.click();
 }
 
-const searchInput = document.querySelector('#search_form input[name=q]');
+const searchInputElmnt = document.querySelector('#search_form input[name=q]');
 
-searchInput.addEventListener('keydown', (ev) => {
+// todo use Enter to start searching if we still in <input /> and not <div />
+searchInputElmnt.addEventListener('keydown', (ev) => {
   switch (ev.key) {
     case 'Down':
     case 'ArrowDown':
@@ -152,64 +142,59 @@ searchInput.addEventListener('keydown', (ev) => {
       break;
     case 'Enter':
       ev.preventDefault();
-      handleSearchEnter();
+      handleSearchItemSelected();
       break;
   }
 });
 
-searchInput.addEventListener('input', async (ev) => {
+searchInputElmnt.addEventListener('input', async (ev) => {
   const text = ev.target.value;
 
   if (!text) {
-    const sr = document.getElementById(srId);
-    sr.removeAttribute('state');
-    sr.replaceWith(sr.cloneNode(false));
+    const resultsElmnt = document.getElementById(resultsElmntId);
+    resultsElmnt.removeAttribute('state');
+    resultsElmnt.replaceWith(resultsElmnt.cloneNode(false));
     return;
   }
 
-  document.getElementById(srId).setAttribute('state', 'loading');
+  document.getElementById(resultsElmntId).setAttribute('state', 'loading');
 
   const result = await declSearch(text);
   if (ev.target.value != text) return; // todo why?
 
-  const oldSR = document.getElementById('search_results');
-  const sr = oldSR.cloneNode(false);
-  for (const {decl} of result) {
-    const d = sr.appendChild(document.createElement('a'));
+  const currentResultsElmnt = document.getElementById('search_results');
+  const resultsElmntCopy = currentResultsElmnt.cloneNode(false);
+  for (const { decl } of result) {
+    const d = resultsElmntCopy.appendChild(document.createElement('a'));
     d.innerText = decl;
     d.title = decl;
-    d.href = `${siteRoot}find/${decl}`;
+    d.href = `${siteRoot}find/${decl}`; // todo why not a link directly to the declaration in docs?
   }
-  sr.setAttribute('state', 'done');
-  oldSR.replaceWith(sr);
+  resultsElmntCopy.setAttribute('state', 'done');
+  currentResultsElmnt.replaceWith(resultsElmntCopy);
 });
-
-
-
-
-
 
 // 404 page goodies
 // ----------------
 
-const howabout = document.getElementById('howabout');
-if (howabout) {
-  howabout.innerText = "Please wait a second.  I'll try to help you.";
+const suggestionsElmnt = document.getElementById('howabout');
+if (suggestionsElmnt) {
+  suggestionsElmnt.innerText = "Please wait a second.  I'll try to help you.";
 
-  howabout.parentNode
-      .insertBefore(document.createElement('pre'), howabout)
-      .appendChild(document.createElement('code'))
-      .innerText = window.location.href.replace(/[/]/g, '/\u200b');
+  suggestionsElmnt.parentNode
+    .insertBefore(document.createElement('pre'), suggestionsElmnt)
+    .appendChild(document.createElement('code'))
+    .innerText = window.location.href.replace(/[/]/g, '/\u200b');
 
   const query = window.location.href.match(/[/]([^/]+)(?:\.html|[/])?$/)[1];
   declSearch(query).then((results) => {
-      howabout.innerText = 'How about one of these instead:';
-      const ul = howabout.appendChild(document.createElement('ul'));
-      for (const {decl} of results) {
-          const li = ul.appendChild(document.createElement('li'));
-          const a = li.appendChild(document.createElement('a'));
-          a.href = `${siteRoot}find/${decl}`;
-          a.appendChild(document.createElement('code')).innerText = decl;
-      }
+    suggestionsElmnt.innerText = 'How about one of these instead:';
+    const ul = suggestionsElmnt.appendChild(document.createElement('ul'));
+    for (const { decl } of results) {
+      const li = ul.appendChild(document.createElement('li'));
+      const a = li.appendChild(document.createElement('a'));
+      a.href = `${siteRoot}find/${decl}`; // todo why not a link directly?
+      a.appendChild(document.createElement('code')).innerText = decl;
+    }
   });
 }

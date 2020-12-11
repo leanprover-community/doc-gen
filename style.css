@@ -170,7 +170,7 @@ header header_filename {
 }
 #search_results[state="loading"]:empty::before {
     display: block;
-    content: ' 🐙 🐙 🐙 🐙 🐙 🐙 🐙 🐙 🐙 🐙 🐙 🐙 🐙 🐙 🐙 ';
+    content: ' 🐙 🐙 🐙 🐙 🐙 🐙 🐙 ';
     padding: 1ex;
     animation: marquee 10s linear infinite;
 }
