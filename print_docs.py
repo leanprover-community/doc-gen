@@ -31,8 +31,8 @@ root = os.getcwd()
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 env = Environment(
-    loader=FileSystemLoader('templates', 'utf-8'),
-    autoescape=select_autoescape(['html', 'xml'])
+  loader=FileSystemLoader('templates', 'utf-8'),
+  autoescape=select_autoescape(['html', 'xml'])
 )
 env.globals['sorted'] = sorted
 
@@ -209,11 +209,12 @@ def separate_results(objs):
     i_name = obj['filename'] = ImportName.of(obj['filename'])
     if i_name.project == '.':
       continue  # this is doc-gen itself
+    
     file_map[i_name].append(obj)
     loc_map[obj['name']] = i_name
-    for (cstr_name, tp) in obj['constructors']:
+    for (cstr_name, _) in obj['constructors']:
       loc_map[cstr_name] = i_name
-    for (sf_name, tp) in obj['structure_fields']:
+    for (sf_name, _) in obj['structure_fields']:
       loc_map[sf_name] = i_name
     if len(obj['structure_fields']) > 0:
       loc_map[obj['name'] + '.mk'] = i_name
@@ -523,7 +524,7 @@ def mk_export_map_entry(decl_name, filename, kind, is_meta, line, args, tp):
 
 def mk_export_db(loc_map, file_map):
   export_db = {}
-  for fn, decls in file_map.items():
+  for _, decls in file_map.items():
     for obj in decls:
       export_db[obj['name']] = mk_export_map_entry(obj['name'], obj['filename'], obj['kind'], obj['is_meta'], obj['line'], obj['args'], obj['type'])
       export_db[obj['name']]['decl_header_html'] = env.get_template('decl_header.j2').render(decl=obj)
