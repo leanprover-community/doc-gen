@@ -4,202 +4,82 @@
 #   `pip install markdown2 toml`
 #
 
-import json
+# interpreter and general external access
+import sys
 import os
 import os.path
+import argparse
+import subprocess
+from jinja2 import Environment, FileSystemLoader, select_autoescape
+
+# directories manipulation
+import shutil
+import gzip
+
+# data structures
+from pathlib import Path
+from typing import List
+from collections import defaultdict
+from import_name import ImportName
+
+# data structures manipulation
+import json
+import toml
 import glob
+import re
 import textwrap
 import markdown2
-import re
-import subprocess
-import toml
-import shutil
-import argparse
 import html
-import gzip
 from urllib.parse import quote
 from functools import reduce
-import textwrap
-from collections import defaultdict
-from pathlib import Path
-from typing import NamedTuple, List
-import sys
-
 import networkx as nx
 
-root = os.getcwd()
-
-from jinja2 import Environment, FileSystemLoader, select_autoescape
-env = Environment(
-  loader=FileSystemLoader('templates', 'utf-8'),
-  autoescape=select_autoescape(['html', 'xml'])
-)
-env.globals['sorted'] = sorted
-
+# get arguments from script inititation
 parser = argparse.ArgumentParser('Options to print_docs.py')
 parser.add_argument('-w', help = 'Specify site root URL')
 parser.add_argument('-l', help = 'Symlink CSS and JS instead of copying', action = "store_true")
 parser.add_argument('-r', help = 'relative path to mathlib root directory')
 parser.add_argument('-t', help = 'relative path to html output directory')
-cl_args = parser.parse_args()
+CLI_ARGS = parser.parse_args()
+
+# setup templates environment
+env = Environment(
+  loader=FileSystemLoader('templates', 'utf-8'),
+  autoescape=select_autoescape(['html', 'xml'])
+)
 
 # extra doc files to include in generation
 # the content has moved to the community website,
 # but we still build them to avoid broken links
 # format: (filename_root, display_name, source, community_site_url)
-extra_doc_files = [('overview', 'mathlib overview', 'docs/mathlib-overview.md', 'mathlib-overview'),
-                   ('tactic_writing', 'tactic writing', 'docs/extras/tactic_writing.md', 'extras/tactic_writing'),
-                   ('calc', 'calc mode', 'docs/extras/calc.md', 'extras/calc'),
-                   ('conv', 'conv mode', 'docs/extras/conv.md', 'extras/conv'),
-                   ('simp', 'simplification', 'docs/extras/simp.md', 'extras/simp'),
-                   ('well_founded_recursion', 'well founded recursion', 'docs/extras/well_founded_recursion.md','extras/well_founded_recursion'),
-                   ('style', 'style guide', 'docs/contribute/style.md','contribute/style'),
-                   ('doc_style', 'documentation style guide', 'docs/contribute/doc.md','contribute/doc'),
-                   ('naming', 'naming conventions', 'docs/contribute/naming.md','contribute/naming')]
-env.globals['extra_doc_files'] = extra_doc_files
+# TODO: avoid broken links and remove unnecessary structures and action
+EXTRA_DOC_FILES = [
+  ('overview', 'mathlib overview', 'docs/mathlib-overview.md', 'mathlib-overview'),
+  ('tactic_writing', 'tactic writing', 'docs/extras/tactic_writing.md', 'extras/tactic_writing'),
+  ('calc', 'calc mode', 'docs/extras/calc.md', 'extras/calc'),
+  ('conv', 'conv mode', 'docs/extras/conv.md', 'extras/conv'),
+  ('simp', 'simplification', 'docs/extras/simp.md', 'extras/simp'),
+  ('well_founded_recursion', 'well founded recursion', 'docs/extras/well_founded_recursion.md','extras/well_founded_recursion'),
+  ('style', 'style guide', 'docs/contribute/style.md','contribute/style'),
+  ('doc_style', 'documentation style guide', 'docs/contribute/doc.md','contribute/doc'),
+  ('naming', 'naming conventions', 'docs/contribute/naming.md','contribute/naming')
+]
 
-# path to put generated html
-html_root = os.path.join(root, cl_args.t if cl_args.t else 'html') + '/'
-
-# TODO: make sure nothing is left in html_root
-
-# root of the site, for display purposes.
-# override this setting with the `-w` flag.
-site_root = "/"
-
-# root directory of mathlib.
-local_lean_root = os.path.join(root, cl_args.r if cl_args.r else '_target/deps/mathlib') + '/'
-
+# setup global variables
+ROOT = os.getcwd()
+SITE_ROOT = CLI_ARGS.w if CLI_ARGS.w else "/"
+MATHLIB_SRC_ROOT = os.path.join(ROOT, CLI_ARGS.r if CLI_ARGS.r else '_target/deps/mathlib') + '/'
+MATHLIB_DEST_ROOT = os.path.join(ROOT, CLI_ARGS.t if CLI_ARGS.t else 'html', '') # TODO: make sure nothing is left in docs_destination_root
+LINK_PATTERNS = [(re.compile(r'Note \[(.*)\]', re.I), SITE_ROOT + r'notes.html#\1')]
+LEAN_COMMIT = subprocess.check_output(['lean', '--run', 'src/lean_commit.lean']).decode()
 
 with open('leanpkg.toml') as f:
   parsed_toml = toml.loads(f.read())
 ml_data = parsed_toml['dependencies']['mathlib']
-mathlib_commit = ml_data['rev']
-mathlib_github_root = ml_data['git'].strip('/')
+MATHLIB_COMMIT = ml_data['rev']
+MATHLIB_GITHUB_ROOT = ml_data['git'].strip('/')
 
-if cl_args.w:
-  site_root = cl_args.w
-
-mathlib_github_src_root = "{0}/blob/{1}/src/".format(mathlib_github_root, mathlib_commit)
-
-lean_commit = subprocess.check_output(['lean', '--run', 'src/lean_commit.lean']).decode()
-lean_root = 'https://github.com/leanprover-community/lean/blob/{}/library/'.format(lean_commit)
-
-def get_name_from_leanpkg_path(p: Path) -> str:
-  """ get the package name corresponding to a source path """
-  # lean core?
-  if p.parts[-5:] == Path('bin/../lib/lean/library').parts:
-    return "core"
-  if p.parts[-3:] == Path('bin/../library').parts:
-    return "core"
-
-  # try the toml
-  p_leanpkg = p / '..' / 'leanpkg.toml'
-  try:
-    f = p_leanpkg.open()
-  except FileNotFoundError:
-    pass
-  else:
-    with f:
-      parsed_toml = toml.loads(f.read())
-    return parsed_toml['package']['name']
-
-  return '<unknown>'
-
-lean_paths = [
-  Path(p)
-  for p in json.loads(subprocess.check_output(['lean', '--path']).decode())['path']
-]
-path_info = [(p.resolve(), get_name_from_leanpkg_path(p)) for p in lean_paths]
-
-class ImportName(NamedTuple):
-  project: str
-  parts: List[str]
-  raw_path: Path
-
-  @classmethod
-  def of(cls, fname: str):
-    fname = Path(fname)
-    for p, name in path_info:
-      try:
-        rel_path = fname.relative_to(p)
-      except ValueError:
-        pass
-      else:
-        return cls(name, rel_path.with_suffix('').parts, fname)
-    path_details = "".join(f" - {p}\n" for p, _ in path_info)
-    raise RuntimeError(
-      f"Cannot determine import name for {fname}; it is not within any of the directories returned by `lean --path`:\n"
-      f"{path_details}"
-      f"Did you generate `export.json` using a different Lean installation to the one this script is running with?")
-
-  @property
-  def name(self):
-    return '.'.join(self.parts)
-
-  @property
-  def url(self):
-    return '/'.join(self.parts) + '.html'
-
-env.globals['mathlib_github_root'] = mathlib_github_root
-env.globals['mathlib_commit'] = mathlib_commit
-env.globals['lean_commit'] = lean_commit
-env.globals['site_root'] = site_root
-
-note_regex = re.compile(r'Note \[(.*)\]', re.I)
-target_url_regex = site_root + r'notes.html#\1'
-link_patterns = [(note_regex, target_url_regex)]
-
-def convert_markdown(ds, toc=False):
-  extras = ['code-friendly', 'cuddled-lists', 'fenced-code-blocks', 'link-patterns', 'tables']
-  if toc:
-    extras.append('toc')
-  return markdown2.markdown(ds, extras=extras, link_patterns = link_patterns)
-
-# TODO: allow extending this for third-party projects
-library_link_roots = {
-  'core': lean_root,
-  'mathlib': mathlib_github_src_root,
-}
-
-def library_link(filename: ImportName, line=None):
-  try:
-    root = library_link_roots[filename.project]
-  except KeyError:
-    return ""  # empty string is handled as a self-link
-
-  root += '/'.join(filename.parts) + '.lean'
-  if line is not None:
-    root += f'#L{line}'
-  return root
-
-env.globals['library_link'] = library_link
-env.filters['library_link'] = library_link
-
-def name_in_decl(decl_name, dmap):
-  if dmap['name'] == decl_name:
-    return True
-  if decl_name in [sf[0] for sf in dmap['structure_fields']]:
-    return True
-  if decl_name in [sf[0] for sf in dmap['constructors']]:
-    return True
-  return False
-
-def library_link_from_decl_name(decl_name, decl_loc, file_map):
-  try:
-    e = next(d for d in file_map[decl_loc] if name_in_decl(decl_name, d))
-  except StopIteration as e:
-    if decl_name[-3:] == '.mk':
-      return library_link_from_decl_name(decl_name[:-3], decl_loc, file_map)
-    print(f'{decl_name} appears in {decl_loc}, but we do not have data for that declaration. file_map:')
-    print(file_map[decl_loc])
-    raise e
-  return library_link(decl_loc, e['line'])
-
-def open_outfile(filename, mode = 'w'):
-    filename = os.path.join(html_root, filename)
-    os.makedirs(os.path.dirname(filename), exist_ok=True)
-    return open(filename, mode, encoding='utf-8')
+# ------------------------------------------------ START utils reading -------------------------------------------------
 
 def separate_results(objs):
   file_map = defaultdict(list)
@@ -220,6 +100,46 @@ def separate_results(objs):
       loc_map[obj['name'] + '.mk'] = i_name
   return file_map, loc_map
 
+# ------------------------------------------------ END utils reading ---------------------------------------------------
+
+
+# ------------------------------------------------ START read source files -------------------------------------------------
+
+def read_src_data():
+  with open('export.json', 'r', encoding='utf-8') as f:
+    decls = json.load(f, strict=False)
+  file_map, loc_map = separate_results(decls['decls'])
+  for entry in decls['tactic_docs']:
+    if len(entry['tags']) == 0:
+      entry['tags'] = ['untagged']
+
+  mod_docs = {ImportName.of(f): docs for f, docs in decls['mod_docs'].items()}
+  # ensure the key is present for `default.lean` modules with no declarations
+  for i_name in mod_docs:
+    if i_name.project == '.':
+      continue  # this is doc-gen itself
+    file_map[i_name]
+
+  return file_map, loc_map, decls['notes'], mod_docs, decls['instances'], decls['tactic_docs']
+
+# ------------------------------------------------ END read source files -----------------------------------------------------
+
+# ------------------------------------------------ START common utils --------------------------------------------------------
+
+def convert_markdown(ds, toc=False):
+  extras = ['code-friendly', 'cuddled-lists', 'fenced-code-blocks', 'link-patterns', 'tables']
+  if toc:
+    extras.append('toc')
+  return markdown2.markdown(ds, extras=extras, link_patterns = LINK_PATTERNS)
+
+# returns (pagetitle, intro_block), [(tactic_name, tactic_block)]
+def split_tactic_list(markdown):
+  entries = re.findall(r'(?<=# )(.*)([\s\S]*?)(?=(##|\Z))', markdown)
+  return entries[0], entries[1:]
+
+# ------------------------------------------------ END common utils ----------------------------------------------------------
+
+# ------------------------------------------------ START templates setup ----------------------------------------------------
 def trace_deps(file_map):
   graph = nx.DiGraph()
   import_name_by_path = {k.raw_path: k for k in file_map}
@@ -239,150 +159,6 @@ def trace_deps(file_map):
       n_ok += 1
   print(f"trace_deps: Processed {n_ok} / {n} dependency links")
   return graph
-
-def load_json():
-  with open('export.json', 'r', encoding='utf-8') as f:
-    decls = json.load(f, strict=False)
-  file_map, loc_map = separate_results(decls['decls'])
-  for entry in decls['tactic_docs']:
-    if len(entry['tags']) == 0:
-      entry['tags'] = ['untagged']
-
-  mod_docs = {ImportName.of(f): docs for f, docs in decls['mod_docs'].items()}
-  # ensure the key is present for `default.lean` modules with no declarations
-  for i_name in mod_docs:
-    if i_name.project == '.':
-      continue  # this is doc-gen itself
-    file_map[i_name]
-
-  return file_map, loc_map, decls['notes'], mod_docs, decls['instances'], decls['tactic_docs']
-
-def linkify_core(decl_name, text, loc_map):
-  if decl_name in loc_map:
-    tooltip = ' title="{}"'.format(decl_name) if text != decl_name else ''
-    return '<a href="{0}#{1}"{3}>{2}</a>'.format(
-      site_root + loc_map[decl_name].url, decl_name, text, tooltip)
-  elif text != decl_name:
-    return '<span title="{0}">{1}</span>'.format(decl_name, text)
-  else:
-    return text
-
-def linkify(string, loc_map):
-  return linkify_core(string, string, loc_map)
-
-def linkify_linked(string, loc_map):
-  return ''.join(
-    match[4] if match[0] == '' else
-    match[1] + linkify_core(match[0], match[2], loc_map) + match[3]
-    for match in re.findall(r'\ue000(.+?)\ue001(\s*)(.*?)(\s*)\ue002|([^\ue000]+)', string))
-
-def linkify_efmt(f, loc_map):
-  def go(f):
-    if isinstance(f, str):
-      f = f.replace('\n', ' ')
-      # f = f.replace(' ', '&nbsp;')
-      return linkify_linked(f, loc_map)
-    elif f[0] == 'n':
-      return f'<span class="fn">{go(f[1])}</span>'
-    elif f[0] == 'c':
-      return go(f[1]) + go(f[2])
-    else:
-      raise Exception('unknown efmt object')
-
-  return go(['n', f])
-
-def linkify_markdown(string, loc_map):
-  def linkify_type(string):
-    splitstr = re.split(r'([\s\[\]\(\)\{\}])', string)
-    tks = map(lambda s: linkify(s, loc_map), splitstr)
-    return "".join(tks)
-
-  string = re.sub(r'<code>([^<]+)</code>',
-    lambda p: '<code>{}</code>'.format(linkify_type(p.group(1))), string)
-  string = re.sub(r'<span class="n">([^<]+)</span>',
-    lambda p: '<span class="n">{}</span>'.format(linkify_type(p.group(1))), string)
-  return string
-
-def plaintext_summary(markdown, max_chars = 200):
-  # collapse lines
-  text = re.compile(r'([a-zA-Z`(),;\$\-]) *\n *([a-zA-Z`()\$])').sub(r'\1 \2', markdown)
-
-  # adapted from https://github.com/writeas/go-strip-markdown/blob/master/strip.go
-  remove_keep_contents_patterns = [
-    r'(?m)^([\s\t]*)([\*\-\+]|\d\.)\s+',
-    r'\*\*([^*]+)\*\*',
-    r'\*([^*]+)\*',
-    r'(?m)^\#{1,6}\s*([^#]+)\s*(\#{1,6})?$',
-    r'__([^_]+)__',
-    r'_([^_]+)_',
-    r'\!\[(.*?)\]\s?[\[\(].*?[\]\)]',
-    r'\[(.*?)\][\[\(].*?[\]\)]'
-  ]
-  remove_patterns = [
-    r'^\s{0,3}>\s?', r'^={2,}', r'`{3}.*$', r'~~', r'^[=\-]{2,}\s*$',
-    r'^-{3,}\s*$', r'^\s*']
-
-  text = reduce(lambda text, p: re.compile(p, re.MULTILINE).sub(r'\1', text), remove_keep_contents_patterns, text)
-  text = reduce(lambda text, p: re.compile(p, re.MULTILINE).sub('', text), remove_patterns, text)
-
-  # collapse lines again
-  text = re.compile(r'\s*\.?\n').sub('. ', text)
-
-  return textwrap.shorten(text, width = max_chars, placeholder="…")
-
-def link_to_decl(decl_name, loc_map):
-  return f'{site_root}{loc_map[decl_name].url}#{decl_name}'
-
-def kind_of_decl(decl):
-  kind = 'structure' if len(decl['structure_fields']) > 0 else 'inductive' if len(decl['constructors']) > 0 else decl['kind']
-  if kind == 'thm': kind = 'theorem'
-  elif kind == 'cnst': kind = 'constant'
-  elif kind == 'ax': kind = 'axiom'
-  return kind
-env.globals['kind_of_decl'] = kind_of_decl
-
-def htmlify_name(n):
-  return '.'.join([f'<span class="name">{ html.escape(part) }</span>' for part in n.split('.')])
-env.filters['htmlify_name'] = htmlify_name
-
-# returns (pagetitle, intro_block), [(tactic_name, tactic_block)]
-def split_tactic_list(markdown):
-  entries = re.findall(r'(?<=# )(.*)([\s\S]*?)(?=(##|\Z))', markdown)
-  return entries[0], entries[1:]
-
-def import_options(loc_map, decl_name, import_string):
-  direct_import_paths = []
-  if decl_name in loc_map:
-    direct_import_paths.append(loc_map[decl_name].name)
-  if import_string != '' and import_string not in direct_import_paths:
-    direct_import_paths.append(import_string)
-  if any(i.startswith('init.') for i in direct_import_paths):
-    return '<details class="imports"><summary>Import using</summary><ul>{}</ul>'.format('<li>imported by default</li>')
-  elif len(direct_import_paths) > 0:
-    return '<details class="imports"><summary>Import using</summary><ul>{}</ul>'.format(
-      '\n'.join(['<li>import {}</li>'.format(d) for d in direct_import_paths]))
-  else:
-    return ''
-
-def split_on_hr(description):
-  return description.split('\n---\n', 1)[-1]
-env.filters['split_on_hr'] = split_on_hr
-
-def tag_id_of_name(tag):
-  return tag.strip().replace(' ', '-')
-env.globals['tag_id_of_name'] = tag_id_of_name
-env.globals['tag_ids_of_names'] = lambda ns: ' '.join(tag_id_of_name(n) for n in ns)
-
-def write_pure_md_file(source, dest, name, loc_map):
-  with open(source) as infile:
-    body = convert_markdown(infile.read(), True)
-
-  with open_outfile(dest) as out:
-    out.write(env.get_template('pure_md.j2').render(
-      active_path = '',
-      name = name,
-      body = body,
-    ))
 
 def mk_site_tree(partition: List[ImportName]):
   filenames = [ [filename.project] + list(filename.parts) for filename in partition ]
@@ -410,17 +186,173 @@ def mk_site_tree_core(filenames, path=[]):
 
   return entries
 
-def setup_jinja_globals(file_map, loc_map, instances):
+def import_options(loc_map, decl_name, import_string):
+  direct_import_paths = []
+  if decl_name in loc_map:
+    direct_import_paths.append(loc_map[decl_name].name)
+  if import_string != '' and import_string not in direct_import_paths:
+    direct_import_paths.append(import_string)
+  if any(i.startswith('init.') for i in direct_import_paths):
+    return '<details class="imports"><summary>Import using</summary><ul>{}</ul>'.format('<li>imported by default</li>')
+  elif len(direct_import_paths) > 0:
+    return '<details class="imports"><summary>Import using</summary><ul>{}</ul>'.format(
+      '\n'.join(['<li>import {}</li>'.format(d) for d in direct_import_paths]))
+  else:
+    return ''
+
+def kind_of_decl(decl):
+  kind = 'structure' if len(decl['structure_fields']) > 0 else 'inductive' if len(decl['constructors']) > 0 else decl['kind']
+  if kind == 'thm': kind = 'theorem'
+  elif kind == 'cnst': kind = 'constant'
+  elif kind == 'ax': kind = 'axiom'
+  return kind
+
+def tag_id_of_name(tag):
+  return tag.strip().replace(' ', '-')
+
+def linkify_core(decl_name, text, loc_map):
+  if decl_name in loc_map:
+    tooltip = ' title="{}"'.format(decl_name) if text != decl_name else ''
+    return '<a href="{0}#{1}"{3}>{2}</a>'.format(
+      SITE_ROOT + loc_map[decl_name].url, decl_name, text, tooltip)
+  elif text != decl_name:
+    return '<span title="{0}">{1}</span>'.format(decl_name, text)
+  else:
+    return text
+
+def linkify_efmt(f, loc_map):
+  def linkify_linked(string, loc_map):
+    return ''.join(
+      match[4] if match[0] == '' else
+      match[1] + linkify_core(match[0], match[2], loc_map) + match[3]
+      for match in re.findall(r'\ue000(.+?)\ue001(\s*)(.*?)(\s*)\ue002|([^\ue000]+)', string))
+
+  def go(f):
+    if isinstance(f, str):
+      f = f.replace('\n', ' ')
+      # f = f.replace(' ', '&nbsp;')
+      return linkify_linked(f, loc_map)
+    elif f[0] == 'n':
+      return f'<span class="fn">{go(f[1])}</span>'
+    elif f[0] == 'c':
+      return go(f[1]) + go(f[2])
+    else:
+      raise Exception('unknown efmt object')
+
+  return go(['n', f])
+
+def linkify_markdown(string, loc_map):
+  def linkify_type(string):
+    splitstr = re.split(r'([\s\[\]\(\)\{\}])', string)
+    tks = map(lambda s: linkify_core(s, s, loc_map), splitstr)
+    return "".join(tks)
+
+  string = re.sub(r'<code>([^<]+)</code>',
+    lambda p: '<code>{}</code>'.format(linkify_type(p.group(1))), string)
+  string = re.sub(r'<span class="n">([^<]+)</span>',
+    lambda p: '<span class="n">{}</span>'.format(linkify_type(p.group(1))), string)
+  return string
+
+def link_to_decl(decl_name, loc_map):
+  return f'{SITE_ROOT}{loc_map[decl_name].url}#{decl_name}'
+
+def plaintext_summary(markdown, max_chars = 200):
+  # collapse lines
+  text = re.compile(r'([a-zA-Z`(),;\$\-]) *\n *([a-zA-Z`()\$])').sub(r'\1 \2', markdown)
+
+  # adapted from https://github.com/writeas/go-strip-markdown/blob/master/strip.go
+  remove_keep_contents_patterns = [
+    r'(?m)^([\s\t]*)([\*\-\+]|\d\.)\s+',
+    r'\*\*([^*]+)\*\*',
+    r'\*([^*]+)\*',
+    r'(?m)^\#{1,6}\s*([^#]+)\s*(\#{1,6})?$',
+    r'__([^_]+)__',
+    r'_([^_]+)_',
+    r'\!\[(.*?)\]\s?[\[\(].*?[\]\)]',
+    r'\[(.*?)\][\[\(].*?[\]\)]'
+  ]
+  remove_patterns = [
+    r'^\s{0,3}>\s?', r'^={2,}', r'`{3}.*$', r'~~', r'^[=\-]{2,}\s*$',
+    r'^-{3,}\s*$', r'^\s*'
+  ]
+
+  text = reduce(lambda text, p: re.compile(p, re.MULTILINE).sub(r'\1', text), remove_keep_contents_patterns, text)
+  text = reduce(lambda text, p: re.compile(p, re.MULTILINE).sub('', text), remove_patterns, text)
+
+  # collapse lines again
+  text = re.compile(r'\s*\.?\n').sub('. ', text)
+
+  return textwrap.shorten(text, width = max_chars, placeholder="…")
+  
+def htmlify_name(n):
+  return '.'.join([f'<span class="name">{ html.escape(part) }</span>' for part in n.split('.')])
+
+def library_link(filename: ImportName, line=None):
+  mathlib_github_src_root = "{0}/blob/{1}/src/".format(MATHLIB_GITHUB_ROOT, MATHLIB_COMMIT)
+  lean_root = 'https://github.com/leanprover-community/lean/blob/{}/library/'.format(LEAN_COMMIT)
+
+  # TODO: allow extending this for third-party projects
+  library_link_roots = {
+    'core': lean_root,
+    'mathlib': mathlib_github_src_root,
+  }
+
+  try:
+    root = library_link_roots[filename.project]
+  except KeyError:
+    return ""  # empty string is handled as a self-link
+
+  root += '/'.join(filename.parts) + '.lean'
+  if line is not None:
+    root += f'#L{line}'
+  return root
+
+def setup_jinja_env(file_map, loc_map, instances):
   env.globals['import_graph'] = trace_deps(file_map)
   env.globals['site_tree'] = mk_site_tree(file_map)
   env.globals['instances'] = instances
   env.globals['import_options'] = lambda d, i: import_options(loc_map, d, i)
   env.globals['find_import_path'] = lambda d: find_import_path(loc_map, d)
-  env.filters['linkify'] = lambda x: linkify(x, loc_map)
+  env.globals['sorted'] = sorted
+  env.globals['extra_doc_files'] = EXTRA_DOC_FILES
+  env.globals['mathlib_github_root'] = MATHLIB_GITHUB_ROOT
+  env.globals['mathlib_commit'] = MATHLIB_COMMIT
+  env.globals['lean_commit'] = LEAN_COMMIT
+  env.globals['site_root'] = SITE_ROOT
+  env.globals['kind_of_decl'] = kind_of_decl
+  env.globals['tag_id_of_name'] = tag_id_of_name
+  env.globals['tag_ids_of_names'] = lambda names: ' '.join(tag_id_of_name(n) for n in names)
+  env.globals['library_link'] = library_link
+
+  env.filters['linkify'] = lambda x: linkify_core(x, x, loc_map)
   env.filters['linkify_efmt'] = lambda x: linkify_efmt(x, loc_map)
   env.filters['convert_markdown'] = lambda x: linkify_markdown(convert_markdown(x), loc_map) # TODO: this is probably very broken
   env.filters['link_to_decl'] = lambda x: link_to_decl(x, loc_map)
-  env.filters['plaintext_summary'] = lambda x: plaintext_summary(x)
+  env.filters['plaintext_summary'] = plaintext_summary
+  env.filters['split_on_hr'] = lambda x: x.split('\n---\n', 1)[-1]
+  env.filters['htmlify_name'] = htmlify_name
+  env.filters['library_link'] = library_link
+
+# ------------------------------------------------ END templates setup ------------------------------------------------------
+
+
+# ------------------------------------------------ START write destination files ----------------------------------------------
+
+def open_outfile(filename, mode = 'w'):
+  filename = os.path.join(MATHLIB_DEST_ROOT, filename)
+  os.makedirs(os.path.dirname(filename), exist_ok=True)
+  return open(filename, mode, encoding='utf-8')
+
+def write_pure_md_file(source, dest, name):
+  with open(source) as infile:
+    body = convert_markdown(infile.read(), True)
+
+  with open_outfile(dest) as out:
+    out.write(env.get_template('pure_md.j2').render(
+      active_path = '',
+      name = name,
+      body = body,
+    ))
 
 def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs):
   with open_outfile('index.html') as out:
@@ -447,7 +379,7 @@ def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs
 
   for filename, decls in partition.items():
     md = mod_docs.get(filename, [])
-    with open_outfile(html_root + filename.url) as out:
+    with open_outfile(MATHLIB_DEST_ROOT + filename.url) as out:
       out.write(env.get_template('module.j2').render(
         active_path = filename.url,
         filename = filename,
@@ -455,20 +387,40 @@ def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs
         decl_names = sorted(d['name'] for d in decls),
       ))
 
-  for (filename, displayname, source, _) in extra_doc_files:
-    write_pure_md_file(local_lean_root + source, filename + '.html', displayname, loc_map)
+  for (filename, displayname, source, _) in EXTRA_DOC_FILES:
+    write_pure_md_file(MATHLIB_SRC_ROOT + source, filename + '.html', displayname)
 
 def write_site_map(partition):
   with open_outfile('sitemap.txt') as out:
     for filename in partition:
-      out.write(site_root + filename.url + '\n')
+      out.write(SITE_ROOT + filename.url + '\n')
     for n in ['index', 'tactics', 'commands', 'hole_commands', 'notes']:
-      out.write(site_root + n + '.html\n')
-    for (filename, _, _, _) in extra_doc_files:
-      out.write(site_root + filename + '.html\n')
+      out.write(SITE_ROOT + n + '.html\n')
+    for (filename, _, _, _) in EXTRA_DOC_FILES:
+      out.write(SITE_ROOT + filename + '.html\n')
+
+def name_in_decl(decl_name, dmap):
+  if dmap['name'] == decl_name:
+    return True
+  if decl_name in [sf[0] for sf in dmap['structure_fields']]:
+    return True
+  if decl_name in [sf[0] for sf in dmap['constructors']]:
+    return True
+  return False
+
+def library_link_from_decl_name(decl_name, decl_loc, file_map):
+  try:
+    e = next(d for d in file_map[decl_loc] if name_in_decl(decl_name, d))
+  except StopIteration as e:
+    if decl_name[-3:] == '.mk':
+      return library_link_from_decl_name(decl_name[:-3], decl_loc, file_map)
+    print(f'{decl_name} appears in {decl_loc}, but we do not have data for that declaration. file_map:')
+    print(file_map[decl_loc])
+    raise e
+  return library_link(decl_loc, e['line'])
 
 def write_docs_redirect(decl_name, decl_loc):
-  url = site_root + decl_loc.url
+  url = SITE_ROOT + decl_loc.url
   with open_outfile('find/' + decl_name + '/index.html') as out:
     out.write(f'<meta http-equiv="refresh" content="0;url={url}#{quote(decl_name)}">')
 
@@ -477,6 +429,7 @@ def write_src_redirect(decl_name, decl_loc, file_map):
   with open_outfile('find/' + decl_name + '/src/index.html') as out:
     out.write(f'<meta http-equiv="refresh" content="0;url={url}">')
 
+# TODO: see if we can do without the 'find' dir
 def write_redirects(loc_map, file_map):
   for decl_name in loc_map:
     if decl_name.startswith('con.') and sys.platform == 'win32':
@@ -484,7 +437,7 @@ def write_redirects(loc_map, file_map):
     write_docs_redirect(decl_name, loc_map[decl_name])
     write_src_redirect(decl_name, loc_map[decl_name], file_map)
 
-def copy_css(path, use_symlinks):
+def copy_web_files(path, use_symlinks):
   def cp(a, b):
     if use_symlinks:
       try:
@@ -501,54 +454,63 @@ def copy_css(path, use_symlinks):
   cp('searchWorker.js', path+'searchWorker.js')
 
 def copy_yaml_files(path):
-  for fn in ['100.yaml', 'undergrad.yaml', 'overview.yaml']:
-    shutil.copyfile(f'{local_lean_root}docs/{fn}', path+fn)
+  for name in ['100.yaml', 'undergrad.yaml', 'overview.yaml']:
+    shutil.copyfile(f'{MATHLIB_SRC_ROOT}docs/{name}', path+name)
 
 def copy_static_files(path):
-  for filename in glob.glob(os.path.join(root, 'static', '*.*')):
+  for filename in glob.glob(os.path.join(ROOT, 'static', '*.*')):
     shutil.copy(filename, path)
 
+def copy_files(path, use_symlinks): 
+  copy_web_files(path, use_symlinks)
+  copy_yaml_files(path)
+  copy_static_files(path)
+  
+# write only declaration names in separate file
+# TODO: delete when using data structure for searching
 def write_decl_txt(loc_map):
   with open_outfile('decl.txt') as out:
     out.write('\n'.join(loc_map.keys()))
 
-def mk_export_map_entry(decl_name, filename, kind, is_meta, line, args, tp):
-  return {'filename': str(filename.raw_path),
-          'kind': kind,
-          'is_meta': is_meta,
-          'line': line,
-          # 'args': args,
-          # 'type': tp,
-          'src_link': library_link(filename, line),
-          'docs_link': f'{site_root}{filename.url}#{decl_name}'}
+def mk_export_map_entry(decl_name, filename, kind, is_meta, line):
+  return {
+    'filename': str(filename.raw_path),
+    'kind': kind,
+    'is_meta': is_meta,
+    'line': line,
+    'src_link': library_link(filename, line),
+    'docs_link': f'{SITE_ROOT}{filename.url}#{decl_name}'
+  }
 
-def mk_export_db(loc_map, file_map):
+def mk_export_db(file_map):
   export_db = {}
   for _, decls in file_map.items():
     for obj in decls:
-      export_db[obj['name']] = mk_export_map_entry(obj['name'], obj['filename'], obj['kind'], obj['is_meta'], obj['line'], obj['args'], obj['type'])
+      export_db[obj['name']] = mk_export_map_entry(obj['name'], obj['filename'], obj['kind'], obj['is_meta'], obj['line'])
       export_db[obj['name']]['decl_header_html'] = env.get_template('decl_header.j2').render(decl=obj)
-      for (cstr_name, tp) in obj['constructors']:
-        export_db[cstr_name] = mk_export_map_entry(cstr_name, obj['filename'], obj['kind'], obj['is_meta'], obj['line'], [], tp)
-      for (sf_name, tp) in obj['structure_fields']:
-        export_db[sf_name] = mk_export_map_entry(sf_name, obj['filename'],  obj['kind'], obj['is_meta'], obj['line'], [], tp)
+      for (cstr_name, _) in obj['constructors']:
+        export_db[cstr_name] = mk_export_map_entry(cstr_name, obj['filename'], obj['kind'], obj['is_meta'], obj['line'])
+      for (sf_name, _) in obj['structure_fields']:
+        export_db[sf_name] = mk_export_map_entry(sf_name, obj['filename'],  obj['kind'], obj['is_meta'], obj['line'])
   return export_db
 
 def write_export_db(export_db):
   json_str = json.dumps(export_db)
-  with gzip.GzipFile(html_root + 'export_db.json.gz', 'w') as zout:
+  with gzip.GzipFile(MATHLIB_DEST_ROOT + 'export_db.json.gz', 'w') as zout:
     zout.write(json_str.encode('utf-8'))
 
+# ------------------------------------------------ END write destination files ----------------------------------------------
+
 def main():
-  file_map, loc_map, notes, mod_docs, instances, tactic_docs = load_json()
-  setup_jinja_globals(file_map, loc_map, instances)
+  file_map, loc_map, notes, mod_docs, instances, tactic_docs = read_src_data()
+
+  setup_jinja_env(file_map, loc_map, instances)
   write_decl_txt(loc_map)
   write_html_files(file_map, loc_map, notes, mod_docs, instances, tactic_docs)
+
   write_redirects(loc_map, file_map)
-  copy_css(html_root, use_symlinks=cl_args.l)
-  copy_yaml_files(html_root)
-  copy_static_files(html_root)
-  write_export_db(mk_export_db(loc_map, file_map))
+  copy_files(MATHLIB_DEST_ROOT, use_symlinks=CLI_ARGS.l)
+  write_export_db(mk_export_db(file_map))
   write_site_map(file_map)
 
 if __name__ == '__main__':
