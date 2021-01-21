@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import List
 from collections import defaultdict
 from import_name import ImportName
+from mathlib_data_structures import mathlibStructures, declaration, tactic, tacticCategories, declarationKindsSource, declarationKindsDestination, generalPages
 
 # data structures manipulation
 import json
@@ -33,6 +34,7 @@ import html
 from urllib.parse import quote
 from functools import reduce
 import networkx as nx
+from operator import itemgetter
 
 # get arguments from script inititation
 parser = argparse.ArgumentParser('Options to print_docs.py')
@@ -86,18 +88,18 @@ def separate_results(objs):
   loc_map = {}
   for obj in objs:
     # replace the filenames in-place with parsed filename objects
-    i_name = obj['filename'] = ImportName.of(obj['filename'])
+    i_name = obj[declaration['FILENAME']] = ImportName.of(obj[declaration['FILENAME']])
     if i_name.project == '.':
       continue  # this is doc-gen itself
     
     file_map[i_name].append(obj)
-    loc_map[obj['name']] = i_name
-    for (cstr_name, _) in obj['constructors']:
+    loc_map[obj[declaration['NAME']]] = i_name
+    for (cstr_name, _) in obj[declaration['CONSTRUCTORS']]:
       loc_map[cstr_name] = i_name
-    for (sf_name, _) in obj['structure_fields']:
+    for (sf_name, _) in obj[declaration['STRUCTURE_FIELDS']]:
       loc_map[sf_name] = i_name
-    if len(obj['structure_fields']) > 0:
-      loc_map[obj['name'] + '.mk'] = i_name
+    if len(obj[declaration['STRUCTURE_FIELDS']]) > 0:
+      loc_map[obj[declaration['NAME']] + '.mk'] = i_name
   return file_map, loc_map
 
 # ------------------------------------------------ END utils reading ---------------------------------------------------
@@ -107,20 +109,22 @@ def separate_results(objs):
 
 def read_src_data():
   with open('export.json', 'r', encoding='utf-8') as f:
-    decls = json.load(f, strict=False)
-  file_map, loc_map = separate_results(decls['decls'])
-  for entry in decls['tactic_docs']:
-    if len(entry['tags']) == 0:
-      entry['tags'] = ['untagged']
+    lib_data = json.load(f, strict=False)
 
-  mod_docs = {ImportName.of(f): docs for f, docs in decls['mod_docs'].items()}
+  file_map, loc_map = separate_results(lib_data[mathlibStructures['DECLARATIONS']])
+
+  for entry in lib_data[mathlibStructures['TACTICS']]:
+    if len(entry[tactic['TAGS']]) == 0:
+      entry[tactic['TAGS']] = ['untagged']
+
+  mod_docs = {ImportName.of(f): docs for f, docs in lib_data[mathlibStructures['MODULE_DESCRIPTIONS']].items()}
   # ensure the key is present for `default.lean` modules with no declarations
   for i_name in mod_docs:
     if i_name.project == '.':
       continue  # this is doc-gen itself
     file_map[i_name]
 
-  return file_map, loc_map, decls['notes'], mod_docs, decls['instances'], decls['tactic_docs']
+  return file_map, loc_map, lib_data[mathlibStructures['NOTES']], mod_docs, lib_data[mathlibStructures['INSTANCES']], lib_data[mathlibStructures['TACTICS']]
 
 # ------------------------------------------------ END read source files -----------------------------------------------------
 
@@ -160,8 +164,8 @@ def trace_deps(file_map):
   print(f"trace_deps: Processed {n_ok} / {n} dependency links")
   return graph
 
-def mk_site_tree(partition: List[ImportName]):
-  filenames = [ [filename.project] + list(filename.parts) for filename in partition ]
+def mk_site_tree(file_map: List[ImportName]):
+  filenames = [ [filename.project] + list(filename.parts) for filename in file_map ]
   return mk_site_tree_core(filenames)
 
 def mk_site_tree_core(filenames, path=[]):
@@ -201,11 +205,16 @@ def import_options(loc_map, decl_name, import_string):
     return ''
 
 def kind_of_decl(decl):
-  kind = 'structure' if len(decl['structure_fields']) > 0 else 'inductive' if len(decl['constructors']) > 0 else decl['kind']
-  if kind == 'thm': kind = 'theorem'
-  elif kind == 'cnst': kind = 'constant'
-  elif kind == 'ax': kind = 'axiom'
-  return kind
+  if len(decl[declaration['STRUCTURE_FIELDS']]) > 0:
+    return declarationKindsDestination['STRUCTURE']
+  elif len(decl[declaration['CONSTRUCTORS']]) > 0:
+    return declarationKindsDestination['INDUCTIVE']
+  elif decl[declaration['KIND']] == declarationKindsSource['THEOREM']: 
+    return declarationKindsDestination['THEOREM']
+  elif decl[declaration['KIND']] == declarationKindsSource['CONSTANT']:
+    return declarationKindsDestination['CONSTANT']
+  elif decl[declaration['KIND']] == declarationKindsSource['AXIOM']:
+    return declarationKindsDestination['AXIOM']
 
 def tag_id_of_name(tag):
   return tag.strip().replace(' ', '-')
@@ -354,7 +363,7 @@ def write_pure_md_file(source, dest, name):
       body = body,
     ))
 
-def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs):
+def write_html_files(file_map, notes, mod_docs, tactic_docs):
   with open_outfile('index.html') as out:
     out.write(env.get_template('index.j2').render(
       active_path=''))
@@ -368,56 +377,62 @@ def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs
       active_path='',
       notes = sorted(notes, key = lambda n: n[0])))
 
-  kinds = [('tactic', 'tactics'), ('command', 'commands'), ('hole_command', 'hole_commands'), ('attribute', 'attributes')]
-  for (kind, filename) in kinds:
-    entries = [e for e in tactic_docs if e['category'] == kind]
+  types_of_tactics = [
+    (tacticCategories['TACTIC'], generalPages['TACTICS']), 
+    (tacticCategories['COMMAND'], generalPages['COMMANDS']), 
+    (tacticCategories['HOLE_COMMAND'], generalPages['HOLE_COMMANDS']), 
+    (tacticCategories['ATTRIBUTE'], generalPages['ATTRIBUTES'])
+  ]
+  for (category, filename) in types_of_tactics:
+    entries = [e for e in tactic_docs if e[tactic['CATEGORY']] == category]
     with open_outfile(filename + '.html') as out:
       out.write(env.get_template(filename + '.j2').render(
         active_path='',
-        entries = sorted(entries, key = lambda n: n['name']),
-        tagset = sorted(set(t for e in entries for t in e['tags']))))
+        entries = sorted(entries, key = lambda n: n[tactic['NAME']]),
+        tagset = sorted(set(t for e in entries for t in e[tactic['TAGS']]))
+      ))
 
-  for filename, decls in partition.items():
+  for filename, decls in file_map.items():
     md = mod_docs.get(filename, [])
     with open_outfile(MATHLIB_DEST_ROOT + filename.url) as out:
       out.write(env.get_template('module.j2').render(
         active_path = filename.url,
         filename = filename,
-        items = sorted(md + decls, key = lambda d: d['line']),
-        decl_names = sorted(d['name'] for d in decls),
+        items = sorted(md + decls, key = lambda d: d[declaration['LINE']]),
+        decl_names = sorted(d[declaration['NAME']] for d in decls),
       ))
 
   for (filename, displayname, source, _) in EXTRA_DOC_FILES:
     write_pure_md_file(MATHLIB_SRC_ROOT + source, filename + '.html', displayname)
 
-def write_site_map(partition):
+def write_site_map(file_map):
   with open_outfile('sitemap.txt') as out:
-    for filename in partition:
+    for filename in file_map:
       out.write(SITE_ROOT + filename.url + '\n')
-    for n in ['index', 'tactics', 'commands', 'hole_commands', 'notes']:
-      out.write(SITE_ROOT + n + '.html\n')
+    for name in generalPages.values():
+      out.write(SITE_ROOT + name + '.html\n')
     for (filename, _, _, _) in EXTRA_DOC_FILES:
       out.write(SITE_ROOT + filename + '.html\n')
 
-def name_in_decl(decl_name, dmap):
-  if dmap['name'] == decl_name:
+def name_in_decl(decl_name, decl):
+  if decl[declaration['NAME']] == decl_name:
     return True
-  if decl_name in [sf[0] for sf in dmap['structure_fields']]:
+  if decl_name in [sf[0] for sf in decl[declaration['STRUCTURE_FIELDS']]]:
     return True
-  if decl_name in [sf[0] for sf in dmap['constructors']]:
+  if decl_name in [cnstr[0] for cnstr in decl[declaration['CONSTRUCTORS']]]:
     return True
   return False
 
 def library_link_from_decl_name(decl_name, decl_loc, file_map):
   try:
-    e = next(d for d in file_map[decl_loc] if name_in_decl(decl_name, d))
+    e = next(decl for decl in file_map[decl_loc] if name_in_decl(decl_name, decl))
   except StopIteration as e:
     if decl_name[-3:] == '.mk':
       return library_link_from_decl_name(decl_name[:-3], decl_loc, file_map)
     print(f'{decl_name} appears in {decl_loc}, but we do not have data for that declaration. file_map:')
     print(file_map[decl_loc])
     raise e
-  return library_link(decl_loc, e['line'])
+  return library_link(decl_loc, e[declaration['LINE']])
 
 def write_docs_redirect(decl_name, decl_loc):
   url = SITE_ROOT + decl_loc.url
@@ -484,14 +499,23 @@ def mk_export_map_entry(decl_name, filename, kind, is_meta, line):
 
 def mk_export_db(file_map):
   export_db = {}
-  for _, decls in file_map.items():
+  for decls in file_map.values():
     for obj in decls:
-      export_db[obj['name']] = mk_export_map_entry(obj['name'], obj['filename'], obj['kind'], obj['is_meta'], obj['line'])
-      export_db[obj['name']]['decl_header_html'] = env.get_template('decl_header.j2').render(decl=obj)
-      for (cstr_name, _) in obj['constructors']:
-        export_db[cstr_name] = mk_export_map_entry(cstr_name, obj['filename'], obj['kind'], obj['is_meta'], obj['line'])
-      for (sf_name, _) in obj['structure_fields']:
-        export_db[sf_name] = mk_export_map_entry(sf_name, obj['filename'],  obj['kind'], obj['is_meta'], obj['line'])
+      name, filename, kind, is_meta, line, constructors, structure_fields = itemgetter(
+        declaration['NAME'], 
+        declaration['FILENAME'], 
+        declaration['KIND'], 
+        declaration['IS_META'], 
+        declaration['LINE'],
+        declaration['CONSTRUCTORS'],
+        declaration['STRUCTURE_FIELDS']
+      )(obj)
+      export_db[name] = mk_export_map_entry(name, filename, kind, is_meta, line)
+      export_db[name]['decl_header_html'] = env.get_template('decl_header.j2').render(decl=obj)
+      for (cstr_name, _) in constructors:
+        export_db[cstr_name] = mk_export_map_entry(cstr_name, filename, kind, is_meta, line)
+      for (sf_name, _) in structure_fields:
+        export_db[sf_name] = mk_export_map_entry(sf_name, filename,  kind, is_meta, line)
   return export_db
 
 def write_export_db(export_db):
@@ -506,7 +530,7 @@ def main():
 
   setup_jinja_env(file_map, loc_map, instances)
   write_decl_txt(loc_map)
-  write_html_files(file_map, loc_map, notes, mod_docs, instances, tactic_docs)
+  write_html_files(file_map, notes, mod_docs, tactic_docs)
 
   write_redirects(loc_map, file_map)
   copy_files(MATHLIB_DEST_ROOT, use_symlinks=CLI_ARGS.l)
