@@ -211,8 +211,8 @@ def kind_of_decl(decl):
     return declarationKindsDestination['INDUCTIVE']
   elif decl[declaration['KIND']] == declarationKindsSource['THEOREM']: 
     return declarationKindsDestination['THEOREM']
-  elif decl[declaration['KIND']] == declarationKindsSource['CONSTANT']:
-    return declarationKindsDestination['CONSTANT']
+  elif decl[declaration['KIND']] == declarationKindsSource['CONST']:
+    return declarationKindsDestination['CONST']
   elif decl[declaration['KIND']] == declarationKindsSource['AXIOM']:
     return declarationKindsDestination['AXIOM']
 

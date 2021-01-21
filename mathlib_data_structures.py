@@ -1,5 +1,5 @@
 mathlibStructures = dict(
-  DECLARATIONS = 'decl',
+  DECLARATIONS = 'decls',
   TACTICS = 'tactic_docs',
   MODULE_DESCRIPTIONS = 'mod_docs',
   NOTES = 'notes',
