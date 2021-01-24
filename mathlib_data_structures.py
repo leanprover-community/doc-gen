@@ -1,10 +1,9 @@
-mathlibStructures = dict(
-  DECLARATIONS = 'decls',
-  TACTICS = 'tactic_docs',
-  MODULE_DESCRIPTIONS = 'mod_docs',
-  NOTES = 'notes',
+class mathlibStructures:
+  DECLARATIONS = 'decls'
+  TACTICS = 'tactic_docs'
+  MODULE_DESCRIPTIONS = 'mod_docs'
+  NOTES = 'notes'
   INSTANCES = 'instances'
-)
 
 declaration = dict(
   NAME = 'name',
@@ -58,3 +57,5 @@ generalPages = dict(
   HOLE_COMMANDS = 'hole_commands',
   ATTRIBUTES = 'notes',
 )
+
+

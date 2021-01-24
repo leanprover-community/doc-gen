@@ -111,20 +111,20 @@ def read_src_data():
   with open('export.json', 'r', encoding='utf-8') as f:
     lib_data = json.load(f, strict=False)
 
-  file_map, loc_map = separate_results(lib_data[mathlibStructures['DECLARATIONS']])
+  file_map, loc_map = separate_results(lib_data[mathlibStructures.DECLARATIONS])
 
-  for entry in lib_data[mathlibStructures['TACTICS']]:
+  for entry in lib_data[mathlibStructures.TACTICS]:
     if len(entry[tactic['TAGS']]) == 0:
       entry[tactic['TAGS']] = ['untagged']
 
-  mod_docs = {ImportName.of(f): docs for f, docs in lib_data[mathlibStructures['MODULE_DESCRIPTIONS']].items()}
+  mod_docs = {ImportName.of(f): docs for f, docs in lib_data[mathlibStructures.MODULE_DESCRIPTIONS].items()}
   # ensure the key is present for `default.lean` modules with no declarations
   for i_name in mod_docs:
     if i_name.project == '.':
       continue  # this is doc-gen itself
     file_map[i_name]
 
-  return file_map, loc_map, lib_data[mathlibStructures['NOTES']], mod_docs, lib_data[mathlibStructures['INSTANCES']], lib_data[mathlibStructures['TACTICS']]
+  return file_map, loc_map, lib_data[mathlibStructures.NOTES], mod_docs, lib_data[mathlibStructures.INSTANCES], lib_data[mathlibStructures.TACTICS]
 
 # ------------------------------------------------ END read source files -----------------------------------------------------
 
