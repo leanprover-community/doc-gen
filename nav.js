@@ -168,7 +168,7 @@ searchInputElmnt.addEventListener('input', async (ev) => {
     const d = resultsElmntCopy.appendChild(document.createElement('a'));
     d.innerText = decl;
     d.title = decl;
-    d.href = `${siteRoot}find/${decl}`; // todo why not a link directly to the declaration in docs?
+    d.href = `${siteRoot}find/${decl}`;
   }
   resultsElmntCopy.setAttribute('state', 'done');
   currentResultsElmnt.replaceWith(resultsElmntCopy);
@@ -193,7 +193,7 @@ if (suggestionsElmnt) {
     for (const { decl } of results) {
       const li = ul.appendChild(document.createElement('li'));
       const a = li.appendChild(document.createElement('a'));
-      a.href = `${siteRoot}find/${decl}`; // todo why not a link directly?
+      a.href = `${siteRoot}find/${decl}`;
       a.appendChild(document.createElement('code')).innerText = decl;
     }
   });
