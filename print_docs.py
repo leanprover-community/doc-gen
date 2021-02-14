@@ -52,7 +52,7 @@ cl_args = parser.parse_args()
 # extra doc files to include in generation
 # the content has moved to the community website,
 # but we still build them to avoid broken links
-# format: (filename_root, display_name, source, community_site_url)
+# format: (filename_root, display_name, source relative to local_lean_root, community_site_url)
 extra_doc_files = [('overview', 'mathlib overview', 'docs/mathlib-overview.md', 'mathlib-overview'),
                    ('tactic_writing', 'tactic writing', 'docs/extras/tactic_writing.md', 'extras/tactic_writing'),
                    ('calc', 'calc mode', 'docs/extras/calc.md', 'extras/calc'),
@@ -63,6 +63,12 @@ extra_doc_files = [('overview', 'mathlib overview', 'docs/mathlib-overview.md', 
                    ('doc_style', 'documentation style guide', 'docs/contribute/doc.md','contribute/doc'),
                    ('naming', 'naming conventions', 'docs/contribute/naming.md','contribute/naming')]
 env.globals['extra_doc_files'] = extra_doc_files
+
+# test doc files to include in generation
+# will not be linked to from the doc pages
+# format: (filename_root, display_name, source relative to cwd)
+test_doc_files = [('latex', 'latex tests', 'test/latex.md')]
+env.globals['test_doc_files'] = test_doc_files
 
 # path to put generated html
 html_root = os.path.join(root, cl_args.t if cl_args.t else 'html') + '/'
@@ -168,11 +174,10 @@ class CustomHTMLRenderer(HTMLRenderer):
   def render_heading(self, token) -> str:
     """
     Override the default heading to provide links like in GitHub.
+
+    TODO: populate a list of table of contents in the `.toc_html` field of the body
     """
-    template = ('<h{level} id="{anchor}" class="markdown-heading">{inner} <a class="hover-link" href="#{anchor}">#</a></h{level}>'
-      if token.level > 1
-      # link to `#top` for h1 headings
-      else '<h{level} class="markdown-heading">{inner} <a class="hover-link" href="#top">#</a></h{level}>')
+    template = '<h{level} id="{anchor}" class="markdown-heading">{inner} <a class="hover-link" href="#{anchor}">#</a></h{level}>'
     inner: str = self.render_inner(token)
     # generate anchor following what github does
     # See info and links at https://gist.github.com/asabaylus/3071099
@@ -518,6 +523,9 @@ def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs
 
   for (filename, displayname, source, _) in extra_doc_files:
     write_pure_md_file(local_lean_root + source, filename + '.html', displayname)
+
+  for (filename, displayname, source) in test_doc_files:
+    write_pure_md_file(source, filename + '.html', displayname)
 
 def write_site_map(partition):
   with open_outfile('sitemap.txt') as out:

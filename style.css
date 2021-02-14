@@ -324,6 +324,11 @@ nav {
     visibility: hidden;
 }
 
+/* hide # after markdown headings except on hover */
+.markdown-heading:not(:hover) > .hover-link {
+    visibility: hidden;
+}
+
 main h2, main h3, main h4, main h5, main h6 {
     margin-top: 2rem;
 }
