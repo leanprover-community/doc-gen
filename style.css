@@ -314,7 +314,8 @@ nav {
 }
 
 /* Make `#id` links appear below header. */
-.decl::before, h2[id]::before, a[id]::before {
+.decl::before, h1[id]::before, h2[id]::before, h3[id]::before,
+        h4[id]::before, h5[id]::before, h6[id]::before, a[id]::before {
     content: "";
     display: block;
     height:      var(--fragment-offset);

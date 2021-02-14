@@ -1,4 +1,4 @@
-markdown2
+mistletoe>=0.7.2
 toml
 mathlibtools
 pygments >= 2.7.1

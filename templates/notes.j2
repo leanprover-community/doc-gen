@@ -7,14 +7,16 @@
 {%- endblock -%}
 
 {% block content %}
+<div class="docfile">
+
 <h1>Lean mathlib notes</h1>
 
 <p>Various implementation details are noted in the mathlib source, and referenced later on.
 We collect these notes here.</p>
 
 {% for note_name, note_markdown in notes %}
-    <div class="note" id="{{note_name}}">
-        <h2>{{note_name}}</h2>
+    <div class="note">
+        <h2 id="{{note_name}}"><a href="#{{note_name}}">{{note_name}}</a></h2>
         {{ note_markdown | convert_markdown }}
     </div>
 {% endfor %}
@@ -25,4 +27,6 @@ We collect these notes here.</p>
 {% for note_name, _ in notes %}
     <div class="nav_link"><a href="#{{note_name}}">{{note_name}}</a></div>
 {% endfor %}
+
+</div>
 {% endblock %}

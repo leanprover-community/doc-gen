@@ -1,15 +1,16 @@
 #!/usr/bin/env/python3
+"""
+Run using ./gen_docs unless debugging
 
-# Requires the `markdown2` and `toml` packages:
-#   `pip install markdown2 toml`
-#
+Example standalone usage for local testing (requires export.json):
+$ python3 print_docs.py -r "_target/deps/mathlib" -w "/"
 
+"""
 import json
 import os
 import os.path
 import glob
 import textwrap
-import markdown2
 import re
 import subprocess
 import toml
@@ -24,6 +25,11 @@ from collections import defaultdict
 from pathlib import Path
 from typing import NamedTuple, List
 import sys
+
+from mistletoe import Document, HTMLRenderer, span_token
+from pygments import highlight
+from pygments.lexers import get_lexer_by_name as get_lexer
+from pygments.formatters.html import HtmlFormatter
 
 import networkx as nx
 
@@ -146,15 +152,72 @@ env.globals['mathlib_commit'] = mathlib_commit
 env.globals['lean_commit'] = lean_commit
 env.globals['site_root'] = site_root
 
-note_regex = re.compile(r'Note \[(.*)\]', re.I)
-target_url_regex = site_root + r'notes.html#\1'
-link_patterns = [(note_regex, target_url_regex)]
+class NoteLink(span_token.SpanToken):
+  """
+  Detect library note links
+  """
+  pattern = re.compile(r'Note \[(.*)\]', re.I)
+  def __init__(self, match):
+    self.body = match.group(0)
+    self.note = match.group(1)
 
-def convert_markdown(ds, toc=False):
-  extras = ['code-friendly', 'cuddled-lists', 'fenced-code-blocks', 'link-patterns', 'tables']
-  if toc:
-    extras.append('toc')
-  return markdown2.markdown(ds, extras=extras, link_patterns = link_patterns)
+class CustomHTMLRenderer(HTMLRenderer):
+  def __init__(self):
+    super().__init__(NoteLink)
+
+  def render_heading(self, token) -> str:
+    """
+    Override the default heading to provide links like in GitHub.
+    """
+    template = ('<h{level} id="{anchor}" class="markdown-heading">{inner} <a class="hover-link" href="#{anchor}">#</a></h{level}>'
+      if token.level > 1
+      # link to `#top` for h1 headings
+      else '<h{level} class="markdown-heading">{inner} <a class="hover-link" href="#top">#</a></h{level}>')
+    inner: str = self.render_inner(token)
+    # generate anchor following what github does
+    # See info and links at https://gist.github.com/asabaylus/3071099
+    anchor = inner.strip().lower()
+    anchor = re.sub(r'[^\w\- ]+', '', anchor).replace(' ', '-')
+    return template.format(level=token.level, inner=inner, anchor=anchor)
+
+  # Use pygments highlighting.
+  # https://github.com/miyuchina/mistletoe/blob/8f2f0161b2af92f8dd25a0a55cb7d437a67938bc/contrib/pygments_renderer.py
+  # HTMLCodeFormatter class copied from markdown2:
+  # https://github.com/trentm/python-markdown2/blob/2c58d70da0279fe19d04b3269b04d360a56c01ce/lib/markdown2.py#L1826
+  class HtmlCodeFormatter(HtmlFormatter):
+    def _wrap_code(self, inner):
+        """A function for use in a Pygments Formatter which
+        wraps in <code> tags.
+        """
+        yield 0, "<code>"
+        for tup in inner:
+            yield tup
+        yield 0, "</code>"
+
+    def wrap(self, source, outfile):
+        """Return the source with a code, pre, and div."""
+        return self._wrap_div(self._wrap_pre(self._wrap_code(source)))
+
+  formatter = HtmlCodeFormatter(cssclass='codehilite')
+  def render_block_code(self, token):
+    code = token.children[0].content
+    try:
+      # default to 'lean' if no language is specified
+      lexer = get_lexer(token.language) if token.language else get_lexer('lean')
+    except:
+      lexer = get_lexer('text')
+    return highlight(code, lexer, self.formatter)
+
+  def render_note_link(self, token):
+    """
+    Render library note links
+    """
+    return f'<a href="{site_root}notes.html#{token.note}">{token.body}</a>'
+
+markdown_renderer = CustomHTMLRenderer()
+
+def convert_markdown(ds):
+  return markdown_renderer.render(Document(ds))
 
 # TODO: allow extending this for third-party projects
 library_link_roots = {
@@ -372,9 +435,9 @@ def tag_id_of_name(tag):
 env.globals['tag_id_of_name'] = tag_id_of_name
 env.globals['tag_ids_of_names'] = lambda ns: ' '.join(tag_id_of_name(n) for n in ns)
 
-def write_pure_md_file(source, dest, name, loc_map):
+def write_pure_md_file(source, dest, name):
   with open(source) as infile:
-    body = convert_markdown(infile.read(), True)
+    body = convert_markdown(infile.read())
 
   with open_outfile(dest) as out:
     out.write(env.get_template('pure_md.j2').render(
@@ -414,7 +477,6 @@ def setup_jinja_globals(file_map, loc_map, instances):
   env.globals['site_tree'] = mk_site_tree(file_map)
   env.globals['instances'] = instances
   env.globals['import_options'] = lambda d, i: import_options(loc_map, d, i)
-  env.globals['find_import_path'] = lambda d: find_import_path(loc_map, d)
   env.filters['linkify'] = lambda x: linkify(x, loc_map)
   env.filters['linkify_efmt'] = lambda x: linkify_efmt(x, loc_map)
   env.filters['convert_markdown'] = lambda x: linkify_markdown(convert_markdown(x), loc_map) # TODO: this is probably very broken
@@ -455,7 +517,7 @@ def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs
       ))
 
   for (filename, displayname, source, _) in extra_doc_files:
-    write_pure_md_file(local_lean_root + source, filename + '.html', displayname, loc_map)
+    write_pure_md_file(local_lean_root + source, filename + '.html', displayname)
 
 def write_site_map(partition):
   with open_outfile('sitemap.txt') as out:
