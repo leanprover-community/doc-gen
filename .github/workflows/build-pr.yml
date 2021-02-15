@@ -50,6 +50,13 @@ jobs:
           json: ${{ steps.get_user.outputs.data }}
           permission: 'permission'
 
+      - name: Add reaction
+        if: (steps.parse_pr_head.outputs.head_user == 'leanprover-community') && (steps.parse_user.outputs.permission == 'admin')
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          comment-id: ${{ github.event.comment.id }}
+          reactions: rocket
+
       # this step is needed to get the PR ref from an issue comment
       # https://github.com/actions/checkout/issues/331
       - uses: actions/github-script@v3
