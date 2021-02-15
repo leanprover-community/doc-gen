@@ -50,6 +50,13 @@ jobs:
           json: ${{ steps.get_user.outputs.data }}
           permission: 'permission'
 
+      - name: Add reaction
+        if: (steps.parse_pr_head.outputs.head_user == 'leanprover-community') && (steps.parse_user.outputs.permission == 'admin')
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          comment-id: ${{ github.event.comment.id }}
+          reactions: rocket
+
       # this step is needed to get the PR ref from an issue comment
       # https://github.com/actions/checkout/issues/331
       - uses: actions/github-script@v3
@@ -114,3 +121,17 @@ jobs:
           github_repo: ${{ github.repository }}
           github_event: ${{ github.event_name }}
           github_ref: ${{ github.ref }}
+
+      # https://stackoverflow.com/questions/58066966/commenting-a-pull-request-in-a-github-action
+      - name: Post link
+        if: (steps.parse_pr_head.outputs.head_user == 'leanprover-community') && (steps.parse_user.outputs.permission == 'admin')
+        env:
+          URL: ${{ github.event.issue.comments_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl \
+            -X POST \
+            $URL \
+            -H "Content-Type: application/json" \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            --data '{ "body": "This PR has been successfully deployed at <http://leanprover-community.github.io/mathlib_docs_demo>!" }'
