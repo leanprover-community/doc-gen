@@ -47,7 +47,7 @@ jobs:
           else
             deploy="false"
           fi
-          ./deploy_docs.sh "mathlib" ".." "mathlib" "leanprover-community" "mathlib_docs" deploy
+          ./deploy_docs.sh "mathlib" ".." "mathlib" "leanprover-community" "mathlib_docs" "$deploy"
         env:
           DEPLOY_GITHUB_TOKEN: ${{ secrets.DEPLOY_GITHUB_TOKEN }}
           github_repo: ${{ github.repository }}
