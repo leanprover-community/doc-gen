@@ -548,7 +548,7 @@ def write_src_redirect(decl_name, decl_loc, file_map):
 
 def write_redirects(loc_map, file_map):
   for decl_name in loc_map:
-    if decl_name.startswith('con.') and sys.platform == 'win32':
+    if (decl_name == 'con' or decl_name.startswith('con.')) and sys.platform == 'win32':
       continue  # can't write these files on windows
     write_docs_redirect(decl_name, loc_map[decl_name])
     write_src_redirect(decl_name, loc_map[decl_name], file_map)

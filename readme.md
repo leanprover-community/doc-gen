@@ -12,7 +12,7 @@ It depends on features of Lean 3.5c added in
 ```
 pip install -r requirements.txt
 rm -rf _target
-leanproject get-mathlib-cache
+leanproject up
 ```
 
 Make sure that olean files are generated for mathlib in `_target`, otherwise this will be extremely slow.
