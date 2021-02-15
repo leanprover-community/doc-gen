@@ -37,7 +37,7 @@ rm -rf mathlib_docs/docs/
 # but this is better than trying to recompile all of mathlib.
 elan override set "$lean_version"
 
-./gen_docs -w 'https://$4.github.io/$5/' \
+./gen_docs -w "https://$4.github.io/$5/" \
   -r "$3/" -t "mathlib_docs/docs/"
 
 if [ "$6" = "true" ]; then
