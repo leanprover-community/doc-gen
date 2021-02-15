@@ -41,7 +41,13 @@ jobs:
           leanproject up
 
       - name: generate docs
-        run: ./deploy_docs.sh "mathlib" ".." "mathlib"
+        run: |
+          if [ "$github_repo" = "leanprover-community/doc-gen" ] && [ "$github_ref" = "refs/heads/master" ]; then
+            deploy="true"
+          else
+            deploy="false"
+          fi
+          ./deploy_docs.sh "mathlib" ".." "mathlib" "leanprover-community" "mathlib_docs" deploy
         env:
           DEPLOY_GITHUB_TOKEN: ${{ secrets.DEPLOY_GITHUB_TOKEN }}
           github_repo: ${{ github.repository }}
