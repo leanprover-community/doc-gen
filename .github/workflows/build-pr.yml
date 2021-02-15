@@ -114,3 +114,17 @@ jobs:
           github_repo: ${{ github.repository }}
           github_event: ${{ github.event_name }}
           github_ref: ${{ github.ref }}
+
+      # https://stackoverflow.com/questions/58066966/commenting-a-pull-request-in-a-github-action
+      - name: Post link
+        if: (steps.parse_pr_head.outputs.head_user == 'leanprover-community') && (steps.parse_user.outputs.permission == 'admin')
+        env:
+          URL: ${{ github.event.issue.comments_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl \
+            -X POST \
+            $URL \
+            -H "Content-Type: application/json" \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            --data '{ "body": "This PR has been successfully deployed at <http://leanprover-community.github.io/mathlib_docs_demo>!" }'
