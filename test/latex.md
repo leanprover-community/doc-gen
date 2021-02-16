@@ -2,7 +2,7 @@
 
 This test page collects several examples of LaTeX in markdown.
 
-Compare: <https://math.meta.stackexchange.com/revisions/9386/160>
+Compare: <https://math.meta.stackexchange.com/revisions/9386/162>
 
 ## Examples from doc-gen issues
 
@@ -427,6 +427,8 @@ by writing this:
 
 ## Matrices
 
+<https://math.meta.stackexchange.com/a/5023/>
+
 1. Use `$$\begin{matrix}…\end{matrix}$$`  In between the `\begin` and `\end`, put the matrix elements. End each matrix row with `\\`, and separate matrix elements with `&`.  For example,
 
         $$
@@ -439,7 +441,7 @@ $$
 
     produces:
 
-       $$
+$$
         \begin{matrix}
         1 & x & x^2 \\
         1 & y & y^2 \\
