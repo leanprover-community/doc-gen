@@ -26,10 +26,7 @@ from pathlib import Path
 from typing import NamedTuple, List
 import sys
 
-from mistletoe import Document, HTMLRenderer, span_token
-from pygments import highlight
-from pygments.lexers import get_lexer_by_name as get_lexer
-from pygments.formatters.html import HtmlFormatter
+from mistletoe_renderer import CustomHTMLRenderer
 
 import networkx as nx
 
@@ -158,71 +155,10 @@ env.globals['mathlib_commit'] = mathlib_commit
 env.globals['lean_commit'] = lean_commit
 env.globals['site_root'] = site_root
 
-class NoteLink(span_token.SpanToken):
-  """
-  Detect library note links
-  """
-  pattern = re.compile(r'Note \[(.*)\]', re.I)
-  def __init__(self, match):
-    self.body = match.group(0)
-    self.note = match.group(1)
-
-class CustomHTMLRenderer(HTMLRenderer):
-  def __init__(self):
-    super().__init__(NoteLink)
-
-  def render_heading(self, token) -> str:
-    """
-    Override the default heading to provide links like in GitHub.
-
-    TODO: populate a list of table of contents in the `.toc_html` field of the body
-    """
-    template = '<h{level} id="{anchor}" class="markdown-heading">{inner} <a class="hover-link" href="#{anchor}">#</a></h{level}>'
-    inner: str = self.render_inner(token)
-    # generate anchor following what github does
-    # See info and links at https://gist.github.com/asabaylus/3071099
-    anchor = inner.strip().lower()
-    anchor = re.sub(r'[^\w\- ]+', '', anchor).replace(' ', '-')
-    return template.format(level=token.level, inner=inner, anchor=anchor)
-
-  # Use pygments highlighting.
-  # https://github.com/miyuchina/mistletoe/blob/8f2f0161b2af92f8dd25a0a55cb7d437a67938bc/contrib/pygments_renderer.py
-  # HTMLCodeFormatter class copied from markdown2:
-  # https://github.com/trentm/python-markdown2/blob/2c58d70da0279fe19d04b3269b04d360a56c01ce/lib/markdown2.py#L1826
-  class HtmlCodeFormatter(HtmlFormatter):
-    def _wrap_code(self, inner):
-        """A function for use in a Pygments Formatter which
-        wraps in <code> tags.
-        """
-        yield 0, "<code>"
-        for tup in inner:
-            yield tup
-        yield 0, "</code>"
-
-    def wrap(self, source, outfile):
-        """Return the source with a code, pre, and div."""
-        return self._wrap_div(self._wrap_pre(self._wrap_code(source)))
-
-  formatter = HtmlCodeFormatter(cssclass='codehilite')
-  def render_block_code(self, token):
-    code = token.children[0].content
-    try:
-      # default to 'lean' if no language is specified
-      lexer = get_lexer(token.language) if token.language else get_lexer('lean')
-    except:
-      lexer = get_lexer('text')
-    return highlight(code, lexer, self.formatter)
-
-  def render_note_link(self, token):
-    """
-    Render library note links
-    """
-    return f'<a href="{site_root}notes.html#{token.note}">{token.body}</a>'
-
-markdown_renderer = CustomHTMLRenderer()
+markdown_renderer = CustomHTMLRenderer(site_root)
 
 def convert_markdown(ds):
-  return markdown_renderer.render(Document(ds))
+  return markdown_renderer.render_md(ds)
 
 # TODO: allow extending this for third-party projects
 library_link_roots = {
