@@ -9,7 +9,7 @@ Extra features include:
 """
 import re
 
-from mistletoe import Document, HTMLRenderer, span_token
+from mistletoe import Document, HTMLRenderer, span_token, latex_token
 from pygments import highlight
 from pygments.lexers import get_lexer_by_name as get_lexer
 from pygments.formatters.html import HtmlFormatter
@@ -38,7 +38,7 @@ class CustomHTMLRenderer(HTMLRenderer):
 
     def __init__(self, site_root):
         self.site_root = site_root
-        super().__init__(NoteLink)
+        super().__init__(NoteLink, latex_token.Math)
 
     def render_md(self, ds):
         """
@@ -50,14 +50,7 @@ class CustomHTMLRenderer(HTMLRenderer):
         Uses `mathjax_editing` to strip out sections of the text
         which potentially contain LaTeX and then splice them back in.
         """
-        ds_no_math, math = remove_math(ds, '$')
-        # We have to run `mathjax_editing.replace_math` on the text in code
-        # blocks before passing it to Pygments (see `render_block_code`),
-        # otherwise `replace_math` will be confused by the added syntax
-        # highlighting `<span>`s and won't be able to splice in those blocks.
-        self.math = math
-        html = self.render(Document(ds_no_math))
-        return replace_math(html, self.math)
+        return self.render(Document(ds))
 
     def render_heading(self, token) -> str:
         """
@@ -96,12 +89,12 @@ class CustomHTMLRenderer(HTMLRenderer):
 
     def render_block_code(self, token):
         # replace math before highlighting
-        code = replace_math(token.children[0].content, self.math)
+        code = token.children[0].content
         try:
             # default to 'lean' if no language is specified
             lexer = get_lexer(
                 token.language) if token.language else get_lexer('lean')
-        except:
+        except Exception:
             lexer = get_lexer('text')
         return highlight(code, lexer, self.formatter)
 
@@ -110,3 +103,7 @@ class CustomHTMLRenderer(HTMLRenderer):
         Render library note links
         """
         return f'<a href="{self.site_root}notes.html#{token.note}">{token.body}</a>'
+
+    @staticmethod
+    def render_math(token):
+        return token.content
