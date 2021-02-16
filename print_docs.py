@@ -1,15 +1,16 @@
 #!/usr/bin/env/python3
+"""
+Run using ./gen_docs unless debugging
 
-# Requires the `markdown2` and `toml` packages:
-#   `pip install markdown2 toml`
-#
+Example standalone usage for local testing (requires export.json):
+$ python3 print_docs.py -r "_target/deps/mathlib" -w "/"
 
+"""
 import json
 import os
 import os.path
 import glob
 import textwrap
-import markdown2
 import re
 import subprocess
 import toml
@@ -24,6 +25,8 @@ from collections import defaultdict
 from pathlib import Path
 from typing import NamedTuple, List
 import sys
+
+from mistletoe_renderer import CustomHTMLRenderer
 
 import networkx as nx
 
@@ -46,7 +49,7 @@ cl_args = parser.parse_args()
 # extra doc files to include in generation
 # the content has moved to the community website,
 # but we still build them to avoid broken links
-# format: (filename_root, display_name, source, community_site_url)
+# format: (filename_root, display_name, source relative to local_lean_root, community_site_url)
 extra_doc_files = [('overview', 'mathlib overview', 'docs/mathlib-overview.md', 'mathlib-overview'),
                    ('tactic_writing', 'tactic writing', 'docs/extras/tactic_writing.md', 'extras/tactic_writing'),
                    ('calc', 'calc mode', 'docs/extras/calc.md', 'extras/calc'),
@@ -57,6 +60,12 @@ extra_doc_files = [('overview', 'mathlib overview', 'docs/mathlib-overview.md', 
                    ('doc_style', 'documentation style guide', 'docs/contribute/doc.md','contribute/doc'),
                    ('naming', 'naming conventions', 'docs/contribute/naming.md','contribute/naming')]
 env.globals['extra_doc_files'] = extra_doc_files
+
+# test doc files to include in generation
+# will not be linked to from the doc pages
+# format: (filename_root, display_name, source relative to cwd)
+test_doc_files = [('latex', 'latex tests', 'test/latex.md')]
+env.globals['test_doc_files'] = test_doc_files
 
 # path to put generated html
 html_root = os.path.join(root, cl_args.t if cl_args.t else 'html') + '/'
@@ -146,15 +155,10 @@ env.globals['mathlib_commit'] = mathlib_commit
 env.globals['lean_commit'] = lean_commit
 env.globals['site_root'] = site_root
 
-note_regex = re.compile(r'Note \[(.*)\]', re.I)
-target_url_regex = site_root + r'notes.html#\1'
-link_patterns = [(note_regex, target_url_regex)]
+markdown_renderer = CustomHTMLRenderer(site_root)
 
-def convert_markdown(ds, toc=False):
-  extras = ['code-friendly', 'cuddled-lists', 'fenced-code-blocks', 'link-patterns', 'tables']
-  if toc:
-    extras.append('toc')
-  return markdown2.markdown(ds, extras=extras, link_patterns = link_patterns)
+def convert_markdown(ds):
+  return markdown_renderer.render_md(ds)
 
 # TODO: allow extending this for third-party projects
 library_link_roots = {
@@ -372,9 +376,9 @@ def tag_id_of_name(tag):
 env.globals['tag_id_of_name'] = tag_id_of_name
 env.globals['tag_ids_of_names'] = lambda ns: ' '.join(tag_id_of_name(n) for n in ns)
 
-def write_pure_md_file(source, dest, name, loc_map):
+def write_pure_md_file(source, dest, name):
   with open(source) as infile:
-    body = convert_markdown(infile.read(), True)
+    body = convert_markdown(infile.read())
 
   with open_outfile(dest) as out:
     out.write(env.get_template('pure_md.j2').render(
@@ -414,7 +418,6 @@ def setup_jinja_globals(file_map, loc_map, instances):
   env.globals['site_tree'] = mk_site_tree(file_map)
   env.globals['instances'] = instances
   env.globals['import_options'] = lambda d, i: import_options(loc_map, d, i)
-  env.globals['find_import_path'] = lambda d: find_import_path(loc_map, d)
   env.filters['linkify'] = lambda x: linkify(x, loc_map)
   env.filters['linkify_efmt'] = lambda x: linkify_efmt(x, loc_map)
   env.filters['convert_markdown'] = lambda x: linkify_markdown(convert_markdown(x), loc_map) # TODO: this is probably very broken
@@ -455,7 +458,10 @@ def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs
       ))
 
   for (filename, displayname, source, _) in extra_doc_files:
-    write_pure_md_file(local_lean_root + source, filename + '.html', displayname, loc_map)
+    write_pure_md_file(local_lean_root + source, filename + '.html', displayname)
+
+  for (filename, displayname, source) in test_doc_files:
+    write_pure_md_file(source, filename + '.html', displayname)
 
 def write_site_map(partition):
   with open_outfile('sitemap.txt') as out:
