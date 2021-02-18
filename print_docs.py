@@ -335,7 +335,7 @@ def linkify_markdown(string, loc_map):
     return "".join(tks)
   def linkify_ref(string):
     if string in bib.entries:
-      return f'<a href="{site_root}references.html#{string}">{string}</a>'
+      return f'<a href="{site_root}references.html#{string}">[{string}]</a>'
     return string
 
   # inline declaration names
