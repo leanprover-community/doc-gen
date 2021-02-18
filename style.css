@@ -323,6 +323,10 @@ nav {
     box-sizing: inherit;
     visibility: hidden;
 }
+li[id] {
+    scroll-margin-top: var(--header-height);
+}
+
 
 /* hide # after markdown headings except on hover */
 .markdown-heading:not(:hover) > .hover-link {

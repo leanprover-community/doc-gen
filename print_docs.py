@@ -27,7 +27,8 @@ from typing import NamedTuple, List
 import sys
 
 from mistletoe_renderer import CustomHTMLRenderer
-
+import pybtex.database
+from pylatexenc.latex2text import LatexNodes2Text
 import networkx as nx
 
 root = os.getcwd()
@@ -79,6 +80,39 @@ site_root = "/"
 # root directory of mathlib.
 local_lean_root = os.path.join(root, cl_args.r if cl_args.r else '_target/deps/mathlib') + '/'
 
+bib = pybtex.database.parse_file(f'{local_lean_root}docs/references.bib')
+
+for key, data in bib.entries.items():
+  url = None
+  if 'link' in data.fields:
+    url = data.fields['link'][5:-1]
+  elif 'url' in data.fields:
+    url = data.fields['url']
+  elif 'eprint' in data.fields:
+    eprint = data.fields['eprint']
+    if eprint.startswith('arXiv:'):
+      url = 'https://arxiv.org/abs/'+eprint[6:]
+    else:
+      url = eprint
+  # else:
+    # raise ValueError(f"Couldn't find a url for bib item {key}")
+  if url:
+    if url.startswith(r'\url'):
+      url = url[4:].strip('{}')
+    url = url.replace(r'\_', '_')
+
+  if 'journal' in data.fields and data.fields['journal'] != 'CoRR':
+    journal = data.fields['journal']
+  elif 'booktitle' in data.fields:
+    journal = data.fields['booktitle']
+  else:
+    journal = None
+  data.fields['url'] = url
+  data.fields['journal'] = journal
+
+latexnodes2text = LatexNodes2Text()
+def clean_tex(src: str) -> str:
+    return latexnodes2text.latex_to_text(src)
 
 with open('leanpkg.toml') as f:
   parsed_toml = toml.loads(f.read())
@@ -299,11 +333,20 @@ def linkify_markdown(string, loc_map):
     splitstr = re.split(r'([\s\[\]\(\)\{\}])', string)
     tks = map(lambda s: linkify(s, loc_map), splitstr)
     return "".join(tks)
+  def linkify_ref(string):
+    if string in bib.entries:
+      return f'<a href="{site_root}references.html#{string}">{string}</a>'
+    return string
 
+  # inline declaration names
   string = re.sub(r'<code>([^<]+)</code>',
     lambda p: '<code>{}</code>'.format(linkify_type(p.group(1))), string)
+  # declaration names in highlighted Lean code snippets
   string = re.sub(r'<span class="n">([^<]+)</span>',
     lambda p: '<span class="n">{}</span>'.format(linkify_type(p.group(1))), string)
+  # references (don't match if there are illegal characters for a BibTeX key, cf. https://tex.stackexchange.com/a/408548)
+  string = re.sub(r'\[([^{ },~#%\\]+)\]',
+    lambda p: f'{linkify_ref(p.group(1))}', string)
   return string
 
 def plaintext_summary(markdown, max_chars = 200):
@@ -423,6 +466,7 @@ def setup_jinja_globals(file_map, loc_map, instances):
   env.filters['convert_markdown'] = lambda x: linkify_markdown(convert_markdown(x), loc_map) # TODO: this is probably very broken
   env.filters['link_to_decl'] = lambda x: link_to_decl(x, loc_map)
   env.filters['plaintext_summary'] = lambda x: plaintext_summary(x)
+  env.filters['tex'] = lambda x: clean_tex(x)
 
 def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs):
   with open_outfile('index.html') as out:
@@ -437,6 +481,11 @@ def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs
     out.write(env.get_template('notes.j2').render(
       active_path='',
       notes = sorted(notes, key = lambda n: n[0])))
+
+  with open_outfile('references.html') as out:
+    out.write(env.get_template('references.j2').render(
+      active_path='',
+      entries = sorted(bib.entries.items(), key = lambda e: e[0])))
 
   kinds = [('tactic', 'tactics'), ('command', 'commands'), ('hole_command', 'hole_commands'), ('attribute', 'attributes')]
   for (kind, filename) in kinds:
@@ -467,7 +516,7 @@ def write_site_map(partition):
   with open_outfile('sitemap.txt') as out:
     for filename in partition:
       out.write(site_root + filename.url + '\n')
-    for n in ['index', 'tactics', 'commands', 'hole_commands', 'notes']:
+    for n in ['index', 'tactics', 'commands', 'hole_commands', 'notes', 'references']:
       out.write(site_root + n + '.html\n')
     for (filename, _, _, _) in extra_doc_files:
       out.write(site_root + filename + '.html\n')
@@ -505,8 +554,8 @@ def copy_css(path, use_symlinks):
   cp('nav.js', path+'nav.js')
   cp('searchWorker.js', path+'searchWorker.js')
 
-def copy_yaml_files(path):
-  for fn in ['100.yaml', 'undergrad.yaml', 'overview.yaml']:
+def copy_yaml_bib_files(path):
+  for fn in ['100.yaml', 'undergrad.yaml', 'overview.yaml', 'references.bib']:
     shutil.copyfile(f'{local_lean_root}docs/{fn}', path+fn)
 
 def copy_static_files(path):
@@ -551,7 +600,7 @@ def main():
   write_html_files(file_map, loc_map, notes, mod_docs, instances, tactic_docs)
   write_redirects(loc_map, file_map)
   copy_css(html_root, use_symlinks=cl_args.l)
-  copy_yaml_files(html_root)
+  copy_yaml_bib_files(html_root)
   copy_static_files(html_root)
   write_export_db(mk_export_db(loc_map, file_map))
   write_site_map(file_map)
