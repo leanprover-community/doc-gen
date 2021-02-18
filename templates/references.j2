@@ -19,7 +19,10 @@
       {% else %}{{ entry.fields['title'] | tex }}.
       {% endif %}
       {% if entry.fields['journal'] %}{{ entry.fields['journal'] | tex }},{% endif %}
-      {{ entry.fields['year'] }}
+      {{ entry.fields['year'] }}.
+      <small>{% for filename, backref_id in entry.fields['backrefs'] %}
+        <a href="{{ filename }}#{{ backref_id }}">[{{ loop.index }}]</a>
+      {% endfor %}</small>
     </li>
 {% endfor %}
 </ul>

@@ -109,6 +109,7 @@ for key, data in bib.entries.items():
     journal = None
   data.fields['url'] = url
   data.fields['journal'] = journal
+  data.fields['backrefs'] = []
 
 latexnodes2text = LatexNodes2Text()
 def clean_tex(src: str) -> str:
@@ -328,18 +329,30 @@ def linkify_efmt(f, loc_map):
 
   return go(['n', f])
 
+# stores number of backref anchors in each file
+num_backrefs = defaultdict(int)
+
 def linkify_markdown(string, loc_map):
+  global current_filename
+
   def linkify_type(string):
     splitstr = re.split(r'([\s\[\]\(\)\{\}])', string)
     tks = map(lambda s: linkify(s, loc_map), splitstr)
     return "".join(tks)
+
+  def generate_backref(key):
+    num_backrefs[current_filename] += 1
+    backref_id = f'backref{num_backrefs[current_filename]}'
+    bib.entries[key].fields['backrefs'].append((current_filename, backref_id))
+    return backref_id
+
   def linkify_named_ref(name, string):
     if string in bib.entries:
-      return f'<a href="{site_root}references.html#{string}">{name}</a>'
+      return f'<a id="{generate_backref(string)}" href="{site_root}references.html#{string}">{name}</a>'
     return f'[{name}][{string}]'
   def linkify_standalone_ref(string):
     if string in bib.entries:
-      return f'<a href="{site_root}references.html#{string}">[{string}]</a>'
+      return f'<a id="{generate_backref(string)}" href="{site_root}references.html#{string}">[{string}]</a>'
     return f'[{string}]'
 
   # inline declaration names
@@ -474,29 +487,33 @@ def setup_jinja_globals(file_map, loc_map, instances):
   env.filters['plaintext_summary'] = lambda x: plaintext_summary(x)
   env.filters['tex'] = lambda x: clean_tex(x)
 
+# stores the full filename of the markdown being rendered
+current_filename = None
+
 def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs):
+  global current_filename
+
   with open_outfile('index.html') as out:
+    current_filename = 'index.html'
     out.write(env.get_template('index.j2').render(
       active_path=''))
 
   with open_outfile('404.html') as out:
+    current_filename = '404.html'
     out.write(env.get_template('404.j2').render(
       active_path=''))
 
   with open_outfile('notes.html') as out:
+    current_filename = 'notes.html'
     out.write(env.get_template('notes.j2').render(
       active_path='',
       notes = sorted(notes, key = lambda n: n[0])))
-
-  with open_outfile('references.html') as out:
-    out.write(env.get_template('references.j2').render(
-      active_path='',
-      entries = sorted(bib.entries.items(), key = lambda e: e[0])))
 
   kinds = [('tactic', 'tactics'), ('command', 'commands'), ('hole_command', 'hole_commands'), ('attribute', 'attributes')]
   for (kind, filename) in kinds:
     entries = [e for e in tactic_docs if e['category'] == kind]
     with open_outfile(filename + '.html') as out:
+      current_filename = filename + '.html'
       out.write(env.get_template(filename + '.j2').render(
         active_path='',
         entries = sorted(entries, key = lambda n: n['name']),
@@ -505,6 +522,7 @@ def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs
   for filename, decls in partition.items():
     md = mod_docs.get(filename, [])
     with open_outfile(html_root + filename.url) as out:
+      current_filename = filename.url
       out.write(env.get_template('module.j2').render(
         active_path = filename.url,
         filename = filename,
@@ -513,10 +531,21 @@ def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs
       ))
 
   for (filename, displayname, source, _) in extra_doc_files:
+    current_filename = filename + '.html'
     write_pure_md_file(local_lean_root + source, filename + '.html', displayname)
 
   for (filename, displayname, source) in test_doc_files:
+    current_filename = filename + '.html'
     write_pure_md_file(source, filename + '.html', displayname)
+
+  # generate references.html last so that we can add backrefs
+  with open_outfile('references.html') as out:
+    current_filename = 'references.html'
+    out.write(env.get_template('references.j2').render(
+      active_path='',
+      entries = sorted(bib.entries.items(), key = lambda e: e[0])))
+
+  current_filename = None
 
 def write_site_map(partition):
   with open_outfile('sitemap.txt') as out:
