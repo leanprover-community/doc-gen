@@ -314,10 +314,23 @@ nav {
 }
 
 /* Make `#id` links appear below header. */
-.decl, h1[id], h2[id], h3[id], h4[id], h5[id], h6[id], a[id], li[id] {
-    scroll-margin-top: var(--header-height);
+.decl::before, h1[id]::before, h2[id]::before, h3[id]::before,
+        h4[id]::before, h5[id]::before, h6[id]::before,
+        a[id]::before, li[id]::before {
+    content: "";
+    display: block;
+    height:      var(--fragment-offset);
+    padding-top:  var(--fragment-offset);
+    margin-top:  calc(-1 * var(--fragment-offset));
+    box-sizing: inherit;
+    visibility: hidden;
 }
-
+/* The following seems like a better solution;
+however, Safari doesn't support it :(
+<https://caniuse.com/mdn-css_properties_scroll-margin-top> */
+/* .decl, h1[id], h2[id], h3[id], h4[id], h5[id], h6[id], a[id], li[id] {
+    scroll-margin-top: var(--fragment-offset);
+} */
 
 /* hide # after markdown headings except on hover */
 .markdown-heading:not(:hover) > .hover-link {
