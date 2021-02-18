@@ -333,10 +333,14 @@ def linkify_markdown(string, loc_map):
     splitstr = re.split(r'([\s\[\]\(\)\{\}])', string)
     tks = map(lambda s: linkify(s, loc_map), splitstr)
     return "".join(tks)
-  def linkify_ref(string):
+  def linkify_named_ref(name, string):
+    if string in bib.entries:
+      return f'<a href="{site_root}references.html#{string}">{name}</a>'
+    return f'[{name}][{string}]'
+  def linkify_standalone_ref(string):
     if string in bib.entries:
       return f'<a href="{site_root}references.html#{string}">[{string}]</a>'
-    return string
+    return f'[{string}]'
 
   # inline declaration names
   string = re.sub(r'<code>([^<]+)</code>',
@@ -345,8 +349,10 @@ def linkify_markdown(string, loc_map):
   string = re.sub(r'<span class="n">([^<]+)</span>',
     lambda p: '<span class="n">{}</span>'.format(linkify_type(p.group(1))), string)
   # references (don't match if there are illegal characters for a BibTeX key, cf. https://tex.stackexchange.com/a/408548)
+  string = re.sub(r'\[([^\]]+)\]\[([^{ },~#%\\]+)\]',
+    lambda p: f'{linkify_named_ref(p.group(1), p.group(2))}', string)
   string = re.sub(r'\[([^{ },~#%\\]+)\]',
-    lambda p: f'{linkify_ref(p.group(1))}', string)
+    lambda p: f'{linkify_standalone_ref(p.group(1))}', string)
   return string
 
 def plaintext_summary(markdown, max_chars = 200):
