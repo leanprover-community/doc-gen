@@ -3,7 +3,7 @@
 Run using ./gen_docs unless debugging
 
 Example standalone usage for local testing (requires export.json):
-$ python3 print_docs.py -r "_target/deps/mathlib" -w "/"
+$ python3 print_docs.py -r "_target/deps/mathlib" -w "/" -l
 
 """
 import json
@@ -190,7 +190,7 @@ env.globals['mathlib_commit'] = mathlib_commit
 env.globals['lean_commit'] = lean_commit
 env.globals['site_root'] = site_root
 
-markdown_renderer = CustomHTMLRenderer(site_root)
+markdown_renderer = CustomHTMLRenderer()
 
 def convert_markdown(ds):
   return markdown_renderer.render_md(ds)
@@ -329,8 +329,10 @@ def linkify_efmt(f, loc_map):
 
   return go(['n', f])
 
-# stores number of backref anchors in each file
+# store number of backref anchors and notes in each file
 num_backrefs = defaultdict(int)
+num_notes = defaultdict(int)
+note_pattern = re.compile(r'Note \[(.*)\]', re.I)
 
 def linkify_markdown(string, loc_map):
   global current_filename
@@ -340,21 +342,33 @@ def linkify_markdown(string, loc_map):
     tks = map(lambda s: linkify(s, loc_map), splitstr)
     return "".join(tks)
 
-  def generate_backref(key):
+  def note_backref(key):
+    num_notes[current_filename] += 1
+    backref_id = f'noteref{num_notes[current_filename]}'
+    global_notes[key]['backrefs'].append((current_filename, backref_id))
+    return backref_id
+  def bib_backref(key):
     num_backrefs[current_filename] += 1
     backref_id = f'backref{num_backrefs[current_filename]}'
     bib.entries[key].fields['backrefs'].append((current_filename, backref_id))
     return backref_id
 
-  def linkify_named_ref(name, string):
-    if string in bib.entries:
-      return f'<a id="{generate_backref(string)}" href="{site_root}references.html#{string}">{name}</a>'
-    return f'[{name}][{string}]'
-  def linkify_standalone_ref(string):
-    if string in bib.entries:
-      return f'<a id="{generate_backref(string)}" href="{site_root}references.html#{string}">[{string}]</a>'
-    return f'[{string}]'
+  def linkify_note(body, note):
+    if note in global_notes:
+      return f'<a id="{note_backref(note)}" href="{site_root}notes.html#{note}">{body}</a>'
+    return f'{body}'
+  def linkify_named_ref(name, key):
+    if key in bib.entries:
+      return f'<a id="{bib_backref(key)}" href="{site_root}references.html#{key}">{name}</a>'
+    return f'[{name}][{key}]'
+  def linkify_standalone_ref(key):
+    if key in bib.entries:
+      return f'<a id="{bib_backref(key)}" href="{site_root}references.html#{key}">[{key}]</a>'
+    return f'[{key}]'
 
+  # notes
+  string = re.sub(note_pattern,
+    lambda p: f'{linkify_note(p.group(0), p.group(1))}', string)
   # inline declaration names
   string = re.sub(r'<code>([^<]+)</code>',
     lambda p: '<code>{}</code>'.format(linkify_type(p.group(1))), string)
@@ -362,7 +376,7 @@ def linkify_markdown(string, loc_map):
   string = re.sub(r'<span class="n">([^<]+)</span>',
     lambda p: '<span class="n">{}</span>'.format(linkify_type(p.group(1))), string)
   # references (don't match if there are illegal characters for a BibTeX key, cf. https://tex.stackexchange.com/a/408548)
-  string = re.sub(r'\[([^\]]+)\]\[([^{ },~#%\\]+)\]',
+  string = re.sub(r'\[([^\]]+)\]\s*\[([^{ },~#%\\]+)\]',
     lambda p: f'{linkify_named_ref(p.group(1), p.group(2))}', string)
   string = re.sub(r'\[([^{ },~#%\\]+)\]',
     lambda p: f'{linkify_standalone_ref(p.group(1))}', string)
@@ -489,9 +503,14 @@ def setup_jinja_globals(file_map, loc_map, instances):
 
 # stores the full filename of the markdown being rendered
 current_filename = None
-
+global_notes = {}
 def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs):
   global current_filename
+  for note_name, note_markdown in notes:
+    global_notes[note_name] = {
+      'md': note_markdown,
+      'backrefs': []
+    }
 
   with open_outfile('index.html') as out:
     current_filename = 'index.html'
@@ -502,12 +521,6 @@ def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs
     current_filename = '404.html'
     out.write(env.get_template('404.j2').render(
       active_path=''))
-
-  with open_outfile('notes.html') as out:
-    current_filename = 'notes.html'
-    out.write(env.get_template('notes.j2').render(
-      active_path='',
-      notes = sorted(notes, key = lambda n: n[0])))
 
   kinds = [('tactic', 'tactics'), ('command', 'commands'), ('hole_command', 'hole_commands'), ('attribute', 'attributes')]
   for (kind, filename) in kinds:
@@ -538,7 +551,14 @@ def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs
     current_filename = filename + '.html'
     write_pure_md_file(source, filename + '.html', displayname)
 
-  # generate references.html last so that we can add backrefs
+  # generate notes.html and references.html last
+  # so that we can add backrefs
+  with open_outfile('notes.html') as out:
+    current_filename = 'notes.html'
+    out.write(env.get_template('notes.j2').render(
+      active_path='',
+      notes = sorted(global_notes.items(), key = lambda n: n[0])))
+
   with open_outfile('references.html') as out:
     current_filename = 'references.html'
     out.write(env.get_template('references.j2').render(

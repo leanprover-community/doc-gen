@@ -14,10 +14,14 @@
 <p>Various implementation details are noted in the mathlib source, and referenced later on.
 We collect these notes here.</p>
 
-{% for note_name, note_markdown in notes %}
+{% for note_name, note_data in notes %}
     <div class="note">
         <h2 id="{{note_name}}"><a href="#{{note_name}}">{{note_name}}</a></h2>
-        {{ note_markdown | convert_markdown }}
+        {{ note_data['md'] | convert_markdown }}
+
+        referenced by: <small>{% for filename, backref_id in note_data['backrefs'] %}
+        <a href="{{ filename }}#{{ backref_id }}">[{{ loop.index }}]</a>
+      {% endfor %}</small>
     </div>
 {% endfor %}
 {% endblock %}

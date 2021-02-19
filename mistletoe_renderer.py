@@ -3,42 +3,22 @@ This module contains a class CustomHTMLRenderer, which uses
 mistletoe to generate HTML from markdown.
 
 Extra features include:
-- Library note links
 - Managing LaTeX so that MathJax will be able to process it in the browser
 - Syntax highlighting with Pygments
 """
 import re
 
-from mistletoe import Document, HTMLRenderer, span_token
+from mistletoe import Document, HTMLRenderer
 from pygments import highlight
 from pygments.lexers import get_lexer_by_name as get_lexer
 from pygments.formatters.html import HtmlFormatter
 
 from mathjax_editing import remove_math, replace_math
 
-
-class NoteLink(span_token.SpanToken):
-    """
-    Detect library note links
-    """
-    parse_inner = False
-    pattern = re.compile(r'Note \[(.*)\]', re.I)
-
-    def __init__(self, match):
-        self.body = match.group(0)
-        self.note = match.group(1)
-
-
 class CustomHTMLRenderer(HTMLRenderer):
     """
-    Call the constructor with `site_root`.
-
     The main rendering function is `render_md`.
     """
-
-    def __init__(self, site_root):
-        self.site_root = site_root
-        super().__init__(NoteLink)
 
     def render_md(self, ds):
         """
@@ -104,9 +84,3 @@ class CustomHTMLRenderer(HTMLRenderer):
         except:
             lexer = get_lexer('text')
         return highlight(code, lexer, self.formatter)
-
-    def render_note_link(self, token):
-        """
-        Render library note links
-        """
-        return f'<a href="{self.site_root}notes.html#{token.note}">{token.body}</a>'
