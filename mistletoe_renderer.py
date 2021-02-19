@@ -3,22 +3,46 @@ This module contains a class CustomHTMLRenderer, which uses
 mistletoe to generate HTML from markdown.
 
 Extra features include:
+- Linkifying raw URLs
 - Managing LaTeX so that MathJax will be able to process it in the browser
 - Syntax highlighting with Pygments
 """
 import re
 
-from mistletoe import Document, HTMLRenderer
+from mistletoe import Document, HTMLRenderer, span_token
 from pygments import highlight
 from pygments.lexers import get_lexer_by_name as get_lexer
 from pygments.formatters.html import HtmlFormatter
 
 from mathjax_editing import remove_math, replace_math
 
+class RawUrl(span_token.SpanToken):
+    """
+    Detect raw URLs.
+    """
+    parse_inner = False
+    # regex to extract raw URLs from Markdown from:
+    # https://github.com/trentm/python-markdown2/wiki/link-patterns#converting-links-into-links-automatically
+    pattern = re.compile(
+        r'((([A-Za-z]{3,9}:(?:\/\/)?)'  # scheme
+        r'(?:[\-;:&=\+\$,\w]+@)?[A-Za-z0-9\.\-]+(:\[0-9]+)?'  # user@hostname:port
+        r'|(?:www\.|[\-;:&=\+\$,\w]+@)[A-Za-z0-9\.\-]+)'  # www.|user@hostname
+        r'((?:\/[\+~%\/\.\w\-]*)?'  # path
+        r'\??(?:[\-\+=&;%@\.\w]*)'  # query parameters
+        r'#?(?:[\.\!\/\\\w\-]*))?)'  # fragment
+        r'(?![^<]*?(?:<\/\w+>|\/?>))'  # ignore anchor HTML tags
+        r'(?![^\(]*?\))'  # ignore links in brackets (Markdown links and images)
+    )
+
+    def __init__(self, match):
+        self.url = match.group(1)
+
 class CustomHTMLRenderer(HTMLRenderer):
     """
     The main rendering function is `render_md`.
     """
+    def __init__(self):
+        super().__init__(RawUrl)
 
     def render_md(self, ds):
         """
@@ -84,3 +108,9 @@ class CustomHTMLRenderer(HTMLRenderer):
         except:
             lexer = get_lexer('text')
         return highlight(code, lexer, self.formatter)
+
+    def render_raw_url(self, token):
+        """
+        Linkify raw URLs.
+        """
+        return f'<a href="{token.url}">{token.url}</a>'

@@ -356,30 +356,30 @@ def linkify_markdown(string, loc_map):
   def linkify_note(body, note):
     if note in global_notes:
       return f'<a id="{note_backref(note)}" href="{site_root}notes.html#{note}">{body}</a>'
-    return f'{body}'
-  def linkify_named_ref(name, key):
+    return body
+  def linkify_named_ref(body, name, key):
     if key in bib.entries:
       return f'<a id="{bib_backref(key)}" href="{site_root}references.html#{key}">{name}</a>'
-    return f'[{name}][{key}]'
-  def linkify_standalone_ref(key):
+    return body
+  def linkify_standalone_ref(body, key):
     if key in bib.entries:
-      return f'<a id="{bib_backref(key)}" href="{site_root}references.html#{key}">[{key}]</a>'
-    return f'[{key}]'
+      return f'<a id="{bib_backref(key)}" href="{site_root}references.html#{key}">{body}</a>'
+    return body
 
   # notes
   string = re.sub(note_pattern,
-    lambda p: f'{linkify_note(p.group(0), p.group(1))}', string)
+    lambda p: linkify_note(p.group(0), p.group(1)), string)
   # inline declaration names
   string = re.sub(r'<code>([^<]+)</code>',
-    lambda p: '<code>{}</code>'.format(linkify_type(p.group(1))), string)
+    lambda p: f'<code>{linkify_type(p.group(1))}</code>', string)
   # declaration names in highlighted Lean code snippets
   string = re.sub(r'<span class="n">([^<]+)</span>',
-    lambda p: '<span class="n">{}</span>'.format(linkify_type(p.group(1))), string)
+    lambda p: f'<span class="n">{linkify_type(p.group(1))}</span>', string)
   # references (don't match if there are illegal characters for a BibTeX key, cf. https://tex.stackexchange.com/a/408548)
   string = re.sub(r'\[([^\]]+)\]\s*\[([^{ },~#%\\]+)\]',
-    lambda p: f'{linkify_named_ref(p.group(1), p.group(2))}', string)
+    lambda p: linkify_named_ref(p.group(0), p.group(1), p.group(2)), string)
   string = re.sub(r'\[([^{ },~#%\\]+)\]',
-    lambda p: f'{linkify_standalone_ref(p.group(1))}', string)
+    lambda p: linkify_standalone_ref(p.group(0), p.group(1)), string)
   return string
 
 def plaintext_summary(markdown, max_chars = 200):
