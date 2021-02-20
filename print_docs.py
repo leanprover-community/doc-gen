@@ -21,13 +21,14 @@ import gzip
 from urllib.parse import quote
 from functools import reduce
 import textwrap
-from collections import defaultdict
+from collections import Counter, defaultdict
 from pathlib import Path
 from typing import NamedTuple, List, Optional
 import sys
 
 from mistletoe_renderer import CustomHTMLRenderer
 import pybtex.database
+from pybtex.style.labels.alpha import LabelStyle
 from pylatexenc.latex2text import LatexNodes2Text
 import networkx as nx
 
@@ -82,7 +83,34 @@ local_lean_root = os.path.join(root, cl_args.r if cl_args.r else '_target/deps/m
 
 bib = pybtex.database.parse_file(f'{local_lean_root}docs/references.bib')
 
+label_style = LabelStyle()
+# cf. LabelStyle.format_labels in pybtex.style.labels.alpha:
+# first generate label from author(s) + year
+# counted will be the total number of times the label appears
+counted = Counter()
+
+latexnodes2text = LatexNodes2Text()
+def clean_tex(src: str) -> str:
+  return latexnodes2text.latex_to_text(src)
+
 for key, data in bib.entries.items():
+  for author in data.persons['author']:
+    # turn LaTeX special characters to Unicode,
+    # since format_label does not correctly abbreviate names containing LaTeX
+    author.last_names = list(map(clean_tex, author.last_names))
+  label = label_style.format_label(data)
+  counted.update([label])
+  data.fields['alpha_label'] = label
+# count will track number of times label has been finalized
+count = Counter()
+
+for key, data in bib.entries.items():
+  label = data.fields['alpha_label']
+  # If there are duplicates, fix label by appending 'a', 'b', etc.
+  if counted[label] > 1:
+    data.fields['alpha_label'] += chr(ord('a') + count[label])
+    count.update([label])
+
   url = None
   if 'link' in data.fields:
     url = data.fields['link'][5:-1]
@@ -110,10 +138,6 @@ for key, data in bib.entries.items():
   data.fields['url'] = url
   data.fields['journal'] = journal
   data.fields['backrefs'] = []
-
-latexnodes2text = LatexNodes2Text()
-def clean_tex(src: str) -> str:
-    return latexnodes2text.latex_to_text(src)
 
 with open('leanpkg.toml') as f:
   parsed_toml = toml.loads(f.read())
@@ -369,7 +393,8 @@ def linkify_markdown(string: str, loc_map) -> str:
     return body
   def linkify_named_ref(body: str, name: str, key: str) -> str:
     if key in bib.entries:
-      return f'<a id="{bib_backref(key)}" href="{site_root}references.html#{key}">{name}</a>'
+      alpha_label = bib.entries[key].fields["alpha_label"]
+      return f'<a id="{bib_backref(key)}" href="{site_root}references.html#{alpha_label}">{name}</a>'
     return body
   def linkify_standalone_ref(body: str, key: str) -> str:
     if key in bib.entries:
@@ -584,7 +609,7 @@ def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs
     current_filename = 'references.html'
     out.write(env.get_template('references.j2').render(
       active_path='',
-      entries = sorted(bib.entries.items(), key = lambda e: e[0])))
+      entries = sorted(bib.entries.items(), key = lambda e: e[1].fields['alpha_label'])))
 
   current_project = None
   current_filename = None
