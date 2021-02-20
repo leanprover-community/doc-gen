@@ -20,8 +20,8 @@
       {% endif %}
       {% if entry.fields['journal'] %}{{ entry.fields['journal'] | tex }},{% endif %}
       {{ entry.fields['year'] }}.
-      <small>{% for filename, backref_id in entry.fields['backrefs'] %}
-        <a href="{{ filename }}#{{ backref_id }}">[{{ loop.index }}]</a>
+      <small>{% for filename, backref_id, title in entry.fields['backrefs'] %}
+        <a href="{{ filename }}#{{ backref_id }}" title="{{ title }}">[{{ loop.index }}]</a>
       {% endfor %}</small>
     </li>
 {% endfor %}

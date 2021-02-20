@@ -19,9 +19,11 @@ We collect these notes here.</p>
         <h2 id="{{note_name}}"><a href="#{{note_name}}">{{note_name}}</a></h2>
         {{ note_data['md'] | convert_markdown }}
 
-        referenced by: <small>{% for filename, backref_id in note_data['backrefs'] %}
-        <a href="{{ filename }}#{{ backref_id }}">[{{ loop.index }}]</a>
-      {% endfor %}</small>
+        {% if note_data['backrefs'] | length > 0 %}
+        referenced by: <small>{% for filename, backref_id, title in note_data['backrefs'] %}
+        <a href="{{ filename }}#{{ backref_id }}" title="{{ title }}">[{{ loop.index }}]</a>
+        {% endfor %}</small>
+        {% endif %}
     </div>
 {% endfor %}
 {% endblock %}

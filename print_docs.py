@@ -23,7 +23,7 @@ from functools import reduce
 import textwrap
 from collections import defaultdict
 from pathlib import Path
-from typing import NamedTuple, List
+from typing import NamedTuple, List, Optional
 import sys
 
 from mistletoe_renderer import CustomHTMLRenderer
@@ -334,34 +334,44 @@ num_backrefs = defaultdict(int)
 num_notes = defaultdict(int)
 note_pattern = re.compile(r'Note \[(.*)\]', re.I)
 
-def linkify_markdown(string, loc_map):
-  global current_filename
-
-  def linkify_type(string):
+def linkify_markdown(string: str, loc_map) -> str:
+  def linkify_type(string: str):
     splitstr = re.split(r'([\s\[\]\(\)\{\}])', string)
     tks = map(lambda s: linkify(s, loc_map), splitstr)
     return "".join(tks)
 
-  def note_backref(key):
+  def backref_title(filename: str):
+    parts = filename.split('/')
+    # drop .html
+    parts[-1] = parts[-1].split('.')[0]
+    return f'{current_project}: {".".join(parts)}'
+
+  def note_backref(key: str) -> str:
     num_notes[current_filename] += 1
     backref_id = f'noteref{num_notes[current_filename]}'
-    global_notes[key]['backrefs'].append((current_filename, backref_id))
+    if current_project and current_project != 'test':
+      global_notes[key]['backrefs'].append(
+        (current_filename, backref_id, backref_title(current_filename))
+      )
     return backref_id
-  def bib_backref(key):
+  def bib_backref(key: str) -> str:
     num_backrefs[current_filename] += 1
     backref_id = f'backref{num_backrefs[current_filename]}'
-    bib.entries[key].fields['backrefs'].append((current_filename, backref_id))
+    if current_project and current_project != 'test':
+      bib.entries[key].fields['backrefs'].append(
+        (current_filename, backref_id, backref_title(current_filename))
+      )
     return backref_id
 
-  def linkify_note(body, note):
+  def linkify_note(body: str, note: str) -> str:
     if note in global_notes:
       return f'<a id="{note_backref(note)}" href="{site_root}notes.html#{note}">{body}</a>'
     return body
-  def linkify_named_ref(body, name, key):
+  def linkify_named_ref(body: str, name: str, key: str) -> str:
     if key in bib.entries:
       return f'<a id="{bib_backref(key)}" href="{site_root}references.html#{key}">{name}</a>'
     return body
-  def linkify_standalone_ref(body, key):
+  def linkify_standalone_ref(body: str, key: str) -> str:
     if key in bib.entries:
       return f'<a id="{bib_backref(key)}" href="{site_root}references.html#{key}">{body}</a>'
     return body
@@ -375,7 +385,8 @@ def linkify_markdown(string, loc_map):
   # declaration names in highlighted Lean code snippets
   string = re.sub(r'<span class="n">([^<]+)</span>',
     lambda p: f'<span class="n">{linkify_type(p.group(1))}</span>', string)
-  # references (don't match if there are illegal characters for a BibTeX key, cf. https://tex.stackexchange.com/a/408548)
+  # references (don't match if there are illegal characters for a BibTeX key,
+  # cf. https://tex.stackexchange.com/a/408548)
   string = re.sub(r'\[([^\]]+)\]\s*\[([^{ },~#%\\]+)\]',
     lambda p: linkify_named_ref(p.group(0), p.group(1), p.group(2)), string)
   string = re.sub(r'\[([^{ },~#%\\]+)\]',
@@ -502,27 +513,32 @@ def setup_jinja_globals(file_map, loc_map, instances):
   env.filters['tex'] = lambda x: clean_tex(x)
 
 # stores the full filename of the markdown being rendered
-current_filename = None
+current_filename: Optional[str] = None
+# stores the project of the file, e.g. "mathlib", "core", etc.
+current_project: Optional[str] = None
 global_notes = {}
 def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs):
-  global current_filename
+  global current_filename, current_project
   for note_name, note_markdown in notes:
     global_notes[note_name] = {
       'md': note_markdown,
-      'backrefs': []
+      'backrefs': [],
     }
 
   with open_outfile('index.html') as out:
     current_filename = 'index.html'
+    current_project = None
     out.write(env.get_template('index.j2').render(
       active_path=''))
 
   with open_outfile('404.html') as out:
     current_filename = '404.html'
+    current_project = None
     out.write(env.get_template('404.j2').render(
       active_path=''))
 
   kinds = [('tactic', 'tactics'), ('command', 'commands'), ('hole_command', 'hole_commands'), ('attribute', 'attributes')]
+  current_project = 'docs'
   for (kind, filename) in kinds:
     entries = [e for e in tactic_docs if e['category'] == kind]
     with open_outfile(filename + '.html') as out:
@@ -535,6 +551,7 @@ def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs
   for filename, decls in partition.items():
     md = mod_docs.get(filename, [])
     with open_outfile(html_root + filename.url) as out:
+      current_project = filename.project
       current_filename = filename.url
       out.write(env.get_template('module.j2').render(
         active_path = filename.url,
@@ -543,10 +560,12 @@ def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs
         decl_names = sorted(d['name'] for d in decls),
       ))
 
+  current_project = 'extra'
   for (filename, displayname, source, _) in extra_doc_files:
     current_filename = filename + '.html'
     write_pure_md_file(local_lean_root + source, filename + '.html', displayname)
 
+  current_project = 'test'
   for (filename, displayname, source) in test_doc_files:
     current_filename = filename + '.html'
     write_pure_md_file(source, filename + '.html', displayname)
@@ -554,17 +573,20 @@ def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs
   # generate notes.html and references.html last
   # so that we can add backrefs
   with open_outfile('notes.html') as out:
+    current_project = 'docs'
     current_filename = 'notes.html'
     out.write(env.get_template('notes.j2').render(
       active_path='',
       notes = sorted(global_notes.items(), key = lambda n: n[0])))
 
   with open_outfile('references.html') as out:
+    current_project = 'docs'
     current_filename = 'references.html'
     out.write(env.get_template('references.j2').render(
       active_path='',
       entries = sorted(bib.entries.items(), key = lambda e: e[0])))
 
+  current_project = None
   current_filename = None
 
 def write_site_map(partition):
