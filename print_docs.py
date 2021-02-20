@@ -398,7 +398,8 @@ def linkify_markdown(string: str, loc_map) -> str:
     return body
   def linkify_standalone_ref(body: str, key: str) -> str:
     if key in bib.entries:
-      return f'<a id="{bib_backref(key)}" href="{site_root}references.html#{key}">{body}</a>'
+      alpha_label = bib.entries[key].fields["alpha_label"]
+      return f'<a id="{bib_backref(key)}" href="{site_root}references.html#{alpha_label}">[{alpha_label}]</a>'
     return body
 
   # notes
