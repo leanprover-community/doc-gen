@@ -107,6 +107,7 @@ count = Counter()
 for key, data in bib.entries.items():
   label = data.alpha_label
   # Finalize duplicate labels by appending 'a', 'b', 'c', etc.
+  # Currently the ordering is determined by `docs/references.bib`
   if counted[label] > 1:
     data.alpha_label += chr(ord('a') + count[label])
     count.update([label])
