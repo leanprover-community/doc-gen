@@ -14,13 +14,13 @@
 
 <ul>
 {% for _, entry in entries %}
-    <li id="{{entry.fields['alpha_label']}}"><a href="#{{entry.fields['alpha_label']}}">[{{entry.fields['alpha_label']}}]</a> {% for author in entry.persons['author'] %}{{ ' '.join(author.first_names).strip('{}') | tex }} {{ ' '.join(author.last_names).strip('{}') | tex}}, {% endfor %}
+    <li id="{{entry.alpha_label}}"><a href="#{{entry.alpha_label}}">[{{entry.alpha_label}}]</a> {% for author in entry.persons['author'] %}{{ ' '.join(author.first_names).strip('{}') | tex }} {{ ' '.join(author.last_names).strip('{}') | tex}}, {% endfor %}
       {% if entry.fields['url'] %}<a href="{{ entry.fields['url'] }}">{{ entry.fields['title'] | tex }}</a>.
       {% else %}{{ entry.fields['title'] | tex }}.
       {% endif %}
       {% if entry.fields['journal'] %}{{ entry.fields['journal'] | tex }},{% endif %}
       {{ entry.fields['year'] }}.
-      <small>{% for filename, backref_id, title in entry.fields['backrefs'] %}
+      <small>{% for filename, backref_id, title in entry.backrefs %}
         <a href="{{ filename }}#{{ backref_id }}" title="{{ title }}">[{{ loop.index }}]</a>
       {% endfor %}</small>
     </li>
@@ -31,7 +31,7 @@
 {% block internal_nav %}
 <h3><a href="#top">References</a></h3>
 {% for _, entry in entries %}
-    <div class="nav_link"><a href="#{{entry.fields['alpha_label']}}">{{entry.fields['alpha_label']}}</a></div>
+    <div class="nav_link"><a href="#{{entry.alpha_label}}">{{entry.alpha_label}}</a></div>
 {% endfor %}
 
 </div>

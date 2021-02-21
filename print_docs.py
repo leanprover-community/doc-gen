@@ -21,7 +21,7 @@ import gzip
 from urllib.parse import quote
 from functools import reduce
 import textwrap
-from collections import Counter, defaultdict
+from collections import Counter, defaultdict, namedtuple
 from pathlib import Path
 from typing import NamedTuple, List, Optional
 import sys
@@ -85,8 +85,8 @@ bib = pybtex.database.parse_file(f'{local_lean_root}docs/references.bib')
 
 label_style = LabelStyle()
 # cf. LabelStyle.format_labels in pybtex.style.labels.alpha:
-# first generate label from author(s) + year
-# counted will be the total number of times the label appears
+# label_style.format_label generates a label from author(s) + year
+# counted tracks the total number of times a label appears
 counted = Counter()
 
 latexnodes2text = LatexNodes2Text()
@@ -100,15 +100,15 @@ for key, data in bib.entries.items():
     author.last_names = list(map(clean_tex, author.last_names))
   label = label_style.format_label(data)
   counted.update([label])
-  data.fields['alpha_label'] = label
-# count will track number of times label has been finalized
+  data.alpha_label = label
+# count tracks the number of times a duplicate label has been finalized
 count = Counter()
 
 for key, data in bib.entries.items():
-  label = data.fields['alpha_label']
-  # If there are duplicates, fix label by appending 'a', 'b', etc.
+  label = data.alpha_label
+  # Finalize duplicate labels by appending 'a', 'b', 'c', etc.
   if counted[label] > 1:
-    data.fields['alpha_label'] += chr(ord('a') + count[label])
+    data.alpha_label += chr(ord('a') + count[label])
     count.update([label])
 
   url = None
@@ -140,7 +140,7 @@ for key, data in bib.entries.items():
     journal = None
   data.fields['url'] = url
   data.fields['journal'] = journal
-  data.fields['backrefs'] = []
+  data.backrefs = []
 
 with open('leanpkg.toml') as f:
   parsed_toml = toml.loads(f.read())
@@ -359,7 +359,6 @@ def linkify_efmt(f, loc_map):
 # store number of backref anchors and notes in each file
 num_backrefs = defaultdict(int)
 num_notes = defaultdict(int)
-note_pattern = re.compile(r'Note \[(.*)\]', re.I)
 
 def linkify_markdown(string: str, loc_map) -> str:
   def linkify_type(string: str):
@@ -377,7 +376,7 @@ def linkify_markdown(string: str, loc_map) -> str:
     num_notes[current_filename] += 1
     backref_id = f'noteref{num_notes[current_filename]}'
     if current_project and current_project != 'test':
-      global_notes[key]['backrefs'].append(
+      global_notes[key].backrefs.append(
         (current_filename, backref_id, backref_title(current_filename))
       )
     return backref_id
@@ -385,7 +384,7 @@ def linkify_markdown(string: str, loc_map) -> str:
     num_backrefs[current_filename] += 1
     backref_id = f'backref{num_backrefs[current_filename]}'
     if current_project and current_project != 'test':
-      bib.entries[key].fields['backrefs'].append(
+      bib.entries[key].backrefs.append(
         (current_filename, backref_id, backref_title(current_filename))
       )
     return backref_id
@@ -396,17 +395,17 @@ def linkify_markdown(string: str, loc_map) -> str:
     return body
   def linkify_named_ref(body: str, name: str, key: str) -> str:
     if key in bib.entries:
-      alpha_label = bib.entries[key].fields["alpha_label"]
+      alpha_label = bib.entries[key].alpha_label
       return f'<a id="{bib_backref(key)}" href="{site_root}references.html#{alpha_label}">{name}</a>'
     return body
   def linkify_standalone_ref(body: str, key: str) -> str:
     if key in bib.entries:
-      alpha_label = bib.entries[key].fields["alpha_label"]
+      alpha_label = bib.entries[key].alpha_label
       return f'<a id="{bib_backref(key)}" href="{site_root}references.html#{alpha_label}">[{alpha_label}]</a>'
     return body
 
   # notes
-  string = re.sub(note_pattern,
+  string = re.compile(r'Note \[(.*)\]', re.I).sub(
     lambda p: linkify_note(p.group(0), p.group(1)), string)
   # inline declaration names
   string = re.sub(r'<code>([^<]+)</code>',
@@ -546,13 +545,11 @@ current_filename: Optional[str] = None
 # stores the project of the file, e.g. "mathlib", "core", etc.
 current_project: Optional[str] = None
 global_notes = {}
+GlobalNote = namedtuple('GlobalNote', ['md', 'backrefs'])
 def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs):
   global current_filename, current_project
   for note_name, note_markdown in notes:
-    global_notes[note_name] = {
-      'md': note_markdown,
-      'backrefs': [],
-    }
+    global_notes[note_name] = GlobalNote(note_markdown, [])
 
   with open_outfile('index.html') as out:
     current_filename = 'index.html'
@@ -613,7 +610,7 @@ def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs
     current_filename = 'references.html'
     out.write(env.get_template('references.j2').render(
       active_path='',
-      entries = sorted(bib.entries.items(), key = lambda e: e[1].fields['alpha_label'])))
+      entries = sorted(bib.entries.items(), key = lambda e: e[1].alpha_label)))
 
   current_project = None
   current_filename = None
