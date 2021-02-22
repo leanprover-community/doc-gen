@@ -3,7 +3,7 @@ This module contains a class CustomHTMLRenderer, which uses
 mistletoe to generate HTML from markdown.
 
 Extra features include:
-- Library note links
+- Linkifying raw URLs
 - Managing LaTeX so that MathJax will be able to process it in the browser
 - Syntax highlighting with Pygments
 """
@@ -16,29 +16,33 @@ from pygments.formatters.html import HtmlFormatter
 
 from mathjax_editing import remove_math, replace_math
 
-
-class NoteLink(span_token.SpanToken):
+class RawUrl(span_token.SpanToken):
     """
-    Detect library note links
+    Detect raw URLs.
     """
     parse_inner = False
-    pattern = re.compile(r'Note \[(.*)\]', re.I)
+    # regex to extract raw URLs from Markdown from:
+    # https://github.com/trentm/python-markdown2/wiki/link-patterns#converting-links-into-links-automatically
+    pattern = re.compile(
+        r'((([A-Za-z]{3,9}:(?:\/\/)?)'  # scheme
+        r'(?:[\-;:&=\+\$,\w]+@)?[A-Za-z0-9\.\-]+(:\[0-9]+)?'  # user@hostname:port
+        r'|(?:www\.|[\-;:&=\+\$,\w]+@)[A-Za-z0-9\.\-]+)'  # www.|user@hostname
+        r'((?:\/[\+~%\/\.\w\-]*)?'  # path
+        r'\??(?:[\-\+=&;%@\.\w]*)'  # query parameters
+        r'#?(?:[\.\!\/\\\w\-]*))?)'  # fragment
+        r'(?![^<]*?(?:<\/\w+>|\/?>))'  # ignore anchor HTML tags
+        r'(?![^\(]*?\))'  # ignore links in brackets (Markdown links and images)
+    )
 
     def __init__(self, match):
-        self.body = match.group(0)
-        self.note = match.group(1)
-
+        self.url = match.group(1)
 
 class CustomHTMLRenderer(HTMLRenderer):
     """
-    Call the constructor with `site_root`.
-
     The main rendering function is `render_md`.
     """
-
-    def __init__(self, site_root):
-        self.site_root = site_root
-        super().__init__(NoteLink)
+    def __init__(self):
+        super().__init__(RawUrl)
 
     def render_md(self, ds):
         """
@@ -105,8 +109,8 @@ class CustomHTMLRenderer(HTMLRenderer):
             lexer = get_lexer('text')
         return highlight(code, lexer, self.formatter)
 
-    def render_note_link(self, token):
+    def render_raw_url(self, token):
         """
-        Render library note links
+        Linkify raw URLs.
         """
-        return f'<a href="{self.site_root}notes.html#{token.note}">{token.body}</a>'
+        return f'<a href="{token.url}">{token.url}</a>'

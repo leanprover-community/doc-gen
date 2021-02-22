@@ -1,0 +1,38 @@
+{% extends "base.j2" %}
+{% block title %}references{% endblock %}
+
+{%- block metadesc -%}
+  {{ "Works referenced in mathlib doc strings are listed on this page." | plaintext_summary }}
+{%- endblock -%}
+
+{% block content %}
+<div class="docfile">
+
+<h1>References</h1>
+
+<p>Works cited in mathlib are collected on this page. This is generated from the BibTeX file <a href="references.bib">docs/references.bib</a> (<a href="https://github.com/leanprover-community/mathlib/blob/master/docs/references.bib">view on GitHub</a>).</p>
+
+<ul>
+{% for _, entry in entries %}
+    <li id="{{entry.alpha_label}}"><a href="#{{entry.alpha_label}}">[{{entry.alpha_label}}]</a> {% for author in entry.persons['author'] %}{{ ' '.join(author.first_names).strip('{}') | tex }} {{ ' '.join(author.last_names).strip('{}') | tex}}, {% endfor %}
+      {% if entry.fields['url'] %}<a href="{{ entry.fields['url'] }}">{{ entry.fields['title'] | tex }}</a>.
+      {% else %}{{ entry.fields['title'] | tex }}.
+      {% endif %}
+      {% if entry.fields['journal'] %}{{ entry.fields['journal'] | tex }},{% endif %}
+      {{ entry.fields['year'] }}.
+      <small>{% for filename, backref_id, title in entry.backrefs %}
+        <a href="{{ filename }}#{{ backref_id }}" title="{{ title }}">[{{ loop.index }}]</a>
+      {% endfor %}</small>
+    </li>
+{% endfor %}
+</ul>
+{% endblock %}
+
+{% block internal_nav %}
+<h3><a href="#top">References</a></h3>
+{% for _, entry in entries %}
+    <div class="nav_link"><a href="#{{entry.alpha_label}}">{{entry.alpha_label}}</a></div>
+{% endfor %}
+
+</div>
+{% endblock %}

@@ -3,7 +3,7 @@
 Run using ./gen_docs unless debugging
 
 Example standalone usage for local testing (requires export.json):
-$ python3 print_docs.py -r "_target/deps/mathlib" -w "/"
+$ python3 print_docs.py -r "_target/deps/mathlib" -w "/" -l
 
 """
 import json
@@ -21,13 +21,15 @@ import gzip
 from urllib.parse import quote
 from functools import reduce
 import textwrap
-from collections import defaultdict
+from collections import Counter, defaultdict, namedtuple
 from pathlib import Path
-from typing import NamedTuple, List
+from typing import NamedTuple, List, Optional
 import sys
 
 from mistletoe_renderer import CustomHTMLRenderer
-
+import pybtex.database
+from pybtex.style.labels.alpha import LabelStyle
+from pylatexenc.latex2text import LatexNodes2Text
 import networkx as nx
 
 root = os.getcwd()
@@ -79,6 +81,67 @@ site_root = "/"
 # root directory of mathlib.
 local_lean_root = os.path.join(root, cl_args.r if cl_args.r else '_target/deps/mathlib') + '/'
 
+bib = pybtex.database.parse_file(f'{local_lean_root}docs/references.bib')
+
+label_style = LabelStyle()
+# cf. LabelStyle.format_labels in pybtex.style.labels.alpha:
+# label_style.format_label generates a label from author(s) + year
+# counted tracks the total number of times a label appears
+counted = Counter()
+
+latexnodes2text = LatexNodes2Text()
+def clean_tex(src: str) -> str:
+  return latexnodes2text.latex_to_text(src)
+
+for key, data in bib.entries.items():
+  for author in data.persons['author']:
+    # turn LaTeX special characters to Unicode,
+    # since format_label does not correctly abbreviate names containing LaTeX
+    author.last_names = list(map(clean_tex, author.last_names))
+  label = label_style.format_label(data)
+  counted.update([label])
+  data.alpha_label = label
+# count tracks the number of times a duplicate label has been finalized
+count = Counter()
+
+for key, data in bib.entries.items():
+  label = data.alpha_label
+  # Finalize duplicate labels by appending 'a', 'b', 'c', etc.
+  # Currently the ordering is determined by `docs/references.bib`
+  if counted[label] > 1:
+    data.alpha_label += chr(ord('a') + count[label])
+    count.update([label])
+
+  url = None
+  if 'link' in data.fields:
+    url = data.fields['link'][5:-1]
+  elif 'url' in data.fields:
+    url = data.fields['url']
+  elif 'eprint' in data.fields:
+    eprint = data.fields['eprint']
+    if eprint.startswith('arXiv:'):
+      url = 'https://arxiv.org/abs/'+eprint[6:]
+    elif (('archivePrefix' in data.fields and data.fields['archivePrefix'] == 'arXiv') or
+      ('eprinttype' in data.fields and data.fields['eprinttype'] == 'arXiv')):
+      url = 'https://arxiv.org/abs/'+eprint
+    else:
+      url = eprint
+  # else:
+    # raise ValueError(f"Couldn't find a url for bib item {key}")
+  if url:
+    if url.startswith(r'\url'):
+      url = url[4:].strip('{}')
+    url = url.replace(r'\_', '_')
+
+  if 'journal' in data.fields and data.fields['journal'] != 'CoRR':
+    journal = data.fields['journal']
+  elif 'booktitle' in data.fields:
+    journal = data.fields['booktitle']
+  else:
+    journal = None
+  data.fields['url'] = url
+  data.fields['journal'] = journal
+  data.backrefs = []
 
 with open('leanpkg.toml') as f:
   parsed_toml = toml.loads(f.read())
@@ -155,7 +218,7 @@ env.globals['mathlib_commit'] = mathlib_commit
 env.globals['lean_commit'] = lean_commit
 env.globals['site_root'] = site_root
 
-markdown_renderer = CustomHTMLRenderer(site_root)
+markdown_renderer = CustomHTMLRenderer()
 
 def convert_markdown(ds):
   return markdown_renderer.render_md(ds)
@@ -294,16 +357,69 @@ def linkify_efmt(f, loc_map):
 
   return go(['n', f])
 
-def linkify_markdown(string, loc_map):
-  def linkify_type(string):
+# store number of backref anchors and notes in each file
+num_backrefs = defaultdict(int)
+num_notes = defaultdict(int)
+
+def linkify_markdown(string: str, loc_map) -> str:
+  def linkify_type(string: str):
     splitstr = re.split(r'([\s\[\]\(\)\{\}])', string)
     tks = map(lambda s: linkify(s, loc_map), splitstr)
     return "".join(tks)
 
+  def backref_title(filename: str):
+    parts = filename.split('/')
+    # drop .html
+    parts[-1] = parts[-1].split('.')[0]
+    return f'{current_project}: {".".join(parts)}'
+
+  def note_backref(key: str) -> str:
+    num_notes[current_filename] += 1
+    backref_id = f'noteref{num_notes[current_filename]}'
+    if current_project and current_project != 'test':
+      global_notes[key].backrefs.append(
+        (current_filename, backref_id, backref_title(current_filename))
+      )
+    return backref_id
+  def bib_backref(key: str) -> str:
+    num_backrefs[current_filename] += 1
+    backref_id = f'backref{num_backrefs[current_filename]}'
+    if current_project and current_project != 'test':
+      bib.entries[key].backrefs.append(
+        (current_filename, backref_id, backref_title(current_filename))
+      )
+    return backref_id
+
+  def linkify_note(body: str, note: str) -> str:
+    if note in global_notes:
+      return f'<a id="{note_backref(note)}" href="{site_root}notes.html#{note}">{body}</a>'
+    return body
+  def linkify_named_ref(body: str, name: str, key: str) -> str:
+    if key in bib.entries:
+      alpha_label = bib.entries[key].alpha_label
+      return f'<a id="{bib_backref(key)}" href="{site_root}references.html#{alpha_label}">{name}</a>'
+    return body
+  def linkify_standalone_ref(body: str, key: str) -> str:
+    if key in bib.entries:
+      alpha_label = bib.entries[key].alpha_label
+      return f'<a id="{bib_backref(key)}" href="{site_root}references.html#{alpha_label}">[{alpha_label}]</a>'
+    return body
+
+  # notes
+  string = re.compile(r'Note \[(.*)\]', re.I).sub(
+    lambda p: linkify_note(p.group(0), p.group(1)), string)
+  # inline declaration names
   string = re.sub(r'<code>([^<]+)</code>',
-    lambda p: '<code>{}</code>'.format(linkify_type(p.group(1))), string)
+    lambda p: f'<code>{linkify_type(p.group(1))}</code>', string)
+  # declaration names in highlighted Lean code snippets
   string = re.sub(r'<span class="n">([^<]+)</span>',
-    lambda p: '<span class="n">{}</span>'.format(linkify_type(p.group(1))), string)
+    lambda p: f'<span class="n">{linkify_type(p.group(1))}</span>', string)
+  # references (don't match if there are illegal characters for a BibTeX key,
+  # cf. https://tex.stackexchange.com/a/408548)
+  string = re.sub(r'\[([^\]]+)\]\s*\[([^{ },~#%\\]+)\]',
+    lambda p: linkify_named_ref(p.group(0), p.group(1), p.group(2)), string)
+  string = re.sub(r'\[([^{ },~#%\\]+)\]',
+    lambda p: linkify_standalone_ref(p.group(0), p.group(1)), string)
   return string
 
 def plaintext_summary(markdown, max_chars = 200):
@@ -423,25 +539,37 @@ def setup_jinja_globals(file_map, loc_map, instances):
   env.filters['convert_markdown'] = lambda x: linkify_markdown(convert_markdown(x), loc_map) # TODO: this is probably very broken
   env.filters['link_to_decl'] = lambda x: link_to_decl(x, loc_map)
   env.filters['plaintext_summary'] = lambda x: plaintext_summary(x)
+  env.filters['tex'] = lambda x: clean_tex(x)
 
+# stores the full filename of the markdown being rendered
+current_filename: Optional[str] = None
+# stores the project of the file, e.g. "mathlib", "core", etc.
+current_project: Optional[str] = None
+global_notes = {}
+GlobalNote = namedtuple('GlobalNote', ['md', 'backrefs'])
 def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs):
+  global current_filename, current_project
+  for note_name, note_markdown in notes:
+    global_notes[note_name] = GlobalNote(note_markdown, [])
+
   with open_outfile('index.html') as out:
+    current_filename = 'index.html'
+    current_project = None
     out.write(env.get_template('index.j2').render(
       active_path=''))
 
   with open_outfile('404.html') as out:
+    current_filename = '404.html'
+    current_project = None
     out.write(env.get_template('404.j2').render(
       active_path=''))
 
-  with open_outfile('notes.html') as out:
-    out.write(env.get_template('notes.j2').render(
-      active_path='',
-      notes = sorted(notes, key = lambda n: n[0])))
-
   kinds = [('tactic', 'tactics'), ('command', 'commands'), ('hole_command', 'hole_commands'), ('attribute', 'attributes')]
+  current_project = 'docs'
   for (kind, filename) in kinds:
     entries = [e for e in tactic_docs if e['category'] == kind]
     with open_outfile(filename + '.html') as out:
+      current_filename = filename + '.html'
       out.write(env.get_template(filename + '.j2').render(
         active_path='',
         entries = sorted(entries, key = lambda n: n['name']),
@@ -450,6 +578,8 @@ def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs
   for filename, decls in partition.items():
     md = mod_docs.get(filename, [])
     with open_outfile(html_root + filename.url) as out:
+      current_project = filename.project
+      current_filename = filename.url
       out.write(env.get_template('module.j2').render(
         active_path = filename.url,
         filename = filename,
@@ -457,17 +587,40 @@ def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs
         decl_names = sorted(d['name'] for d in decls),
       ))
 
+  current_project = 'extra'
   for (filename, displayname, source, _) in extra_doc_files:
+    current_filename = filename + '.html'
     write_pure_md_file(local_lean_root + source, filename + '.html', displayname)
 
+  current_project = 'test'
   for (filename, displayname, source) in test_doc_files:
+    current_filename = filename + '.html'
     write_pure_md_file(source, filename + '.html', displayname)
+
+  # generate notes.html and references.html last
+  # so that we can add backrefs
+  with open_outfile('notes.html') as out:
+    current_project = 'docs'
+    current_filename = 'notes.html'
+    out.write(env.get_template('notes.j2').render(
+      active_path='',
+      notes = sorted(global_notes.items(), key = lambda n: n[0])))
+
+  with open_outfile('references.html') as out:
+    current_project = 'docs'
+    current_filename = 'references.html'
+    out.write(env.get_template('references.j2').render(
+      active_path='',
+      entries = sorted(bib.entries.items(), key = lambda e: e[1].alpha_label)))
+
+  current_project = None
+  current_filename = None
 
 def write_site_map(partition):
   with open_outfile('sitemap.txt') as out:
     for filename in partition:
       out.write(site_root + filename.url + '\n')
-    for n in ['index', 'tactics', 'commands', 'hole_commands', 'notes']:
+    for n in ['index', 'tactics', 'commands', 'hole_commands', 'notes', 'references']:
       out.write(site_root + n + '.html\n')
     for (filename, _, _, _) in extra_doc_files:
       out.write(site_root + filename + '.html\n')
@@ -505,8 +658,8 @@ def copy_css(path, use_symlinks):
   cp('nav.js', path+'nav.js')
   cp('searchWorker.js', path+'searchWorker.js')
 
-def copy_yaml_files(path):
-  for fn in ['100.yaml', 'undergrad.yaml', 'overview.yaml']:
+def copy_yaml_bib_files(path):
+  for fn in ['100.yaml', 'undergrad.yaml', 'overview.yaml', 'references.bib']:
     shutil.copyfile(f'{local_lean_root}docs/{fn}', path+fn)
 
 def copy_static_files(path):
@@ -551,7 +704,7 @@ def main():
   write_html_files(file_map, loc_map, notes, mod_docs, instances, tactic_docs)
   write_redirects(loc_map, file_map)
   copy_css(html_root, use_symlinks=cl_args.l)
-  copy_yaml_files(html_root)
+  copy_yaml_bib_files(html_root)
   copy_static_files(html_root)
   write_export_db(mk_export_db(loc_map, file_map))
   write_site_map(file_map)

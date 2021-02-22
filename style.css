@@ -314,15 +314,34 @@ nav {
 }
 
 /* Make `#id` links appear below header. */
-.decl::before, h1[id]::before, h2[id]::before, h3[id]::before,
-        h4[id]::before, h5[id]::before, h6[id]::before, a[id]::before {
-    content: "";
-    display: block;
-    height:      var(--fragment-offset);
-    margin-top:  calc(-1 * var(--fragment-offset));
-    box-sizing: inherit;
-    visibility: hidden;
+.decl, h1[id], h2[id], h3[id], h4[id], h5[id], h6[id] {
+    scroll-margin-top: var(--fragment-offset);
 }
+/* don't need as much vertical space for these
+inline elements */
+a[id], li[id] {
+    scroll-margin-top: var(--header-height);
+}
+
+/* HACK: Safari doesn't support scroll-margin-top for
+fragment links (yet?)
+https://caniuse.com/mdn-css_properties_scroll-margin-top
+https://bugs.webkit.org/show_bug.cgi?id=189265
+*/
+@supports not (scroll-margin-top: var(--fragment-offset)) {
+    .decl::before, h1[id]::before, h2[id]::before, h3[id]::before,
+    h4[id]::before, h5[id]::before, h6[id]::before,
+    a[id]::before, li[id]::before {
+        content: "";
+        display: block;
+        height:      var(--fragment-offset);
+        margin-top:  calc(-1 * var(--fragment-offset));
+        box-sizing: inherit;
+        visibility: hidden;
+        width: 1px;
+    }
+}
+
 
 /* hide # after markdown headings except on hover */
 .markdown-heading:not(:hover) > .hover-link {
