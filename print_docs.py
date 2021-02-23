@@ -476,9 +476,9 @@ def import_options(loc_map, decl_name, import_string):
   if import_string != '' and import_string not in direct_import_paths:
     direct_import_paths.append(import_string)
   if any(i.startswith('init.') for i in direct_import_paths):
-    return '<details class="imports"><summary>Import using</summary><ul>{}</ul>'.format('<li>imported by default</li>')
+    return '<details class="imports"><summary>Import using</summary><ul>{}</ul></details>'.format('<li>imported by default</li>')
   elif len(direct_import_paths) > 0:
-    return '<details class="imports"><summary>Import using</summary><ul>{}</ul>'.format(
+    return '<details class="imports"><summary>Import using</summary><ul>{}</ul></details>'.format(
       '\n'.join(['<li>import {}</li>'.format(d) for d in direct_import_paths]))
   else:
     return ''
