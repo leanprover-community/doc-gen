@@ -394,7 +394,7 @@ do m ← of_tactic localized_attr.get_cache,
     lean.parser.emit_code_here m <|> skip
 
 meta def main : io unit := do
-json ← run_tactic mk_export_json,
+json ← run_tactic (trace_error "export_json failed:" mk_export_json),
 put_str json.unparse
 
 -- HACK: print gadgets with less fluff
