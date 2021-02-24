@@ -319,8 +319,11 @@ do docs ← olean_doc_strings,
 meta def get_instances : tactic (rb_lmap string string) :=
 attribute.get_instances `instance >>= list.mfoldl
   (λ map inst_nm,
-   do (_, e) ← mk_const inst_nm >>= infer_type >>= mk_local_pis,
-      (expr.const class_nm _) ← return e.get_app_fn,
+   do ty ← mk_const inst_nm >>= infer_type,
+      (_, e) ← open_pis_whnf ty transparency.reducible,
+      e ← whnf e transparency.reducible,
+      expr.const class_nm _ ← pure e.get_app_fn |
+        fail ("not a constant: " ++ to_string e),
       return $ map.insert class_nm.to_string inst_nm.to_string)
   mk_rb_map
 
