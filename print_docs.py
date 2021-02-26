@@ -126,6 +126,8 @@ for key, data in bib.entries.items():
       url = 'https://arxiv.org/abs/'+eprint
     else:
       url = eprint
+  elif 'doi' in data.fields:
+    url = 'https://doi.org/'+data.fields['doi']
   # else:
     # raise ValueError(f"Couldn't find a url for bib item {key}")
   if url:
