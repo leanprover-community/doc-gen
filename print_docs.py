@@ -146,6 +146,8 @@ def parse_bib_file(fname):
     data.fields['journal'] = journal
     data.backrefs = []
 
+  return bib
+
 with open('leanpkg.toml') as f:
   parsed_toml = toml.loads(f.read())
 ml_data = parsed_toml['dependencies']['mathlib']
