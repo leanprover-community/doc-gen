@@ -552,7 +552,7 @@ current_filename: Optional[str] = None
 current_project: Optional[str] = None
 global_notes = {}
 GlobalNote = namedtuple('GlobalNote', ['md', 'backrefs'])
-def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs):
+def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs, bib):
   global current_filename, current_project
   for note_name, note_markdown in notes:
     global_notes[note_name] = GlobalNote(note_markdown, [])
@@ -707,7 +707,7 @@ def main():
   file_map, loc_map, notes, mod_docs, instances, tactic_docs = load_json()
   setup_jinja_globals(file_map, loc_map, instances, bib)
   write_decl_txt(loc_map)
-  write_html_files(file_map, loc_map, notes, mod_docs, instances, tactic_docs)
+  write_html_files(file_map, loc_map, notes, mod_docs, instances, tactic_docs, bib)
   write_redirects(loc_map, file_map)
   copy_css(html_root, use_symlinks=cl_args.l)
   copy_yaml_bib_files(html_root)
