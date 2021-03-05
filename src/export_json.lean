@@ -362,15 +362,12 @@ do l ← list.map tactic_doc_entry.add_import <$> get_tactic_doc_entries,
 
 meta def mk_export_json : tactic json := do
 e ← get_env,
-/- Using `environment.mfold` is much cleaner. Unfortunately this led to a segfault, I think because
-of a stack overflow. Converting the environment to a list of declarations and folding over that led
-to "deep recursion detected". -/
 s ← read,
-let decls := e.fold ([] : list json) (λ decl acc,
-  match (enable_links *> process_decl decl) s with
-  | result.success (some di) _ := di.to_json :: acc
-  | _:= acc
-  end),
+let decls := list.reduce_option $ e.get_decls.map_async_chunked $ λ decl,
+match (enable_links *> process_decl decl) s with
+| result.success (some di) _ := some di.to_json
+| _:= none
+end,
 mod_docs ← write_olean_docs,
 notes ← format_notes,
 tactic_docs ← format_tactic_docs,
