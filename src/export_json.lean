@@ -289,6 +289,21 @@ else do
   (_, ty) ← mk_local_pis d.type,
   efmt.pp ty
 
+meta def get_kind (d : declaration) : tactic string :=
+match d with 
+| declaration.defn _ _ _ _ _ _ := return "def"
+| declaration.ax _ _ _ := return "axiom"
+| declaration.thm _ _ _ _ := return "theorem"
+| declaration.cnst _ _ _ _ := do 
+  e ← get_env,
+  if e.is_structure d.to_name then 
+    return "structure"
+  else if e.is_inductive d.to_name then 
+    return "inductive"
+  else return "constant"
+
+end
+
 /-- extracts `decl_info` from `d`. Should return `none` instead of failing. -/
 meta def process_decl (d : declaration) : tactic (option decl_info) :=
 do ff ← d.in_current_file | return none,
@@ -301,9 +316,10 @@ do ff ← d.in_current_file | return none,
    (args, type) ← get_args_and_type d.type,
    attributes ← attributes_of decl_name,
    equations ← get_equations decl_name,
+   kind ← get_kind d,
    structure_fields ← mk_structure_fields decl_name e,
    constructors ← mk_constructors decl_name e,
-   return $ some ⟨decl_name, !d.is_trusted, args, type, doc_string, filename, line, attributes, equations, d.kind, structure_fields, constructors⟩
+   return $ some ⟨decl_name, !d.is_trusted, args, type, doc_string, filename, line, attributes, equations, kind, structure_fields, constructors⟩
 
 meta def write_module_doc_pair : pos × string → json
 | (⟨line, _⟩, doc) := json.object [("line", line), ("doc", doc)]

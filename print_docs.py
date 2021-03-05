@@ -454,13 +454,7 @@ def plaintext_summary(markdown, max_chars = 200):
 def link_to_decl(decl_name, loc_map):
   return f'{site_root}{loc_map[decl_name].url}#{decl_name}'
 
-def kind_of_decl(decl):
-  kind = 'structure' if len(decl['structure_fields']) > 0 else 'inductive' if len(decl['constructors']) > 0 else decl['kind']
-  if kind == 'thm': kind = 'theorem'
-  elif kind == 'cnst': kind = 'constant'
-  elif kind == 'ax': kind = 'axiom'
-  return kind
-env.globals['kind_of_decl'] = kind_of_decl
+env.globals['kind_of_decl'] = lambda decl: decl['kind']
 
 def htmlify_name(n):
   return '.'.join([f'<span class="name">{ html.escape(part) }</span>' for part in n.split('.')])
