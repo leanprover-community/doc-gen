@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Author: Robert Y. Lewis
 -/
 
-import tactic.core system.io data.string.defs tactic.interactive data.list.sort data.list.defs
+import tactic.core system.io data.string.defs tactic.interactive data.list.sort
 
 /-!
 Used to generate a json file for html docs.
