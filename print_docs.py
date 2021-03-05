@@ -81,6 +81,10 @@ site_root = "/"
 # root directory of mathlib.
 local_lean_root = os.path.join(root, cl_args.r if cl_args.r else '_target/deps/mathlib') + '/'
 
+latexnodes2text = LatexNodes2Text()
+def clean_tex(src: str) -> str:
+  return latexnodes2text.latex_to_text(src)
+
 def parse_bib_file(fname):
   bib = pybtex.database.parse_file(fname)
 
@@ -89,10 +93,6 @@ def parse_bib_file(fname):
   # label_style.format_label generates a label from author(s) + year
   # counted tracks the total number of times a label appears
   counted = Counter()
-
-  latexnodes2text = LatexNodes2Text()
-  def clean_tex(src: str) -> str:
-    return latexnodes2text.latex_to_text(src)
 
   for key, data in bib.entries.items():
     for author in data.persons['author']:
