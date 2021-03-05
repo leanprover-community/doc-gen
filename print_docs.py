@@ -81,69 +81,72 @@ site_root = "/"
 # root directory of mathlib.
 local_lean_root = os.path.join(root, cl_args.r if cl_args.r else '_target/deps/mathlib') + '/'
 
-bib = pybtex.database.parse_file(f'{local_lean_root}docs/references.bib')
-
-label_style = LabelStyle()
-# cf. LabelStyle.format_labels in pybtex.style.labels.alpha:
-# label_style.format_label generates a label from author(s) + year
-# counted tracks the total number of times a label appears
-counted = Counter()
-
 latexnodes2text = LatexNodes2Text()
 def clean_tex(src: str) -> str:
   return latexnodes2text.latex_to_text(src)
 
-for key, data in bib.entries.items():
-  for author in data.persons['author']:
-    # turn LaTeX special characters to Unicode,
-    # since format_label does not correctly abbreviate names containing LaTeX
-    author.last_names = list(map(clean_tex, author.last_names))
-  label = label_style.format_label(data)
-  counted.update([label])
-  data.alpha_label = label
-# count tracks the number of times a duplicate label has been finalized
-count = Counter()
+def parse_bib_file(fname):
+  bib = pybtex.database.parse_file(fname)
 
-for key, data in bib.entries.items():
-  label = data.alpha_label
-  # Finalize duplicate labels by appending 'a', 'b', 'c', etc.
-  # Currently the ordering is determined by `docs/references.bib`
-  if counted[label] > 1:
-    data.alpha_label += chr(ord('a') + count[label])
-    count.update([label])
+  label_style = LabelStyle()
+  # cf. LabelStyle.format_labels in pybtex.style.labels.alpha:
+  # label_style.format_label generates a label from author(s) + year
+  # counted tracks the total number of times a label appears
+  counted = Counter()
 
-  url = None
-  if 'link' in data.fields:
-    url = data.fields['link'][5:-1]
-  elif 'url' in data.fields:
-    url = data.fields['url']
-  elif 'eprint' in data.fields:
-    eprint = data.fields['eprint']
-    if eprint.startswith('arXiv:'):
-      url = 'https://arxiv.org/abs/'+eprint[6:]
-    elif (('archivePrefix' in data.fields and data.fields['archivePrefix'] == 'arXiv') or
-      ('eprinttype' in data.fields and data.fields['eprinttype'] == 'arXiv')):
-      url = 'https://arxiv.org/abs/'+eprint
+  for key, data in bib.entries.items():
+    for author in data.persons['author']:
+      # turn LaTeX special characters to Unicode,
+      # since format_label does not correctly abbreviate names containing LaTeX
+      author.last_names = list(map(clean_tex, author.last_names))
+    label = label_style.format_label(data)
+    counted.update([label])
+    data.alpha_label = label
+  # count tracks the number of times a duplicate label has been finalized
+  count = Counter()
+
+  for key, data in bib.entries.items():
+    label = data.alpha_label
+    # Finalize duplicate labels by appending 'a', 'b', 'c', etc.
+    # Currently the ordering is determined by `docs/references.bib`
+    if counted[label] > 1:
+      data.alpha_label += chr(ord('a') + count[label])
+      count.update([label])
+
+    url = None
+    if 'link' in data.fields:
+      url = data.fields['link'][5:-1]
+    elif 'url' in data.fields:
+      url = data.fields['url']
+    elif 'eprint' in data.fields:
+      eprint = data.fields['eprint']
+      if eprint.startswith('arXiv:'):
+        url = 'https://arxiv.org/abs/'+eprint[6:]
+      elif (('archivePrefix' in data.fields and data.fields['archivePrefix'] == 'arXiv') or
+        ('eprinttype' in data.fields and data.fields['eprinttype'] == 'arXiv')):
+        url = 'https://arxiv.org/abs/'+eprint
+      else:
+        url = eprint
+    elif 'doi' in data.fields:
+      url = 'https://doi.org/'+data.fields['doi']
+    # else:
+      # raise ValueError(f"Couldn't find a url for bib item {key}")
+    if url:
+      if url.startswith(r'\url'):
+        url = url[4:].strip('{}')
+      url = url.replace(r'\_', '_')
+
+    if 'journal' in data.fields and data.fields['journal'] != 'CoRR':
+      journal = data.fields['journal']
+    elif 'booktitle' in data.fields:
+      journal = data.fields['booktitle']
     else:
-      url = eprint
-  elif 'doi' in data.fields:
-    url = 'https://doi.org/'+data.fields['doi']
-  # else:
-    # raise ValueError(f"Couldn't find a url for bib item {key}")
-  if url:
-    if url.startswith(r'\url'):
-      url = url[4:].strip('{}')
-    url = url.replace(r'\_', '_')
+      journal = None
+    data.fields['url'] = url
+    data.fields['journal'] = journal
+    data.backrefs = []
 
-  if 'journal' in data.fields and data.fields['journal'] != 'CoRR':
-    journal = data.fields['journal']
-  elif 'booktitle' in data.fields:
-    journal = data.fields['booktitle']
-  else:
-    journal = None
-  data.fields['url'] = url
-  data.fields['journal'] = journal
-  data.backrefs = []
+  return bib
 
 with open('leanpkg.toml') as f:
   parsed_toml = toml.loads(f.read())
@@ -363,7 +366,7 @@ def linkify_efmt(f, loc_map):
 num_backrefs = defaultdict(int)
 num_notes = defaultdict(int)
 
-def linkify_markdown(string: str, loc_map) -> str:
+def linkify_markdown(string: str, loc_map, bib) -> str:
   def linkify_type(string: str):
     splitstr = re.split(r'([\s\[\]\(\)\{\}])', string)
     tks = map(lambda s: linkify(s, loc_map), splitstr)
@@ -531,14 +534,14 @@ def mk_site_tree_core(filenames, path=[]):
 
   return entries
 
-def setup_jinja_globals(file_map, loc_map, instances):
+def setup_jinja_globals(file_map, loc_map, instances, bib):
   env.globals['import_graph'] = trace_deps(file_map)
   env.globals['site_tree'] = mk_site_tree(file_map)
   env.globals['instances'] = instances
   env.globals['import_options'] = lambda d, i: import_options(loc_map, d, i)
   env.filters['linkify'] = lambda x: linkify(x, loc_map)
   env.filters['linkify_efmt'] = lambda x: linkify_efmt(x, loc_map)
-  env.filters['convert_markdown'] = lambda x: linkify_markdown(convert_markdown(x), loc_map) # TODO: this is probably very broken
+  env.filters['convert_markdown'] = lambda x: linkify_markdown(convert_markdown(x), loc_map, bib) # TODO: this is probably very broken
   env.filters['link_to_decl'] = lambda x: link_to_decl(x, loc_map)
   env.filters['plaintext_summary'] = lambda x: plaintext_summary(x)
   env.filters['tex'] = lambda x: clean_tex(x)
@@ -549,7 +552,7 @@ current_filename: Optional[str] = None
 current_project: Optional[str] = None
 global_notes = {}
 GlobalNote = namedtuple('GlobalNote', ['md', 'backrefs'])
-def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs):
+def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs, bib):
   global current_filename, current_project
   for note_name, note_markdown in notes:
     global_notes[note_name] = GlobalNote(note_markdown, [])
@@ -700,10 +703,11 @@ def write_export_db(export_db):
     zout.write(json_str.encode('utf-8'))
 
 def main():
+  bib = parse_bib_file(f'{local_lean_root}docs/references.bib')
   file_map, loc_map, notes, mod_docs, instances, tactic_docs = load_json()
-  setup_jinja_globals(file_map, loc_map, instances)
+  setup_jinja_globals(file_map, loc_map, instances, bib)
   write_decl_txt(loc_map)
-  write_html_files(file_map, loc_map, notes, mod_docs, instances, tactic_docs)
+  write_html_files(file_map, loc_map, notes, mod_docs, instances, tactic_docs, bib)
   write_redirects(loc_map, file_map)
   copy_css(html_root, use_symlinks=cl_args.l)
   copy_yaml_bib_files(html_root)
