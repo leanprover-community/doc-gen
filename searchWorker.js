@@ -1,5 +1,5 @@
 const req = new XMLHttpRequest();
-req.open('GET', 'decl.txt', false /* blocking */);
+req.open('GET', 'decl.bmp', false /* blocking */);
 req.responseType = 'text';
 req.send();
 

@@ -666,7 +666,9 @@ def copy_static_files(path):
     shutil.copy(filename, path)
 
 def write_decl_txt(loc_map):
-  with open_outfile('decl.txt') as out:
+  # it's not a bitmap, but apparently this tricks Github Pages / nginx into gzipping it
+  # https://github.com/isaacs/github/issues/611#issuecomment-526848190
+  with open_outfile('decl.bmp') as out:
     out.write('\n'.join(loc_map.keys()))
 
 def mk_export_map_entry(decl_name, filename, kind, is_meta, line, args, tp):
