@@ -169,9 +169,12 @@ lean_commit = subprocess.check_output(['lean', '--run', 'src/lean_commit.lean'])
 lean_root = f'https://github.com/leanprover-community/lean/blob/{lean_commit}/library/'
 
 def modify_nav_js(url_rewrites: List):
-  """nav.js will fetch commit.json and use it to rewrite the href attributes of all links in gh_link"""
+  """
+  Adds code to nav.js which rewrites the href attributes of all links
+  in elements with class gh_link.
+  """
   with open_outfile('nav.js', 'a') as out:
-    out.write(f"commit = {json.dumps(url_rewrites)};")
+    out.write(f"const commit = {json.dumps(url_rewrites)};")
     out.write("""
 // Rewrite GitHub links
 // --------------------
@@ -657,7 +660,29 @@ def write_docs_redirect(decl_name, decl_loc):
 def write_src_redirect(decl_name, decl_loc, file_map):
   url = library_link_from_decl_name(decl_name, decl_loc, file_map)
   with open_outfile('find/' + decl_name + '/src/index.html') as out:
-    out.write(f'<meta http-equiv="refresh" content="0;url={url}">')
+    out.write(f"""<script src="{site_root}add_commit.js"></script>
+<script>redirectTo("{url}");</script>
+<noscript><meta http-equiv="refresh" content="0;url={url}"></noscript>
+""")
+
+def write_add_commit_js(url_rewrites: List):
+  """
+  add_commit.js rewrites the tgt URL using the map in url_rewrites
+  and then redirects to it.
+  """
+  with open_outfile('add_commit.js') as out:
+    out.write(f"const commit = {json.dumps(url_rewrites)};")
+    out.write("""function redirectTo(tgt) {
+  let loc = tgt;
+  for (const [prefix, replacement] of commit) {
+    if (tgt.startsWith(prefix)) {
+      loc = tgt.replace(prefix, replacement);
+      break;
+    }
+  }
+  window.location.replace(loc);
+}
+""")
 
 def write_redirects(loc_map, file_map):
   for decl_name in loc_map:
@@ -734,6 +759,7 @@ def main():
   write_redirects(loc_map, file_map)
   copy_css(html_root, use_symlinks=cl_args.l)
   modify_nav_js(url_rewrites)
+  write_add_commit_js(url_rewrites)
   copy_yaml_bib_files(html_root)
   copy_static_files(html_root)
   write_export_db(mk_export_db(loc_map, file_map))
