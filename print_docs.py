@@ -157,10 +157,35 @@ mathlib_github_root = ml_data['git'].strip('/')
 if cl_args.w:
   site_root = cl_args.w
 
-mathlib_github_src_root = "{0}/blob/{1}/src/".format(mathlib_github_root, mathlib_commit)
+# contains an array of [prefix, replacement] strings to be rewritten by nav.js
+url_rewrites = []
 
+mathlib_github_src_root_with_commit = f"{mathlib_github_root}/blob/{mathlib_commit}/src/"
+mathlib_github_src_root = f"{mathlib_github_root}/blob/master/src/"
+url_rewrites.append([mathlib_github_src_root, mathlib_github_src_root_with_commit])
+
+# The Lean version changes infrequently enough that we don't need to rewrite it
 lean_commit = subprocess.check_output(['lean', '--run', 'src/lean_commit.lean']).decode()
-lean_root = 'https://github.com/leanprover-community/lean/blob/{}/library/'.format(lean_commit)
+lean_root = f'https://github.com/leanprover-community/lean/blob/{lean_commit}/library/'
+
+def modify_nav_js(url_rewrites: List):
+  """nav.js will fetch commit.json and use it to rewrite the href attributes of all links in gh_link"""
+  with open_outfile('nav.js', 'a') as out:
+    out.write(f"commit = {json.dumps(url_rewrites)};")
+    out.write("""
+// Rewrite GitHub links
+// --------------------
+
+for (const elem of document.getElementsByClassName('gh_link')) {
+  const a = elem.firstElementChild;
+  for (const [prefix, replacement] of commit) {
+    if (a.href.startsWith(prefix)) {
+      a.href = a.href.replace(prefix, replacement);
+      break;
+    }
+  }
+}
+""")
 
 def get_name_from_leanpkg_path(p: Path) -> str:
   """ get the package name corresponding to a source path """
@@ -643,18 +668,20 @@ def write_redirects(loc_map, file_map):
 
 def copy_css(path, use_symlinks):
   def cp(a, b):
+    # always remove destination, in case we used -l before
+    # and now want to copy the file
+    try:
+      os.remove(b)
+    except FileNotFoundError:
+      pass
     if use_symlinks:
-      try:
-        os.remove(b)
-      except FileNotFoundError:
-        pass
       os.symlink(os.path.relpath(a, os.path.dirname(b)), b)
     else:
       shutil.copyfile(a, b)
 
   cp('style.css', path+'style.css')
   cp('pygments.css', path+'pygments.css')
-  cp('nav.js', path+'nav.js')
+  shutil.copyfile('nav.js', path+'nav.js')
   cp('searchWorker.js', path+'searchWorker.js')
 
 def copy_yaml_bib_files(path):
@@ -706,6 +733,7 @@ def main():
   write_html_files(file_map, loc_map, notes, mod_docs, instances, tactic_docs, bib)
   write_redirects(loc_map, file_map)
   copy_css(html_root, use_symlinks=cl_args.l)
+  modify_nav_js(url_rewrites)
   copy_yaml_bib_files(html_root)
   copy_static_files(html_root)
   write_export_db(mk_export_db(loc_map, file_map))
