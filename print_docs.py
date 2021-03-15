@@ -640,7 +640,7 @@ def write_src_redirect(decl_name, decl_loc, file_map):
   with open_outfile(f'find/{decl_name}/src/index.html') as out:
     out.write(f"""<script src="{site_root}add_commit.js"></script>
 <script>redirectTo("{url}");</script>
-<meta http-equiv="refresh" content="0;url={url}">
+<noscript><a href="{url}">{decl_name} source</a></noscript>
 """)
 
 def write_add_commit_js(url_rewrites: List):
