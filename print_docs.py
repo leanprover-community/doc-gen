@@ -168,28 +168,6 @@ url_rewrites.append([mathlib_github_src_root, mathlib_github_src_root_with_commi
 lean_commit = subprocess.check_output(['lean', '--run', 'src/lean_commit.lean']).decode()
 lean_root = f'https://github.com/leanprover-community/lean/blob/{lean_commit}/library/'
 
-def modify_nav_js(url_rewrites: List):
-  """
-  Adds code to nav.js which rewrites the href attributes of the child
-  <a> element inside every <div> with class "gh_link".
-  """
-  with open_outfile('nav.js', 'a') as out:
-    out.write(f"const commit = {json.dumps(url_rewrites)};")
-    out.write("""
-// Rewrite GitHub links
-// --------------------
-
-for (const elem of document.getElementsByClassName('gh_link')) {
-  const a = elem.firstElementChild;
-  for (const [prefix, replacement] of commit) {
-    if (a.href.startsWith(prefix)) {
-      a.href = a.href.replace(prefix, replacement);
-      break;
-    }
-  }
-}
-""")
-
 def get_name_from_leanpkg_path(p: Path) -> str:
   """ get the package name corresponding to a source path """
   # lean core?
@@ -662,7 +640,7 @@ def write_src_redirect(decl_name, decl_loc, file_map):
   with open_outfile(f'find/{decl_name}/src/index.html') as out:
     out.write(f"""<script src="{site_root}add_commit.js"></script>
 <script>redirectTo("{url}");</script>
-<noscript><meta http-equiv="refresh" content="0;url={url}"></noscript>
+<meta http-equiv="refresh" content="0;url={url}">
 """)
 
 def write_add_commit_js(url_rewrites: List):
@@ -707,8 +685,7 @@ def copy_css_and_js(path, use_symlinks):
 
   cp('style.css', path+'style.css')
   cp('pygments.css', path+'pygments.css')
-  shutil.copyfile('nav.js', path+'nav.js')
-  modify_nav_js(url_rewrites) # must be run *after* nav.js is copied
+  cp('nav.js', path+'nav.js')
   cp('searchWorker.js', path+'searchWorker.js')
   write_add_commit_js(url_rewrites)
 

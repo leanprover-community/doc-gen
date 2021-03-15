@@ -101,6 +101,8 @@ if (tse != null) {
 
 
 
+
+
 // Simple declaration search
 // -------------------------
 
@@ -215,4 +217,23 @@ if (howabout) {
           a.appendChild(document.createElement('code')).innerText = decl;
       }
   });
+}
+
+
+
+
+
+
+// Rewrite GitHub links
+// --------------------
+
+for (const elem of document.getElementsByClassName('gh_link')) {
+  const a = elem.firstElementChild;
+  // commit is set in add_commit.js
+  for (const [prefix, replacement] of commit) {
+    if (a.href.startsWith(prefix)) {
+      a.href = a.href.replace(prefix, replacement);
+      break;
+    }
+  }
 }
