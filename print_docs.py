@@ -157,10 +157,16 @@ mathlib_github_root = ml_data['git'].strip('/')
 if cl_args.w:
   site_root = cl_args.w
 
-mathlib_github_src_root = "{0}/blob/{1}/src/".format(mathlib_github_root, mathlib_commit)
+# contains an array of [prefix, replacement] strings to be rewritten by nav.js
+url_rewrites = []
 
+mathlib_github_src_root_with_commit = f"{mathlib_github_root}/blob/{mathlib_commit}/src/"
+mathlib_github_src_root = f"{mathlib_github_root}/blob/master/src/"
+url_rewrites.append([mathlib_github_src_root, mathlib_github_src_root_with_commit])
+
+# The Lean version changes infrequently enough that we don't need to rewrite it
 lean_commit = subprocess.check_output(['lean', '--run', 'src/lean_commit.lean']).decode()
-lean_root = 'https://github.com/leanprover-community/lean/blob/{}/library/'.format(lean_commit)
+lean_root = f'https://github.com/leanprover-community/lean/blob/{lean_commit}/library/'
 
 def get_name_from_leanpkg_path(p: Path) -> str:
   """ get the package name corresponding to a source path """
@@ -626,13 +632,36 @@ def write_site_map(partition):
 
 def write_docs_redirect(decl_name, decl_loc):
   url = site_root + decl_loc.url
-  with open_outfile('find/' + decl_name + '/index.html') as out:
+  with open_outfile(f'find/{decl_name}/index.html') as out:
     out.write(f'<meta http-equiv="refresh" content="0;url={url}#{quote(decl_name)}">')
 
 def write_src_redirect(decl_name, decl_loc, file_map):
   url = library_link_from_decl_name(decl_name, decl_loc, file_map)
-  with open_outfile('find/' + decl_name + '/src/index.html') as out:
-    out.write(f'<meta http-equiv="refresh" content="0;url={url}">')
+  with open_outfile(f'find/{decl_name}/src/index.html') as out:
+    out.write(f"""<script src="{site_root}add_commit.js"></script>
+<script>redirectTo("{url}");</script>
+<noscript><a href="{url}">{decl_name} source</a></noscript>
+""")
+
+def write_add_commit_js(url_rewrites: List):
+  """
+  redirectTo in add_commit.js rewrites the tgt URL using the map
+  in url_rewrites and then redirects the page to it.
+  """
+  with open_outfile('add_commit.js') as out:
+    out.write(f"const commit = {json.dumps(url_rewrites)};")
+    out.write("""
+function redirectTo(tgt) {
+  let loc = tgt;
+  for (const [prefix, replacement] of commit) {
+    if (tgt.startsWith(prefix)) {
+      loc = tgt.replace(prefix, replacement);
+      break;
+    }
+  }
+  window.location.replace(loc);
+}
+""")
 
 def write_redirects(loc_map, file_map):
   for decl_name in loc_map:
@@ -641,13 +670,15 @@ def write_redirects(loc_map, file_map):
     write_docs_redirect(decl_name, loc_map[decl_name])
     write_src_redirect(decl_name, loc_map[decl_name], file_map)
 
-def copy_css(path, use_symlinks):
+def copy_css_and_js(path, use_symlinks):
   def cp(a, b):
+    # always remove destination, in case we used -l before
+    # and now want to copy the file
+    try:
+      os.remove(b)
+    except FileNotFoundError:
+      pass
     if use_symlinks:
-      try:
-        os.remove(b)
-      except FileNotFoundError:
-        pass
       os.symlink(os.path.relpath(a, os.path.dirname(b)), b)
     else:
       shutil.copyfile(a, b)
@@ -656,6 +687,7 @@ def copy_css(path, use_symlinks):
   cp('pygments.css', path+'pygments.css')
   cp('nav.js', path+'nav.js')
   cp('searchWorker.js', path+'searchWorker.js')
+  write_add_commit_js(url_rewrites)
 
 def copy_yaml_bib_files(path):
   for fn in ['100.yaml', 'undergrad.yaml', 'overview.yaml', 'references.bib']:
@@ -705,7 +737,7 @@ def main():
   write_decl_txt(loc_map)
   write_html_files(file_map, loc_map, notes, mod_docs, instances, tactic_docs, bib)
   write_redirects(loc_map, file_map)
-  copy_css(html_root, use_symlinks=cl_args.l)
+  copy_css_and_js(html_root, use_symlinks=cl_args.l)
   copy_yaml_bib_files(html_root)
   copy_static_files(html_root)
   write_export_db(mk_export_db(loc_map, file_map))
