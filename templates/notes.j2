@@ -7,17 +7,26 @@
 {%- endblock -%}
 
 {% block content %}
+<div class="docfile">
+
 <h1>Lean mathlib notes</h1>
 
 <p>Various implementation details are noted in the mathlib source, and referenced later on.
 We collect these notes here.</p>
 
-{% for note_name, note_markdown in notes %}
-    <div class="note" id="{{note_name}}">
-        <h2>{{note_name}}</h2>
-        {{ note_markdown | convert_markdown }}
+{% for note_name, note_data in notes %}
+    <div class="note">
+        <h2 id="{{note_name}}"><a href="#{{note_name}}">{{note_name}}</a></h2>
+        {{ note_data.md | convert_markdown }}
+
+        {% if note_data.backrefs | length > 0 %}
+        referenced by: <small>{% for filename, backref_id, title in note_data.backrefs %}
+        <a href="{{ filename }}#{{ backref_id }}" title="{{ title }}">[{{ loop.index }}]</a>
+        {% endfor %}</small>
+        {% endif %}
     </div>
 {% endfor %}
+</div>
 {% endblock %}
 
 {% block internal_nav %}

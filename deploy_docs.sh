@@ -2,6 +2,10 @@
 # $1 : path to mathlib from working directory (mathlib: ".", doc-gen: "mathlib")
 # $2 : path to doc-gen from mathlib (mathlib: "doc-gen", doc-gen: "..")
 # $3 : path to mathlib from doc-gen (mathlib: "..", doc-gen: "mathlib")
+# $4 : github organization to deploy to
+# $5 : github repo to deploy to
+# $6 : whether to deploy ("true"/"false")
+
 
 DEPLOY_GITHUB_USER=leanprover-community-bot
 
@@ -19,7 +23,7 @@ docgen_git_hash="$(git log -1 --pretty=format:%h)"
 sed -i "s/rev = \"\S*\"/rev = \"$mathlib_git_hash\"/" leanpkg.toml
 echo -e "builtin_path\npath ./src\npath $3/src" > leanpkg.path
 
-git clone "https://$DEPLOY_GITHUB_USER:$DEPLOY_GITHUB_TOKEN@github.com/leanprover-community/mathlib_docs.git"
+git clone "https://$DEPLOY_GITHUB_USER:$DEPLOY_GITHUB_TOKEN@github.com/$4/$5.git" mathlib_docs
 
 # skip if docs for this commit have already been generated
 if [ "$(cd mathlib_docs && git log -1 --pretty=format:%s)" == "automatic update to mathlib $mathlib_short_git_hash using doc-gen $docgen_git_hash" ]; then
@@ -33,10 +37,10 @@ rm -rf mathlib_docs/docs/
 # but this is better than trying to recompile all of mathlib.
 elan override set "$lean_version"
 
-./gen_docs -w 'https://leanprover-community.github.io/mathlib_docs/' \
+./gen_docs -w "https://$4.github.io/$5/" \
   -r "$3/" -t "mathlib_docs/docs/"
 
-if [ "$github_repo" = "leanprover-community/doc-gen" ] && [ "$github_ref" = "refs/heads/master" ]; then
+if [ "$6" = "true" ]; then
   cd mathlib_docs/docs
   git config user.email "leanprover.community@gmail.com"
   git config user.name "leanprover-community-bot"

@@ -1,6 +1,11 @@
-markdown2
+mistletoe>=0.7.2
 toml
 mathlibtools
 pygments >= 2.7.1
 jinja2
 networkx
+pybtex>=0.22.2
+latexcodec>=2.0.0
+PyYAML>=5.3.1
+six>=1.15.0
+pylatexenc>=2.4

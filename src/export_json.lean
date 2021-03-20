@@ -138,7 +138,7 @@ meta structure decl_info :=
 (line : ℕ)
 (attributes : list string) -- not all attributes, we have a hardcoded list to check
 (equations : list efmt)
-(kind : string) -- def, thm, cnst, ax
+(kind : string) -- def, theorem, constant, axiom, structure, inductive
 (structure_fields : list (string × efmt)) -- name and type of fields of a constructor
 (constructors : list (string × efmt)) -- name and type of constructors of an inductive type
 
@@ -232,12 +232,6 @@ meta def attribute_list := [`simp, `squash_cast, `move_cast, `elim_cast, `nolint
 meta def attributes_of (n : name) : tactic (list string) :=
 list.map to_string <$> attribute_list.mfilter (λ attr, succeeds $ has_attribute attr n)
 
-meta def declaration.kind : declaration → string
-| (declaration.defn a a_1 a_2 a_3 a_4 a_5) := "def"
-| (declaration.thm a a_1 a_2 a_3) := "thm"
-| (declaration.cnst a a_1 a_2 a_3) := "cnst"
-| (declaration.ax a a_1 a_2) := "ax"
-
 -- does this not exist already? I'm confused.
 meta def expr.instantiate_pis : list expr → expr → expr
 | (e'::es) (expr.pi n bi t e) := expr.instantiate_pis es (e.instantiate_var e')
@@ -289,6 +283,20 @@ else do
   (_, ty) ← mk_local_pis d.type,
   efmt.pp ty
 
+meta def get_kind (d : declaration) : tactic string :=
+match d with 
+| declaration.defn _ _ _ _ _ _ := return "def"
+| declaration.ax _ _ _ := return "axiom"
+| declaration.thm _ _ _ _ := return "theorem"
+| declaration.cnst _ _ _ _ := do 
+  e ← get_env,
+  if e.is_structure d.to_name then 
+    return "structure"
+  else if e.is_inductive d.to_name then 
+    return "inductive"
+  else return "constant"
+end
+
 /-- extracts `decl_info` from `d`. Should return `none` instead of failing. -/
 meta def process_decl (d : declaration) : tactic (option decl_info) :=
 do ff ← d.in_current_file | return none,
@@ -301,9 +309,10 @@ do ff ← d.in_current_file | return none,
    (args, type) ← get_args_and_type d.type,
    attributes ← attributes_of decl_name,
    equations ← get_equations decl_name,
+   kind ← get_kind d,
    structure_fields ← mk_structure_fields decl_name e,
    constructors ← mk_constructors decl_name e,
-   return $ some ⟨decl_name, !d.is_trusted, args, type, doc_string, filename, line, attributes, equations, d.kind, structure_fields, constructors⟩
+   return $ some ⟨decl_name, !d.is_trusted, args, type, doc_string, filename, line, attributes, equations, kind, structure_fields, constructors⟩
 
 meta def write_module_doc_pair : pos × string → json
 | (⟨line, _⟩, doc) := json.object [("line", line), ("doc", doc)]
@@ -319,8 +328,11 @@ do docs ← olean_doc_strings,
 meta def get_instances : tactic (rb_lmap string string) :=
 attribute.get_instances `instance >>= list.mfoldl
   (λ map inst_nm,
-   do (_, e) ← mk_const inst_nm >>= infer_type >>= mk_local_pis,
-      (expr.const class_nm _) ← return e.get_app_fn,
+   do ty ← mk_const inst_nm >>= infer_type,
+      (_, e) ← open_pis_whnf ty transparency.reducible,
+      e ← whnf e transparency.reducible,
+      expr.const class_nm _ ← pure e.get_app_fn |
+        fail ("not a constant: " ++ to_string e),
       return $ map.insert class_nm.to_string inst_nm.to_string)
   mk_rb_map
 
@@ -359,15 +371,12 @@ do l ← list.map tactic_doc_entry.add_import <$> get_tactic_doc_entries,
 
 meta def mk_export_json : tactic json := do
 e ← get_env,
-/- Using `environment.mfold` is much cleaner. Unfortunately this led to a segfault, I think because
-of a stack overflow. Converting the environment to a list of declarations and folding over that led
-to "deep recursion detected". -/
 s ← read,
-let decls := e.fold ([] : list json) (λ decl acc,
-  match (enable_links *> process_decl decl) s with
-  | result.success (some di) _ := di.to_json :: acc
-  | _:= acc
-  end),
+let decls := list.reduce_option $ e.get_decls.map_async_chunked $ λ decl,
+match (enable_links *> process_decl decl) s with
+| result.success (some di) _ := some di.to_json
+| _:= none
+end,
 mod_docs ← write_olean_docs,
 notes ← format_notes,
 tactic_docs ← format_tactic_docs,
@@ -391,7 +400,7 @@ do m ← of_tactic localized_attr.get_cache,
     lean.parser.emit_code_here m <|> skip
 
 meta def main : io unit := do
-json ← run_tactic mk_export_json,
+json ← run_tactic (trace_error "export_json failed:" mk_export_json),
 put_str json.unparse
 
 -- HACK: print gadgets with less fluff
