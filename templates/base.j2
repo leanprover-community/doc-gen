@@ -4,18 +4,18 @@
     <link rel="stylesheet" href="{{ site_root }}style.css">
     <link rel="stylesheet" href="{{ site_root }}pygments.css">
     <link rel="shortcut icon" href="{{ site_root }}favicon.ico">
-    <title>mathlib docs: {% block title %}{% endblock %}</title>
+    <title>{% block title %}{% endblock %} - mathlib docs</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="{% block metadesc %}The Lean mathematical library, mathlib, is a community-driven effort to build a unified library of mathematics formalized in the Lean proof assistant.{% endblock %}" />
 
-    <meta name="og:title" content="mathlib docs: {{ self.title() }}">
+    <meta name="og:title" content="{{ self.title() }} - mathlib docs">
     <meta name="og:site_name" content="mathlib for Lean - API documentation">
     <meta name="og:description" content="{{ self.metadesc() }}">
     <meta name="og:image" content="{{ site_root }}meta-og.png">
 
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="mathlib docs: {{ self.title() }}">
+    <meta name="twitter:title" content="{{ self.title() }} - mathlib docs">
     <meta name="twitter:description" content="{{ self.metadesc() }}">
     <meta name="twitter:image" content="{{ site_root }}meta-twitter.png">
 </head>
