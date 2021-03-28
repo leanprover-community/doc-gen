@@ -1,4 +1,3 @@
-// todo why such a fetch since file is already present here?
 const req = new XMLHttpRequest();
 req.open('GET', 'decl.bmp', false /* blocking */);
 req.responseType = 'text';
