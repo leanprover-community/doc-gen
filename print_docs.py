@@ -742,13 +742,18 @@ def mk_export_searchable_map_entry(decl_name, filename, descr, kind, args):
 
 def mk_export_searchable_db(file_map, tactic_docs):
   export_searchable_db = {}
-  for _, decls in file_map.items():
+  for fn, decls in file_map.items():
+    filename_path = str(fn.raw_path)
+    export_searchable_db[filename_path] = []
     for obj in decls:
-      export_searchable_db[obj['name']] = mk_export_map_entry(obj['name'], obj['filename'], obj['doc_string'], obj['kind'], obj['args'])
-      for (cstr_name, tp) in obj['constructors']:
-        export_searchable_db[cstr_name] = mk_export_map_entry(cstr_name, obj['filename'], obj['doc_string'], obj['kind'], obj['args'])
-      for (sf_name, tp) in obj['structure_fields']:
-        export_searchable_db[sf_name] = mk_export_map_entry(sf_name, obj['filename'],  obj['doc_string'], obj['kind'], obj['args'])
+      decl_entry = mk_export_map_entry(obj['name'], obj['filename'], obj['doc_string'], obj['kind'], obj['args'])
+      export_searchable_db[filename_path].append(decl_entry)
+      for (cstr_name, _) in obj['constructors']:
+        cstr_entry = mk_export_map_entry(cstr_name, obj['filename'], obj['doc_string'], obj['kind'], obj['args'])
+        export_searchable_db[filename_path].append(cstr_entry)
+      for (sf_name, _) in obj['structure_fields']:
+        sf_entry = mk_export_map_entry(sf_name, obj['filename'],  obj['doc_string'], obj['kind'], obj['args'])
+        export_searchable_db[filename_path].append(sf_entry)
   return export_searchable_db
 
 def write_export_searchable_db(searchable_data):
