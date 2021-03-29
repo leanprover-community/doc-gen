@@ -713,9 +713,9 @@ def mk_export_map_entry(decl_name, filename, kind, is_meta, line, args, tp):
           'src_link': library_link(filename, line),
           'docs_link': f'{site_root}{filename.url}#{decl_name}'}
 
-def mk_export_db(loc_map, file_map):
+def mk_export_db(file_map):
   export_db = {}
-  for fn, decls in file_map.items():
+  for _, decls in file_map.items():
     for obj in decls:
       export_db[obj['name']] = mk_export_map_entry(obj['name'], obj['filename'], obj['kind'], obj['is_meta'], obj['line'], obj['args'], obj['type'])
       export_db[obj['name']]['decl_header_html'] = env.get_template('decl_header.j2').render(decl=obj)
@@ -730,6 +730,32 @@ def write_export_db(export_db):
   with gzip.GzipFile(html_root + 'export_db.json.gz', 'w') as zout:
     zout.write(json_str.encode('utf-8'))
 
+def mk_export_searchable_map_entry(decl_name, filename, descr, kind, args):
+  return {
+    'filename': str(filename.raw_path),
+    'name': decl_name,
+    'description': descr,
+    'kind': kind,
+    'args': args,
+    'docs_link': f'{site_root}{filename.url}#{decl_name}'
+  }
+
+def mk_export_searchable_db(file_map, tactic_docs):
+  export_searchable_db = {}
+  for _, decls in file_map.items():
+    for obj in decls:
+      export_searchable_db[obj['name']] = mk_export_map_entry(obj['name'], obj['filename'], obj['doc_string'], obj['kind'], obj['args'])
+      for (cstr_name, tp) in obj['constructors']:
+        export_searchable_db[cstr_name] = mk_export_map_entry(cstr_name, obj['filename'], obj['doc_string'], obj['kind'], obj['args'])
+      for (sf_name, tp) in obj['structure_fields']:
+        export_searchable_db[sf_name] = mk_export_map_entry(sf_name, obj['filename'],  obj['doc_string'], obj['kind'], obj['args'])
+  return export_searchable_db
+
+def write_export_searchable_db(searchable_data):
+  json_str = json.dumps(searchable_data)
+  with gzip.GzipFile(html_root + 'searchable_data.json.gz', 'w') as zout:
+    zout.write(json_str.encode('utf-8'))
+
 def main():
   bib = parse_bib_file(f'{local_lean_root}docs/references.bib')
   file_map, loc_map, notes, mod_docs, instances, tactic_docs = load_json()
@@ -740,7 +766,8 @@ def main():
   copy_css_and_js(html_root, use_symlinks=cl_args.l)
   copy_yaml_bib_files(html_root)
   copy_static_files(html_root)
-  write_export_db(mk_export_db(loc_map, file_map))
+  write_export_db(mk_export_db(file_map))
+  write_export_searchable_db(mk_export_searchable_db(file_map, tactic_docs))
   write_site_map(file_map)
 
 if __name__ == '__main__':
