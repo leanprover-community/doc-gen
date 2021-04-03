@@ -730,36 +730,41 @@ def write_export_db(export_db):
   with gzip.GzipFile(html_root + 'export_db.json.gz', 'w') as zout:
     zout.write(json_str.encode('utf-8'))
 
-def mk_export_searchable_map_entry(decl_name, filename, descr, kind, args):
+def mk_export_searchable_map_entry(name, description, kind = '', attributes = []):
   return {
-    'filename': str(filename.raw_path),
-    'name': decl_name,
-    'description': descr,
+    'name': name,
+    'description': description,
     'kind': kind,
-    'args': args,
-    'docs_link': f'{site_root}{filename.url}#{decl_name}'
+    'attributes': attributes,
   }
 
 def mk_export_searchable_db(file_map, tactic_docs):
   export_searchable_db = {}
+
   for fn, decls in file_map.items():
-    filename_path = str(fn.raw_path)
+    filename_path = str(fn.url)
     export_searchable_db[filename_path] = []
     for obj in decls:
-      decl_entry = mk_export_map_entry(obj['name'], obj['filename'], obj['doc_string'], obj['kind'], obj['args'])
+      decl_entry = mk_export_searchable_map_entry(obj['name'], obj['doc_string'], obj['kind'], obj['attributes'])
       export_searchable_db[filename_path].append(decl_entry)
       for (cstr_name, _) in obj['constructors']:
-        cstr_entry = mk_export_map_entry(cstr_name, obj['filename'], obj['doc_string'], obj['kind'], obj['args'])
+        cstr_entry = mk_export_searchable_map_entry(cstr_name, obj['doc_string'], obj['kind'], obj['attributes'])
         export_searchable_db[filename_path].append(cstr_entry)
       for (sf_name, _) in obj['structure_fields']:
-        sf_entry = mk_export_map_entry(sf_name, obj['filename'],  obj['doc_string'], obj['kind'], obj['args'])
+        sf_entry = mk_export_searchable_map_entry(sf_name, obj['doc_string'], obj['kind'], obj['attributes'])
         export_searchable_db[filename_path].append(sf_entry)
+
+  export_searchable_db['tactics.html'] = []
+  for tactic in tactic_docs:
+    tactic_entry = mk_export_searchable_map_entry(tactic['name'], tactic['description'])
+    export_searchable_db['tactics.html'].append(tactic_entry)
+
   return export_searchable_db
 
 def write_export_searchable_db(searchable_data):
   json_str = json.dumps(searchable_data)
-  with gzip.GzipFile(html_root + 'searchable_data.json.gz', 'w') as zout:
-    zout.write(json_str.encode('utf-8'))
+  with open_outfile('searchable_data.json') as out:
+    out.write(json_str)
 
 def main():
   bib = parse_bib_file(f'{local_lean_root}docs/references.bib')
