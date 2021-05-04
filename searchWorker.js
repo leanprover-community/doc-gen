@@ -1,27 +1,66 @@
+// Access indexed data structure to be used for searching through the documentation
 const req = new XMLHttpRequest();
-req.open('GET', 'decl.bmp', false /* blocking */);
-req.responseType = 'text';
+
+req.open('GET', 'searchable_data.json', false /* blocking */);
+req.responseType = 'json';
 req.send();
 
-const declNames = req.responseText.split('\n');
-
-// Adapted from the default tokenizer and
-// https://util.unicode.org/UnicodeJsps/list-unicodeset.jsp?a=%5Cp%7BZ%7D&abb=on&c=on&esc=on&g=&i=
-const SEPARATOR = /[._\n\r \u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]+/u
-
 importScripts('https://cdn.jsdelivr.net/npm/minisearch@2.4.1/dist/umd/index.min.js');
+    // Include options as per API specs: https://lucaong.github.io/minisearch/modules/_minisearch_.html
 const miniSearch = new MiniSearch({
-    fields: ['decl'],
-    storeFields: ['decl'],
-    tokenize: text => text.split(SEPARATOR),
+    idField: 'name',
+    fields: ['module', 'name', 'description'],
+    storeFields: ['module', 'name', 'description', 'attributes', 'kind']
 });
-miniSearch.addAll(declNames.map((decl, id) => ({decl, id})));
+
+const indexedData = req.response;
+miniSearch.addAll(indexedData);
 
 onconnect = ({ports: [port]}) =>
-    port.onmessage = ({data}) => {
-        const results = miniSearch.search(data.q, {
-            prefix: (term) => term.length > 3,
-            fuzzy: (term) => term.length > 3 && 0.2,
-        });
-        port.postMessage(results.slice(0, 20));
-    };
+port.onmessage = ({ data }) => {
+    const { query, filters, maxCount } = data;
+    const results = miniSearch.search(query, {
+        boost: { module: 1, description: 2, name: 3 },
+        combineWith: 'AND',
+        filter: (result) => filterItemResult(result, filters),
+        // prefix: (term) => term.length > 3,
+        // fuzzy: (term) => term.length > 3 && 0.2,
+    });
+    
+    console.log(results);
+    const response = typeof maxCount === "number" ? results.slice(0, maxCount) : results;
+    port.postMessage(response);
+};
+
+const filterItemResult = (result, filters = {}) => {
+    const { attributes: attrFilter, kind: kindFilter } = filters;
+    const hasAttrFilter = attrFilter && attrFilter.length > 0;
+    const hasKindFilter = kindFilter && kindFilter.length > 0;
+
+    if (!hasAttrFilter && !hasKindFilter) {
+        return true;
+    }
+    
+    const { attributes: attrRes, kind: kindRes } = result;
+    let isResultAttrIncluded = false;
+    let isResultKindIncluded = false;
+
+    if (hasKindFilter) {
+        isResultKindIncluded = kindFilter.includes(kindRes);
+    }
+
+    if (hasAttrFilter) {
+        for (let attribute of attrRes) {
+            if (attrFilter.includes(attribute)) {
+                isResultAttrIncluded = true;
+                break;
+            }
+        }
+    } 
+
+    return hasKindFilter && hasAttrFilter ? 
+        (isResultAttrIncluded && isResultKindIncluded) : 
+        hasAttrFilter ? 
+            isResultAttrIncluded : 
+            isResultKindIncluded;
+}

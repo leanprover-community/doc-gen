@@ -91,44 +91,35 @@ if (tse !== null) {
   });
 }
 
-// Simple search through declarations by name
+// Simple search through declarations by name, file name and description comment as printed from mathlib directly
 // -------------------------
 
-const searchWorkerURL = new URL(`${siteRoot}searchWorker.js`, window.location);
-const declSearch = (query) => new Promise((resolve, reject) => {
-  const worker = new SharedWorker(searchWorkerURL);
-  worker.port.start();
-  worker.port.onmessage = ({ data }) => resolve(data);
-  worker.port.onmessageerror = (e) => reject(e);
-  worker.port.postMessage({ query });
+const searchForm = document.getElementById('search_form');
+const searchQuery = searchForm.querySelector('input[name=query]');
+const searchResults = document.getElementById('search_results');
+const maxCountResults = 150;
+
+searchQuery.addEventListener('keydown', (ev) => {
+  if (!searchQuery.value || searchQuery.value.length === 0) {
+    searchResults.innerHTML = '';
+  } else {
+    switch (ev.key) {
+      case 'Down':
+      case 'ArrowDown':
+        ev.preventDefault();
+        handleSearchCursorUpDown(true);
+        break;
+      case 'Up':
+      case 'ArrowUp':
+        ev.preventDefault();
+        handleSearchCursorUpDown(false);
+        break;
+    }
+  }
+  
 });
 
-const resultsElmntId = 'search_results';
-document.getElementById('search_form')
-  .appendChild(document.createElement('div'))
-  .id = resultsElmntId; // todo add on creation of page, not here
-
-function handleSearchCursorUpDown(down) {
-  const selectedResult = document.querySelector(`#${resultsElmntId} .selected`);
-  const resultsElmnt = document.getElementById(resultsElmntId);
-
-  let toSelect = down ? resultsElmnt.firstChild : resultsElmnt.lastChild;
-  if (selectedResult) {
-    selectedResult.classList.remove('selected');
-    toSelect = down ? selectedResult.nextSibling : selectedResult.previousSibling;
-  }
-  toSelect && toSelect.classList.add('selected');
-}
-
-function handleSearchItemSelected() {
-  const selectedResult = document.querySelector(`#${resultsElmntId} .selected`)
-  selectedResult.click();
-}
-
-const searchInputElmnt = document.querySelector('#search_form input[name=q]');
-
-// todo use Enter to start searching if we still in <input /> and not <div />
-searchInputElmnt.addEventListener('keydown', (ev) => {
+searchResults.addEventListener('keydown', (ev) => {
   switch (ev.key) {
     case 'Down':
     case 'ArrowDown':
@@ -147,36 +138,91 @@ searchInputElmnt.addEventListener('keydown', (ev) => {
   }
 });
 
-searchInputElmnt.addEventListener('input', async (ev) => {
-  const text = ev.target.value;
+function handleSearchCursorUpDown(isDownwards) {
+  const selectedResult = document.querySelector(`#${resultsElmntId} .selected`);
 
-  if (!text) {
-    const resultsElmnt = document.getElementById(resultsElmntId);
-    resultsElmnt.removeAttribute('state');
-    resultsElmnt.replaceWith(resultsElmnt.cloneNode(false));
+  if (selectedResult) {
+    selectedResult.classList.remove('selected');
+    selectedResult = isDownwards ? selectedResult.nextSibling : selectedResult.previousSibling;
+  } else {
+    selectedResult = isDownwards ? resultsContainer.firstChild : resultsContainer.lastChild;
+  }
+
+  selectedResult && selectedResult.classList.add('selected');
+}
+
+function handleSearchItemSelected() {
+  // todo goto link made up of the siteRood+module+name
+  const selectedResult = document.querySelector(`#${resultsElmntId} .selected`)
+  selectedResult.click();
+}
+
+// Searching through the index with a specific query and filters
+const searchWorkerURL = new URL(`${siteRoot}searchWorker.js`, window.location);
+const worker = new SharedWorker(searchWorkerURL);
+const searchIndexedData = (query) => new Promise((resolve, reject) => {
+  // todo remove when UI filters done
+  const filters = {
+    attributes: ['nolint'],
+    // kind: ['def']
+  };
+
+  worker.port.start();
+  worker.port.onmessage = ({ data }) => resolve(data);
+  worker.port.onmessageerror = (e) => reject(e);
+  worker.port.postMessage({ query, maxCount: maxCountResults, filters });
+});
+
+const submitSearchFormHandler = async (ev) => {
+  ev.preventDefault();
+  const query = searchQuery.value;
+
+  if (!query && query.length <= 0) {
+    // todo not needed?
     return;
   }
 
-  document.getElementById(resultsElmntId).setAttribute('state', 'loading');
+  searchResults.setAttribute('state', 'loading');
+  await fillInSearchResultsContainer(query);
+  searchResults.setAttribute('state', 'done');
+};
+searchForm.addEventListener('submit', submitSearchFormHandler);
 
-  const result = await declSearch(text);
-  if (ev.target.value != text) return; // todo why?
+const fillInSearchResultsContainer = async (query) => {
+  const results = await searchIndexedData(query);
+  results.sort((a, b) => (a && typeof a.score === "number" && b && typeof b.score === "number") ? (b.score - a.score) : 0);
+  searchResults.innerHTML = results.length < 1 ? createNoResultsHTML() : createResultsHTML(results);
+}
 
-  const currentResultsElmnt = document.getElementById('search_results');
-  const resultsElmntCopy = currentResultsElmnt.cloneNode(false);
-  for (const { decl } of result) {
-    const d = resultsElmntCopy.appendChild(document.createElement('a'));
-    d.innerText = decl;
-    d.title = decl;
-    d.href = `${siteRoot}find/${decl}`;
-  }
-  resultsElmntCopy.setAttribute('state', 'done');
-  currentResultsElmnt.replaceWith(resultsElmntCopy);
-});
+const createNoResultsHTML = () => '<p class="no_search_result"> No declarations or comments match your search. </p>';
+
+const createResultsHTML = (results) => {
+  let html = `<p>Found ${results.length} matches, showing ${maxCountResults > results.length ? results.length : maxCountResults}.</p>`;
+  html += results.map((result, index) => {
+    return createSingleResultHTML(result, index);
+  }).join('');
+  return html;
+}
+
+const createSingleResultHTML = (result, i) => {
+  const { module, name, description, match, terms } = result;
+  const resultUrl = `${siteRoot}${module}#${name}`;
+  const descriptionDisplay = description && description.length > 0 ? `${description.slice(0, 150)}..` : ''
+  
+  const html = `<div id="search_result_${i}" class="search_result_item">
+    <a href="${resultUrl}" class="search_result_anchor">
+      <b class="result_name">${name}</b>
+      <br>
+      <p class="result_module">${module}</p>
+      <p class="result_comment">${descriptionDisplay}</p>
+    </a>
+  </div>`;
+
+	return html;
+} 
 
 // 404 page goodies
 // ----------------
-
 const suggestionsElmnt = document.getElementById('howabout');
 if (suggestionsElmnt) {
   suggestionsElmnt.innerText = "Please wait a second.  I'll try to help you.";
@@ -187,7 +233,7 @@ if (suggestionsElmnt) {
     .innerText = window.location.href.replace(/[/]/g, '/\u200b');
 
   const query = window.location.href.match(/[/]([^/]+)(?:\.html|[/])?$/)[1];
-  declSearch(query).then((results) => {
+  searchIndexedData(query).then((results) => {
     suggestionsElmnt.innerText = 'How about one of these instead:';
     const ul = suggestionsElmnt.appendChild(document.createElement('ul'));
     for (const { decl } of results) {

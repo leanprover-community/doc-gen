@@ -28,10 +28,11 @@
     <h1><label for="nav_toggle"></label><a href="https://leanprover-community.github.io">mathlib</a>
         <span>documentation</span></h1>
     <p class="header_filename break_within">{% block doctitle %}{{ self.title() }}{% endblock %}</p>
-    <form action="https://google.com/search" method="get" id="search_form">
+    <form id="search_form">
         <input type="hidden" name="sitesearch" value="https://leanprover-community.github.io/mathlib_docs">
-        <input type="text" name="q" autocomplete="off">
-        <button>Google site search</button>
+        <input type="text" name="query" autocomplete="off">
+        <button type="submit">Search</button>
+        <div id="search_results"></div>
     </form>
 </header>
 
