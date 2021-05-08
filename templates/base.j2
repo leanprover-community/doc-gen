@@ -31,8 +31,93 @@
     <form id="search_form">
         <input type="hidden" name="sitesearch" value="https://leanprover-community.github.io/mathlib_docs">
         <input type="text" name="query" autocomplete="off">
+               <button id="search_filtes_btn">Filter</button>
         <button type="submit">Search</button>
         <div id="search_results"></div>
+        <div id="filters_container">
+            <span class="close" id="close_filters">x</span>
+            <form id="filters_form">
+                <div id="attributes_filter">
+                    Attributes:
+                    <br>
+                    <input type="checkbox" 
+                        name="attribute"
+                        value="simp"
+                        id="simp"
+                    >
+                    <label for="simp">simp</label>
+                    <br>
+                    <input type="checkbox" 
+                        name="attribute"
+                        value="nolint"
+                        id="nolint"
+                    >
+                    <label for="nolint">nolint</label>
+                    <br>
+                    <input type="checkbox" 
+                        name="attribute"
+                        value="ext"
+                        id="ext"
+                    >
+                    <label for="ext">ext</label>
+                    <br>
+                    <input type="checkbox" 
+                        name="attribute"
+                        value="instance"
+                        id="instance"
+                    >
+                    <label for="instance">instance</label>
+                    <br>
+                    <input type="checkbox" 
+                        name="attribute"
+                        value="class"
+                        id="class"
+                    >
+                    <label for="class">class</label>
+                    <br>
+                </div>
+                <div id="kinds_filter">
+                    Kind:
+                    <br>
+                    <input type="checkbox" 
+                        name="kind"
+                        value="structure"
+                        id="structure"
+                    >
+                    <label for="structure">structure</label>
+                    <br>
+                    <input type="checkbox" 
+                        name="kind"
+                        value="theorem"
+                        id="theorem"
+                    >
+                    <label for="theorem">theorem</label>
+                    <br>
+                    <input type="checkbox" 
+                        name="kind"
+                        value="definition"
+                        id="definition"
+                    >
+                    <label for="definition">definition</label>
+                    <br>
+                    <input type="checkbox" 
+                        name="kind"
+                        value="constant"
+                        id="constant"
+                    >
+                    <label for="constant">constant</label>
+                    <br>
+                    <input type="checkbox" 
+                        name="kind"
+                        value="axiom"
+                        id="axiom"
+                    >
+                    <label for="axiom">axiom</label>
+                    <br>
+                </div>
+                <button type="submit">Submit filters</button>
+            </form>   
+        </div>
     </form>
 </header>
 

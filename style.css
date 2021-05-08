@@ -504,20 +504,53 @@ a:hover {
 }
 
 
+/* Form for filtering search through declarations */
+#filters_container {
+    display: none;
+    width: 20em;
+    height: 20em;
+    position: absolute;
+    right: calc(var(--header-side-padding));
+    top: var(--header-height);
+    z-index: 0.9;
+    background: var(--header-bg);
+    border: 1px solid rgb(218, 216, 216);
+    border-top: none;
+    overflow-x: scroll;
+    overflow-y: hidden;
+}
 
-/* Search interface in form for search */
+#filters_container #filters_form {
+    display: flex;
+	flex-wrap: wrap;
+	justify-content: space-around;
+}
+
+/* Style the close button (span) */
+#filters_container #close_filters {
+    cursor: pointer;
+    position: absolute;
+    top: 50%;
+    right: 0%;
+    padding: 12px 16px;
+    transform: translate(0%, -50%);
+  }
+  
+#filters_container #close_filters:hover {background: #bbb;}
+
+/* Form for searching through declarations */
 #search_results {
     position: absolute;
     top: var(--header-height);
     right: calc(var(--header-side-padding));
-    width: 35em;
+    width: 20em;
     z-index: 1;
     background: var(--header-bg);
     border: 1px solid #aaa;
     border-top: none;
-    overflow-x: auto;
-    overflow-y: auto;
-    max-height: calc(95vh - var(--header-height));
+    overflow-x: scroll;
+    overflow-y: scroll;
+    max-height: calc(60vh - var(--header-height));
 }
 
 #search_results:empty {

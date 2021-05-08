@@ -91,17 +91,81 @@ if (tse !== null) {
   });
 }
 
-// Simple search through declarations by name, file name and description comment as printed from mathlib directly
+// Simple search through declarations by name, file name and description comment as printed from mathlib
 // -------------------------
+const MAX_COUNT_RESULTS = 15;
 
+/* Get all elements for searching and showing results */
 const searchForm = document.getElementById('search_form');
-const searchQuery = searchForm.querySelector('input[name=query]');
-const searchResults = document.getElementById('search_results');
-const maxCountResults = 150;
+const searchQueryInput = searchForm.querySelector('input[name=query]');
+const searchResultsContainer = document.getElementById('search_results');
 
-searchQuery.addEventListener('keydown', (ev) => {
-  if (!searchQuery.value || searchQuery.value.length === 0) {
-    searchResults.innerHTML = '';
+/* Set up defaults for search filtering and results */ 
+const filters = {};
+const maxCount = MAX_COUNT_RESULTS;
+
+/* Handle searching through the index with a specific query and filters */
+const searchWorkerURL = new URL(`${siteRoot}searchWorker.js`, window.location);
+const worker = new SharedWorker(searchWorkerURL);
+const searchIndexedData = (query) => new Promise((resolve, reject) => {
+  worker.port.start();
+  worker.port.onmessage = ({ data }) => resolve(data);
+  worker.port.onmessageerror = (e) => reject(e);
+  worker.port.postMessage({ query, maxCount, filters });
+});
+
+/* Submitting search query */
+const submitSearchFormHandler = async (ev) => {
+  ev.preventDefault();
+  const query = searchQueryInput.value;
+
+  if (!query && query.length <= 0) {
+    return;
+  }
+
+  searchResultsContainer.setAttribute('state', 'loading');
+  await fillInSearchResultsContainer(query);
+  searchResultsContainer.setAttribute('state', 'done');
+};
+searchForm.addEventListener('submit', submitSearchFormHandler);
+
+const fillInSearchResultsContainer = async (query) => {
+  const results = await searchIndexedData(query);
+  results.sort((a, b) => (a && typeof a.score === "number" && b && typeof b.score === "number") ? (b.score - a.score) : 0);
+  searchResultsContainer.innerHTML = results.length < 1 ? createNoResultsHTML() : createResultsHTML(results);
+}
+
+const createNoResultsHTML = () => '<p class="no_search_result"> No declarations or comments match your search. </p>';
+
+const createResultsHTML = (results) => {
+  let html = `<p>Found ${results.length} matches, showing ${maxCountResults > results.length ? results.length : maxCountResults}.</p>`;
+  html += results.map((result, index) => {
+    return createSingleResultHTML(result, index);
+  }).join('');
+  return html;
+}
+
+const createSingleResultHTML = (result, i) => {
+  const { module, name, description, match, terms } = result;
+  const resultUrl = `${siteRoot}${module}#${name}`;
+  const descriptionDisplay = description && description.length > 0 ? `${description.slice(0, 150)}..` : ''
+  
+  const html = `<div id="search_result_${i}" class="search_result_item">
+    <a href="${resultUrl}" class="search_result_anchor">
+      <b class="result_name">${name}</b>
+      <br>
+      <p class="result_module">${module}</p>
+      <p class="result_comment">${descriptionDisplay}</p>
+    </a>
+  </div>`;
+
+	return html;
+} 
+
+/* Keyboard navigation through search input and results */
+searchQueryInput.addEventListener('keydown', (ev) => {
+  if (!searchQueryInput.value || searchQueryInput.value.length === 0) {
+    searchResultsContainer.innerHTML = '';
   } else {
     switch (ev.key) {
       case 'Down':
@@ -119,7 +183,7 @@ searchQuery.addEventListener('keydown', (ev) => {
   
 });
 
-searchResults.addEventListener('keydown', (ev) => {
+searchResultsContainer.addEventListener('keydown', (ev) => {
   switch (ev.key) {
     case 'Down':
     case 'ArrowDown':
@@ -152,74 +216,50 @@ function handleSearchCursorUpDown(isDownwards) {
 }
 
 function handleSearchItemSelected() {
-  // todo goto link made up of the siteRood+module+name
+  // todo goto link made up of the siteRoot+module+name
   const selectedResult = document.querySelector(`#${resultsElmntId} .selected`)
   selectedResult.click();
 }
 
-// Searching through the index with a specific query and filters
-const searchWorkerURL = new URL(`${siteRoot}searchWorker.js`, window.location);
-const worker = new SharedWorker(searchWorkerURL);
-const searchIndexedData = (query) => new Promise((resolve, reject) => {
-  // todo remove when UI filters done
-  const filters = {
-    attributes: ['nolint'],
-    // kind: ['def']
-  };
 
-  worker.port.start();
-  worker.port.onmessage = ({ data }) => resolve(data);
-  worker.port.onmessageerror = (e) => reject(e);
-  worker.port.postMessage({ query, maxCount: maxCountResults, filters });
+
+// Simple filtering by *attributes* and *kind* per declaration
+// -------------------------
+
+/* Get all elements for filtering */
+const filtersToggleButton = document.getElementById('search_filtes_btn');
+const filtersContainer = document.getElementById('filters_container');
+const filtersForm = document.getElementById('filters_form');
+const closeFiltersBtn = document.getElementById('close_filters');
+
+/* Handle opening/closing filters container */
+filtersToggleButton.addEventListener("click", function() {
+  const isOpen = filtersContainer.style.display !== 'none';
+
+  if (isOpen) {
+    filtersContainer.style.display = 'none';
+  } else {
+    filtersContainer.style.display = 'block';
+  }
 });
 
-const submitSearchFormHandler = async (ev) => {
+/* Handle submit chosen filters */
+const submitFiltersFormHandler = async (ev) => {
   ev.preventDefault();
-  const query = searchQuery.value;
-
-  if (!query && query.length <= 0) {
-    // todo not needed?
-    return;
-  }
-
-  searchResults.setAttribute('state', 'loading');
-  await fillInSearchResultsContainer(query);
-  searchResults.setAttribute('state', 'done');
+  // todo set filter values to a filter{} and move on
+  attributesFilters = filtersForm.querySelectorAll('input[name=attributes]:checked').map(e => e.value);
+  kindFilters = filtersForm.querySelectorAll('input[name=kind]:checked').map(e => e.value);
 };
-searchForm.addEventListener('submit', submitSearchFormHandler);
+filtersForm.addEventListener('submit', submitFiltersFormHandler);
 
-const fillInSearchResultsContainer = async (query) => {
-  const results = await searchIndexedData(query);
-  results.sort((a, b) => (a && typeof a.score === "number" && b && typeof b.score === "number") ? (b.score - a.score) : 0);
-  searchResults.innerHTML = results.length < 1 ? createNoResultsHTML() : createResultsHTML(results);
-}
+/* Handle closing filters box */
+closeFiltersBtn.addEventListener("click", function() {
+  filtersContainer.style.display = 'none';
+});
 
-const createNoResultsHTML = () => '<p class="no_search_result"> No declarations or comments match your search. </p>';
 
-const createResultsHTML = (results) => {
-  let html = `<p>Found ${results.length} matches, showing ${maxCountResults > results.length ? results.length : maxCountResults}.</p>`;
-  html += results.map((result, index) => {
-    return createSingleResultHTML(result, index);
-  }).join('');
-  return html;
-}
 
-const createSingleResultHTML = (result, i) => {
-  const { module, name, description, match, terms } = result;
-  const resultUrl = `${siteRoot}${module}#${name}`;
-  const descriptionDisplay = description && description.length > 0 ? `${description.slice(0, 150)}..` : ''
-  
-  const html = `<div id="search_result_${i}" class="search_result_item">
-    <a href="${resultUrl}" class="search_result_anchor">
-      <b class="result_name">${name}</b>
-      <br>
-      <p class="result_module">${module}</p>
-      <p class="result_comment">${descriptionDisplay}</p>
-    </a>
-  </div>`;
 
-	return html;
-} 
 
 // 404 page goodies
 // ----------------
