@@ -93,21 +93,58 @@ if (tse !== null) {
 
 // Simple search through declarations by name, file name and description comment as printed from mathlib
 // -------------------------
-const MAX_COUNT_RESULTS = 15;
+const MAX_COUNT_RESULTS = 10;
 
 /* Get all elements for searching and showing results */
 const searchForm = document.getElementById('search_form');
 const searchQueryInput = searchForm.querySelector('input[name=query]');
 const searchResultsContainer = document.getElementById('search_results');
 
+/* Handle opening/closing search results container */
+function closeResultsDisplay() {
+  searchResultsContainer.style.display = 'none';
+}
+
+function openResultsDisplay() {
+  searchResultsContainer.style.display = 'block';
+}
+
+/* Handle resizing search results container */
+function renderSmallResultsContainer() {
+  searchResultsContainer.classList.contains('full_width') 
+  ? 
+    searchResultsContainer.classList.contains('condensed') 
+    ?
+      searchResultsContainer.classList.remove('full_width') 
+    :
+      searchResultsContainer.classList.replace('full_width', 'condensed') 
+  : 
+    !searchResultsContainer.classList.contains('condensed') && searchResultsContainer.classList.add('condensed');
+}
+
+function renderLargeResultsContainer() {
+  searchResultsContainer.classList.contains('condensed') 
+  ? 
+    searchResultsContainer.classList.contains('full_width') 
+    ?
+      searchResultsContainer.classList.remove('condensed') 
+    :
+      searchResultsContainer.classList.replace('condensed', 'full_width') 
+  : 
+    !searchResultsContainer.classList.contains('full_width') && searchResultsContainer.classList.add('full_width');
+}
 /* Set up defaults for search filtering and results */ 
-const filters = {};
-const maxCount = MAX_COUNT_RESULTS;
+const filters = {
+  attributes: [],
+  kind: []
+};
 
 /* Handle searching through the index with a specific query and filters */
 const searchWorkerURL = new URL(`${siteRoot}searchWorker.js`, window.location);
 const worker = new SharedWorker(searchWorkerURL);
-const searchIndexedData = (query) => new Promise((resolve, reject) => {
+const searchIndexedData = (query, maxResultsCount) => new Promise((resolve, reject) => {
+  const maxCount = typeof maxResultsCount === "number" ? maxResultsCount : MAX_COUNT_RESULTS;
+
   worker.port.start();
   worker.port.onmessage = ({ data }) => resolve(data);
   worker.port.onmessageerror = (e) => reject(e);
@@ -117,39 +154,83 @@ const searchIndexedData = (query) => new Promise((resolve, reject) => {
 /* Submitting search query */
 const submitSearchFormHandler = async (ev) => {
   ev.preventDefault();
+  closeFiltersDisplay();
+  
   const query = searchQueryInput.value;
-
   if (!query && query.length <= 0) {
+    closeResultsDisplay();
     return;
   }
+  renderSmallResultsContainer();
+  openResultsDisplay();
+
 
   searchResultsContainer.setAttribute('state', 'loading');
   await fillInSearchResultsContainer(query);
   searchResultsContainer.setAttribute('state', 'done');
+
+  const searchResultsContainerCloseBtn = document.getElementById('close_results_btn');
+  searchResultsContainerCloseBtn.addEventListener("click", closeResultsDisplay);
+
+  const searchResultsShowAllBtn = document.getElementById('show_all_results_btn');
+  searchResultsShowAllBtn.addEventListener('click', () => renderAllResultsHtml(query));
 };
 searchForm.addEventListener('submit', submitSearchFormHandler);
 
-const fillInSearchResultsContainer = async (query) => {
-  const results = await searchIndexedData(query);
+const renderAllResultsHtml = async (query) => {
+  if (!query && query.length <= 0) {
+    closeResultsDisplay();
+    return;
+  }
+  renderLargeResultsContainer();
+  openResultsDisplay();
+
+
+  searchResultsContainer.setAttribute('state', 'loading');
+  await fillInSearchResultsContainer(query, true);
+  searchResultsContainer.setAttribute('state', 'done');
+
+  const searchResultsContainerCloseBtn = document.getElementById('close_results_btn');
+  searchResultsContainerCloseBtn.addEventListener("click", closeResultsDisplay);
+}
+
+const fillInSearchResultsContainer = async (query, showAll = false) => {
+  const resultsCount = showAll ? -1 : MAX_COUNT_RESULTS;
+  const {response: results, total} = await searchIndexedData(query, resultsCount);
   results.sort((a, b) => (a && typeof a.score === "number" && b && typeof b.score === "number") ? (b.score - a.score) : 0);
-  searchResultsContainer.innerHTML = results.length < 1 ? createNoResultsHTML() : createResultsHTML(results);
+
+  const searchResultsCloseBtn = '<span class="close" id="close_results_btn">x</span>';
+  searchResultsContainer.innerHTML = results.length < 1 ? createNoResultsHTML(searchResultsCloseBtn) : createResultsHTML(results, total, showAll, searchResultsCloseBtn);
 }
 
-const createNoResultsHTML = () => '<p class="no_search_result"> No declarations or comments match your search. </p>';
+const createNoResultsHTML = (html) => `<p class="no_search_result"> No declarations or comments match your search. </p>${html}`;
 
-const createResultsHTML = (results) => {
-  let html = `<p>Found ${results.length} matches, showing ${maxCountResults > results.length ? results.length : maxCountResults}.</p>`;
-  html += results.map((result, index) => {
-    return createSingleResultHTML(result, index);
+const createResultsHTML = (results, total, showAll, html) => {
+  const descriptionMaxLength = showAll ? 350 : 80;
+  let resultHtml = `<p id="search_info">Found ${total} matches 
+    ${!showAll 
+    ?
+      `, showing ${MAX_COUNT_RESULTS > results.length ? results.length : MAX_COUNT_RESULTS}.</p>
+      <span id="show_all_results_btn" class="link_coloring">Show all</span>` 
+    :
+      ''
+    }
+  ${html}`;
+  resultHtml += results.map((result, index) => {
+    return createSingleResultHTML(result, descriptionMaxLength, index);
   }).join('');
-  return html;
+  return resultHtml;
 }
 
-const createSingleResultHTML = (result, i) => {
+const createSingleResultHTML = (result, descriptionMaxLength, i) => {
   const { module, name, description, match, terms } = result;
   const resultUrl = `${siteRoot}${module}#${name}`;
-  const descriptionDisplay = description && description.length > 0 ? `${description.slice(0, 150)}..` : ''
-  
+  const descriptionDisplay = description && description.length > 0 
+  ? 
+    `${description.slice(0, descriptionMaxLength)}${description.length > descriptionMaxLength ? '..' : ''}`
+  :
+    '';
+
   const html = `<div id="search_result_${i}" class="search_result_item">
     <a href="${resultUrl}" class="search_result_anchor">
       <b class="result_name">${name}</b>
@@ -216,7 +297,6 @@ function handleSearchCursorUpDown(isDownwards) {
 }
 
 function handleSearchItemSelected() {
-  // todo goto link made up of the siteRoot+module+name
   const selectedResult = document.querySelector(`#${resultsElmntId} .selected`)
   selectedResult.click();
 }
@@ -227,36 +307,50 @@ function handleSearchItemSelected() {
 // -------------------------
 
 /* Get all elements for filtering */
-const filtersToggleButton = document.getElementById('search_filtes_btn');
+const filtersToggleButton = document.getElementById('search_filters_btn');
 const filtersContainer = document.getElementById('filters_container');
 const filtersForm = document.getElementById('filters_form');
-const closeFiltersBtn = document.getElementById('close_filters');
+const closeFiltersBtn = document.getElementById('close_filters_btn');
 
 /* Handle opening/closing filters container */
-filtersToggleButton.addEventListener("click", function() {
-  const isOpen = filtersContainer.style.display !== 'none';
+function closeFiltersDisplay() {
+  filtersContainer.style.display = 'none';
+}
 
+function openFiltersDisplay() {
+  filtersContainer.style.display = 'block';
+}
+
+function toggleFiltersDisplay() {
+  const filtersContainerStyle = (!filtersContainer.style.display || filtersContainer.style.display.length === 0) ?
+    getComputedStyle(filtersContainer).display : 
+    filtersContainer.style.display;
+  const isOpen = filtersContainerStyle !== 'none';
   if (isOpen) {
-    filtersContainer.style.display = 'none';
+    closeFiltersDisplay();
   } else {
-    filtersContainer.style.display = 'block';
+    openFiltersDisplay();
   }
-});
+}
+filtersToggleButton && filtersToggleButton.addEventListener("click", toggleFiltersDisplay);
+filtersContainer && closeFiltersBtn.addEventListener("click", closeFiltersDisplay);
 
 /* Handle submit chosen filters */
-const submitFiltersFormHandler = async (ev) => {
+const submitFiltersFormHandler = (ev) => {
   ev.preventDefault();
-  // todo set filter values to a filter{} and move on
-  attributesFilters = filtersForm.querySelectorAll('input[name=attributes]:checked').map(e => e.value);
-  kindFilters = filtersForm.querySelectorAll('input[name=kind]:checked').map(e => e.value);
+  const attributeBoxNodes = filtersForm.querySelectorAll('input[name=attribute]:checked');
+  const kindBoxNodes = filtersForm.querySelectorAll('input[name=kind]:checked');
+
+  
+  filters.attributes = [];
+  attributeBoxNodes.forEach(e => filters.attributes.push(e.value));
+
+  filters.kind = [];
+  kindBoxNodes.forEach(e => filters.kind.push(e.value));
+
+  closeFiltersDisplay();
 };
-filtersForm.addEventListener('submit', submitFiltersFormHandler);
-
-/* Handle closing filters box */
-closeFiltersBtn.addEventListener("click", function() {
-  filtersContainer.style.display = 'none';
-});
-
+filtersForm && filtersForm.addEventListener('submit', submitFiltersFormHandler);
 
 
 

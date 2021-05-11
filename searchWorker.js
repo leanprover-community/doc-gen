@@ -19,17 +19,18 @@ miniSearch.addAll(indexedData);
 onconnect = ({ports: [port]}) =>
 port.onmessage = ({ data }) => {
     const { query, filters, maxCount } = data;
+    const filterFunc = (result) => filterItemResult(result, filters);
     const results = miniSearch.search(query, {
         boost: { module: 1, description: 2, name: 3 },
         combineWith: 'AND',
-        filter: (result) => filterItemResult(result, filters),
+        filter: filterFunc,
         // prefix: (term) => term.length > 3,
         // fuzzy: (term) => term.length > 3 && 0.2,
     });
     
     console.log(results);
     const response = typeof maxCount === "number" && maxCount >= 0 ? results.slice(0, maxCount) : results;
-    port.postMessage(response);
+    port.postMessage({response, total: results.length});
 };
 
 const filterItemResult = (result, filters = {}) => {
@@ -38,6 +39,7 @@ const filterItemResult = (result, filters = {}) => {
     const hasKindFilter = kindFilter && kindFilter.length > 0;
 
     if (!hasAttrFilter && !hasKindFilter) {
+        console.log('NO FILTERS')
         return true;
     }
     
@@ -45,14 +47,21 @@ const filterItemResult = (result, filters = {}) => {
     let isResultAttrIncluded = false;
     let isResultKindIncluded = false;
 
+    console.log('-------------------------------------------')
+    console.log(`attrRes: ${attrRes}`)
+    console.log(`attrFilter: ${attrFilter}`)
+    console.log(`kindRes: ${kindRes}`)
+    console.log(`kindFilter: ${kindFilter}`)
     if (hasKindFilter) {
         isResultKindIncluded = kindFilter.includes(kindRes);
+        isResultKindIncluded && console.log('kind has passed')
     }
 
     if (hasAttrFilter) {
         for (let attribute of attrRes) {
             if (attrFilter.includes(attribute)) {
                 isResultAttrIncluded = true;
+                console.log('attribute has passed')
                 break;
             }
         }
