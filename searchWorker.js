@@ -28,7 +28,6 @@ port.onmessage = ({ data }) => {
         // fuzzy: (term) => term.length > 3 && 0.2,
     });
     
-    console.log(results);
     const response = typeof maxCount === "number" && maxCount >= 0 ? results.slice(0, maxCount) : results;
     port.postMessage({response, total: results.length});
 };
@@ -39,7 +38,6 @@ const filterItemResult = (result, filters = {}) => {
     const hasKindFilter = kindFilter && kindFilter.length > 0;
 
     if (!hasAttrFilter && !hasKindFilter) {
-        console.log('NO FILTERS')
         return true;
     }
     
@@ -47,21 +45,14 @@ const filterItemResult = (result, filters = {}) => {
     let isResultAttrIncluded = false;
     let isResultKindIncluded = false;
 
-    console.log('-------------------------------------------')
-    console.log(`attrRes: ${attrRes}`)
-    console.log(`attrFilter: ${attrFilter}`)
-    console.log(`kindRes: ${kindRes}`)
-    console.log(`kindFilter: ${kindFilter}`)
     if (hasKindFilter) {
         isResultKindIncluded = kindFilter.includes(kindRes);
-        isResultKindIncluded && console.log('kind has passed')
     }
 
     if (hasAttrFilter) {
         for (let attribute of attrRes) {
             if (attrFilter.includes(attribute)) {
                 isResultAttrIncluded = true;
-                console.log('attribute has passed')
                 break;
             }
         }
