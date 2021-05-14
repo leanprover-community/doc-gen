@@ -29,6 +29,7 @@ port.onmessage = ({ data }) => {
     });
     
     const response = typeof maxCount === "number" && maxCount >= 0 ? results.slice(0, maxCount) : results;
+    console.log(response)
     port.postMessage({response, total: results.length});
 };
 

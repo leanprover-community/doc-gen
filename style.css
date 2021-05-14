@@ -517,6 +517,7 @@ a:hover {
     border-top: none;
     overflow-y: auto;
     overflow-x: hidden;
+    z-index: 2;
 }
 
 #filters_container #filters_display {
@@ -584,7 +585,7 @@ a:hover {
 }
 #search_results[state="loading"]:empty::before {
     display: block;
-    content: ' 🐙 🐙 🐙 🐙 🐙 🐙 🐙 🐙  ';
+    content: ' 🐙 🐙 🐙 🐙 🐙 🐙 🐙 🐙 ';
     padding: 1ex;
     animation: marquee 10s linear infinite;
 }

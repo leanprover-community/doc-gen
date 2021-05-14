@@ -349,6 +349,7 @@ const submitFiltersFormHandler = (ev) => {
   kindBoxNodes.forEach(e => filters.kind.push(e.value));
 
   closeFiltersDisplay();
+  submitSearchFormHandler(ev);
 };
 filtersForm && filtersForm.addEventListener('submit', submitFiltersFormHandler);
 
