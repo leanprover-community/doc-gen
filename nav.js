@@ -110,28 +110,30 @@ function openResultsDisplay() {
 }
 
 /* Handle resizing search results container */
+const SMALL = 'condensed';
+const LARGE = 'full_width';
 function renderSmallResultsContainer() {
-  searchResultsContainer.classList.contains('full_width') 
+  searchResultsContainer.classList.contains(LARGE) 
   ? 
-    searchResultsContainer.classList.contains('condensed') 
+    searchResultsContainer.classList.contains(SMALL) 
     ?
-      searchResultsContainer.classList.remove('full_width') 
+      searchResultsContainer.classList.remove(LARGE) 
     :
-      searchResultsContainer.classList.replace('full_width', 'condensed') 
+      searchResultsContainer.classList.replace(LARGE, SMALL) 
   : 
-    !searchResultsContainer.classList.contains('condensed') && searchResultsContainer.classList.add('condensed');
+    !searchResultsContainer.classList.contains(SMALL) && searchResultsContainer.classList.add(SMALL);
 }
 
 function renderLargeResultsContainer() {
-  searchResultsContainer.classList.contains('condensed') 
+  searchResultsContainer.classList.contains(SMALL) 
   ? 
-    searchResultsContainer.classList.contains('full_width') 
+    searchResultsContainer.classList.contains(LARGE) 
     ?
-      searchResultsContainer.classList.remove('condensed') 
+      searchResultsContainer.classList.remove(SMALL) 
     :
-      searchResultsContainer.classList.replace('condensed', 'full_width') 
+      searchResultsContainer.classList.replace(SMALL, LARGE) 
   : 
-    !searchResultsContainer.classList.contains('full_width') && searchResultsContainer.classList.add('full_width');
+    !searchResultsContainer.classList.contains(LARGE) && searchResultsContainer.classList.add(LARGE);
 }
 /* Set up defaults for search filtering and results */ 
 const filters = {
@@ -153,11 +155,11 @@ const searchIndexedData = (query, maxResultsCount) => new Promise((resolve, reje
 
 /* Submitting search query */
 const submitSearchFormHandler = async (ev) => {
-  ev.preventDefault();
+  ev?.preventDefault();
   closeFiltersDisplay();
   
   const query = searchQueryInput.value;
-  if (!query && query.length <= 0) {
+  if (!query || query.length <= 0) {
     closeResultsDisplay();
     return;
   }
@@ -170,10 +172,10 @@ const submitSearchFormHandler = async (ev) => {
   searchResultsContainer.setAttribute('state', 'done');
 
   const searchResultsContainerCloseBtn = document.getElementById('close_results_btn');
-  searchResultsContainerCloseBtn.addEventListener("click", closeResultsDisplay);
+  searchResultsContainerCloseBtn?.addEventListener("click", closeResultsDisplay);
 
   const searchResultsShowAllBtn = document.getElementById('show_all_results_btn');
-  searchResultsShowAllBtn.addEventListener('click', () => renderAllResultsHtml(query));
+  searchResultsShowAllBtn?.addEventListener('click', () => renderAllResultsHtml(query));
 };
 searchForm.addEventListener('submit', submitSearchFormHandler);
 
@@ -182,19 +184,20 @@ const renderAllResultsHtml = async (query) => {
     closeResultsDisplay();
     return;
   }
-  renderLargeResultsContainer();
-  openResultsDisplay();
-
 
   searchResultsContainer.setAttribute('state', 'loading');
   await fillInSearchResultsContainer(query, true);
+  
+  renderLargeResultsContainer();
+  openResultsDisplay();
   searchResultsContainer.setAttribute('state', 'done');
 
   const searchResultsContainerCloseBtn = document.getElementById('close_results_btn');
-  searchResultsContainerCloseBtn.addEventListener("click", closeResultsDisplay);
+  searchResultsContainerCloseBtn?.addEventListener("click", closeResultsDisplay);
 }
 
 const fillInSearchResultsContainer = async (query, showAll = false) => {
+  searchResultsContainer.innerHTML = '';
   const resultsCount = showAll ? -1 : MAX_COUNT_RESULTS;
   const {response: results, total} = await searchIndexedData(query, resultsCount);
   results.sort((a, b) => (a && typeof a.score === "number" && b && typeof b.score === "number") ? (b.score - a.score) : 0);
@@ -207,12 +210,11 @@ const createNoResultsHTML = (html) => `<p class="no_search_result"> No declarati
 
 const createResultsHTML = (results, total, showAll, html) => {
   const descriptionMaxLength = showAll ? 350 : 80;
+  const countShowingResults = MAX_COUNT_RESULTS > results.length ? results.length : MAX_COUNT_RESULTS;
+
   let resultHtml = `<p id="search_info">Found ${total} matches 
-    ${!showAll 
-    ?
-      `, showing ${MAX_COUNT_RESULTS > results.length ? results.length : MAX_COUNT_RESULTS}.</p>
-      <span id="show_all_results_btn" class="link_coloring">Show all</span>` 
-    :
+    ${!showAll ?
+      `, showing ${countShowingResults}.</p><span id="show_all_results_btn" class="link_coloring">Show all</span>` :
       ''
     }
   ${html}`;
@@ -223,12 +225,10 @@ const createResultsHTML = (results, total, showAll, html) => {
 }
 
 const createSingleResultHTML = (result, descriptionMaxLength, i) => {
-  const { module, name, description, match, terms } = result;
+  const { module, name, description } = result;
   const resultUrl = `${siteRoot}${module}#${name}`;
-  const descriptionDisplay = description && description.length > 0 
-  ? 
-    `${description.slice(0, descriptionMaxLength)}${description.length > descriptionMaxLength ? '..' : ''}`
-  :
+  const descriptionDisplay = description && description.length > 0 ? 
+    `${description.slice(0, descriptionMaxLength)}${description.length > descriptionMaxLength ? '..' : ''}` :
     '';
 
   const html = `<div id="search_result_${i}" class="search_result_item">
@@ -316,6 +316,7 @@ const closeFiltersBtn = document.getElementById('close_filters_btn');
 function closeFiltersDisplay() {
   filtersContainer.style.display = 'none';
 }
+closeFiltersBtn.addEventListener("click", closeFiltersDisplay);
 
 function openFiltersDisplay() {
   filtersContainer.style.display = 'block';
@@ -332,8 +333,7 @@ function toggleFiltersDisplay() {
     openFiltersDisplay();
   }
 }
-filtersToggleButton && filtersToggleButton.addEventListener("click", toggleFiltersDisplay);
-filtersContainer && closeFiltersBtn.addEventListener("click", closeFiltersDisplay);
+filtersToggleButton.addEventListener("click", toggleFiltersDisplay);
 
 /* Handle submit chosen filters */
 const submitFiltersFormHandler = (ev) => {
@@ -343,15 +343,15 @@ const submitFiltersFormHandler = (ev) => {
 
   
   filters.attributes = [];
-  attributeBoxNodes.forEach(e => filters.attributes.push(e.value));
+  attributeBoxNodes?.forEach(e => filters.attributes.push(e.value));
 
   filters.kind = [];
-  kindBoxNodes.forEach(e => filters.kind.push(e.value));
+  kindBoxNodes?.forEach(e => filters.kind.push(e.value));
 
   closeFiltersDisplay();
   submitSearchFormHandler(ev);
 };
-filtersForm && filtersForm.addEventListener('submit', submitFiltersFormHandler);
+filtersForm.addEventListener('submit', submitFiltersFormHandler);
 
 
 

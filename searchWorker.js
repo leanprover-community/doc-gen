@@ -20,17 +20,21 @@ onconnect = ({ports: [port]}) =>
 port.onmessage = ({ data }) => {
     const { query, filters, maxCount } = data;
     const filterFunc = (result) => filterItemResult(result, filters);
-    const results = miniSearch.search(query, {
-        boost: { module: 1, description: 2, name: 3 },
-        combineWith: 'AND',
-        filter: filterFunc,
-        // prefix: (term) => term.length > 3,
-        // fuzzy: (term) => term.length > 3 && 0.2,
-    });
-    
-    const response = typeof maxCount === "number" && maxCount >= 0 ? results.slice(0, maxCount) : results;
-    console.log(response)
-    port.postMessage({response, total: results.length});
+
+    if (query && typeof query === "string" && query.length > 0) {
+        const results = miniSearch.search(query, {
+            boost: { module: 1, description: 2, name: 3 },
+            combineWith: 'AND',
+            filter: filterFunc,
+            // prefix: (term) => term.length > 3,
+            // fuzzy: (term) => term.length > 3 && 0.2,
+        });
+        
+        const response = typeof maxCount === "number" && maxCount >= 0 ? results.slice(0, maxCount) : results;
+        console.log(response)
+        port.postMessage({response, total: results.length});
+    }
+    port.postMessage({response: [], total: 0});
 };
 
 const filterItemResult = (result, filters = {}) => {
