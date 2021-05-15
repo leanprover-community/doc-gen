@@ -28,10 +28,7 @@ jobs:
           json: ${{ steps.get_pr_head.outputs.data }}
           head_user: 'head.user.login'
 
-      # we skip the rest if this PR is from a fork,
-      # since the GITHUB_TOKEN doesn't have write perms
-      - if: steps.parse_pr_head.outputs.head_user == 'leanprover-community'
-        uses: octokit/request-action@v2.x
+      - uses: octokit/request-action@v2.x
         name: Get comment author
         id: get_user
         with:
@@ -42,8 +39,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Parse steps.get_user.outputs.data, since it is a string
-      - if: steps.parse_pr_head.outputs.head_user == 'leanprover-community'
-        id: parse_user
+      - id: parse_user
         name: Parse comment author permission
         uses: gr2m/get-json-paths-action@v1.x
         with:
@@ -51,7 +47,7 @@ jobs:
           permission: 'permission'
 
       - name: Add reaction
-        if: (steps.parse_pr_head.outputs.head_user == 'leanprover-community') && (steps.parse_user.outputs.permission == 'admin')
+        if: (steps.parse_user.outputs.permission == 'admin')
         uses: peter-evans/create-or-update-comment@v1
         with:
           comment-id: ${{ github.event.comment.id }}
@@ -60,7 +56,7 @@ jobs:
       # this step is needed to get the PR ref from an issue comment
       # https://github.com/actions/checkout/issues/331
       - uses: actions/github-script@v3
-        if: (steps.parse_pr_head.outputs.head_user == 'leanprover-community') && (steps.parse_user.outputs.permission == 'admin')
+        if: (steps.parse_user.outputs.permission == 'admin')
         id: get-pr
         with:
           script: |
@@ -77,17 +73,17 @@ jobs:
               core.setFailed(`Request failed with error ${err}`)
             }
       - uses: actions/checkout@v2
-        if: (steps.parse_pr_head.outputs.head_user == 'leanprover-community') && (steps.parse_user.outputs.permission == 'admin')
+        if: (steps.parse_user.outputs.permission == 'admin')
         with:
           repository: ${{ fromJSON(steps.get-pr.outputs.result).head.repo.full_name }}
           ref: ${{ fromJSON(steps.get-pr.outputs.result).head.sha }} # or .head.ref for branch name
 
       - name: Checkout mathlib
-        if: (steps.parse_pr_head.outputs.head_user == 'leanprover-community') && (steps.parse_user.outputs.permission == 'admin')
+        if: (steps.parse_user.outputs.permission == 'admin')
         run: git clone https://github.com/leanprover-community/mathlib
 
       - name: install elan
-        if: (steps.parse_pr_head.outputs.head_user == 'leanprover-community') && (steps.parse_user.outputs.permission == 'admin')
+        if: (steps.parse_user.outputs.permission == 'admin')
         run: |
           set -o pipefail
           curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- --default-toolchain none -y
@@ -96,25 +92,25 @@ jobs:
           echo "$HOME/.elan/bin" >> $GITHUB_PATH
 
       - name: install Python
-        if: (steps.parse_pr_head.outputs.head_user == 'leanprover-community') && (steps.parse_user.outputs.permission == 'admin')
+        if: (steps.parse_user.outputs.permission == 'admin')
         uses: actions/setup-python@v1
         with:
           python-version: 3.8
 
       - name: install Python dependencies
-        if: (steps.parse_pr_head.outputs.head_user == 'leanprover-community') && (steps.parse_user.outputs.permission == 'admin')
+        if: (steps.parse_user.outputs.permission == 'admin')
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: run leanproject
-        if: (steps.parse_pr_head.outputs.head_user == 'leanprover-community') && (steps.parse_user.outputs.permission == 'admin')
+        if: (steps.parse_user.outputs.permission == 'admin')
         run: |
           cd mathlib
           leanproject up
 
       - name: generate docs
-        if: (steps.parse_pr_head.outputs.head_user == 'leanprover-community') && (steps.parse_user.outputs.permission == 'admin')
+        if: (steps.parse_user.outputs.permission == 'admin')
         run: ./deploy_docs.sh "mathlib" ".." "mathlib" "leanprover-community" "mathlib_docs_demo" "true"
         env:
           DEPLOY_GITHUB_TOKEN: ${{ secrets.DEPLOY_GITHUB_TOKEN }}
@@ -124,7 +120,7 @@ jobs:
 
       # https://stackoverflow.com/questions/58066966/commenting-a-pull-request-in-a-github-action
       - name: Post link
-        if: (steps.parse_pr_head.outputs.head_user == 'leanprover-community') && (steps.parse_user.outputs.permission == 'admin')
+        if: (steps.parse_user.outputs.permission == 'admin')
         env:
           URL: ${{ github.event.issue.comments_url }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
