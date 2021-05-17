@@ -20,9 +20,9 @@ onconnect = ({ports: [port]}) =>
 port.onmessage = ({ data }) => {
     const { query, filters, maxCount } = data;
     const filterFunc = (result) => filterItemResult(result, filters);
-
-    if (query && typeof query === "string" && query.length > 0) {
-        const results = miniSearch.search(query, {
+    const sanitizedQuery = query.trim();
+    if (sanitizedQuery && typeof sanitizedQuery === "string" && sanitizedQuery.length > 0) {
+        const results = miniSearch.search(sanitizedQuery, {
             boost: { module: 1, description: 2, name: 3 },
             combineWith: 'AND',
             filter: filterFunc,
