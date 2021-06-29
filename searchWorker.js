@@ -1,7 +1,7 @@
 // Access indexed data structure to be used for searching through the documentation
 const req = new XMLHttpRequest();
 
-req.open('GET', 'searchable_data.json', false /* blocking */);
+req.open('GET', 'searchable_data.bmp', false /* blocking */);
 req.responseType = 'json';
 req.send();
 

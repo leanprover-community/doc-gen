@@ -765,7 +765,7 @@ def mk_export_searchable_db(file_map, tactic_docs):
 
 def write_export_searchable_db(searchable_data):
   json_str = json.dumps(searchable_data)
-  with open_outfile('searchable_data.json') as out:
+  with open_outfile('searchable_data.bmp') as out:
     out.write(json_str)
 
 def main():
