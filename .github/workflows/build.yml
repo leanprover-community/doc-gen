@@ -55,4 +55,5 @@ jobs:
           github_ref: ${{ github.ref }}
       - name: Upload export.json
         uses: actions/upload-artifact@v2.2.4
-        path: export.json
+        with:
+          path: export.json
