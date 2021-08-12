@@ -232,11 +232,6 @@ meta def attribute_list := [`simp, `squash_cast, `move_cast, `elim_cast, `nolint
 meta def attributes_of (n : name) : tactic (list string) :=
 list.map to_string <$> attribute_list.mfilter (λ attr, succeeds $ has_attribute attr n)
 
--- does this not exist already? I'm confused.
-meta def expr.instantiate_pis : list expr → expr → expr
-| (e'::es) (expr.pi n bi t e) := expr.instantiate_pis es (e.instantiate_var e')
-| _        e              := e
-
 meta def enable_links : tactic unit :=
 do o ← get_options, set_options $ o.set_bool `pp.links tt
 
