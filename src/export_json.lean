@@ -232,7 +232,7 @@ meta def attribute_list := [`simp, `norm_cast, `nolint, `ext, `instance, `class,
 meta def attributes_of (n : name) : tactic (list string) := 
 do l ← list.map to_string <$> attribute_list.mfilter (λ attr, succeeds $ has_attribute attr n),
    mcond (is_protected_decl n)
-     (return "protected"::l)
+     (return $ "protected"::l)
      (return l)
     
 
