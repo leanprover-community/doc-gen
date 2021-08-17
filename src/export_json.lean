@@ -227,10 +227,14 @@ do intron $ count_named_intros e,
 end
 
 /-- The attributes we check for -/
-meta def attribute_list := [`simp, `squash_cast, `move_cast, `elim_cast, `nolint, `ext, `instance, `class]
+meta def attribute_list := [`simp, `norm_cast, `nolint, `ext, `instance, `class, `continuity]
 
-meta def attributes_of (n : name) : tactic (list string) :=
-list.map to_string <$> attribute_list.mfilter (λ attr, succeeds $ has_attribute attr n)
+meta def attributes_of (n : name) : tactic (list string) := 
+do l ← list.map to_string <$> attribute_list.mfilter (λ attr, succeeds $ has_attribute attr n),
+   mcond (is_protected_decl n)
+     (return "protected"::l)
+     (return l)
+    
 
 meta def enable_links : tactic unit :=
 do o ← get_options, set_options $ o.set_bool `pp.links tt
