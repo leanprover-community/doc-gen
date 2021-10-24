@@ -1,15 +1,19 @@
 {% extends "base.j2" %}
-{% block title %}index{% endblock %}
+{% block title %}Index{% endblock %}
 
 {% block content %}
+<h1>Welcome to mathlib's documentation page</h1>
+
 <p>Navigate through mathlib files using the menu on the left.</p>
 
 <p>Declaration names link to their locations in the mathlib or core Lean source.
 Names inside code snippets link to their locations in this documentation.</p>
 
-<p>This documentation has been generated with mathlib commit
-<a href="{{ mathlib_github_root }}/tree/{{ mathlib_commit }}">{{ mathlib_commit }}</a>
-and Lean commit <a href="https://github.com/leanprover-community/lean/blob/{{ lean_commit }}/library">{{ lean_commit }}</a>.</p>
+<p>This documentation has been generated with the following commits:</p>
+<ul>
+  <li>mathlib <a href="{{ mathlib_github_root }}/tree/{{ mathlib_commit }}">{{ mathlib_commit }}</a></li>
+  <li>Lean <a href="https://github.com/leanprover-community/lean/blob/{{ lean_commit }}/library">{{ lean_commit }}</a></li>
+</ul>
 
 <p>Note: mathlib is still only partially documented, and this HTML display is still
 under development. We welcome pull requests on <a
