@@ -4,20 +4,18 @@
 {% block content %}
 <h1>Welcome to mathlib's documentation page</h1>
 
-<p>Navigate through mathlib files using the menu on the left.</p>
+<p>This is the main documentation site for mathlib, the library of mathematics being developed
+in Lean. If you need information about installing Lean or mathlib, or getting started with a project,
+please visit our <a href="https://leanprover-community.github.io">community website</a>.<p>
 
-<p>Declaration names link to their locations in the mathlib or core Lean source.
-Names inside code snippets link to their locations in this documentation.</p>
-
-<p>This documentation has been generated with the following commits:</p>
+<p>This documentation was automatically generated using
+<a href="https://github.com/leanprover-community/doc-gen">doc-gen</a> on the following source commits:</p>
 <ul>
   <li>mathlib <a href="{{ mathlib_github_root }}/tree/{{ mathlib_commit }}">{{ mathlib_commit }}</a></li>
   <li>Lean <a href="https://github.com/leanprover-community/lean/blob/{{ lean_commit }}/library">{{ lean_commit }}</a></li>
 </ul>
 
-<p>Note: mathlib is still only partially documented, and this HTML display is still
-under development. We welcome pull requests on <a
-href="https://github.com/leanprover-community/doc-gen">GitHub</a> to update
-misleading or badly formatted doc strings, or to add missing
-documentation.</p>
+<p>On the left menu, the "General" and "Additional documentation" sections provide links with extra
+information about mathlib and related topics from our community, respectively. The "Library" section
+contains dropdown/expandable subsections according to mathlib's tree structure.</p>
 {% endblock %}
