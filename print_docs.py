@@ -224,9 +224,12 @@ class ImportName(NamedTuple):
   def url(self):
     return '/'.join(self.parts) + '.html'
 
+docgen_commit = subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode().strip()  # removing '\n'
+
 env.globals['mathlib_github_root'] = mathlib_github_root
 env.globals['mathlib_commit'] = mathlib_commit
 env.globals['lean_commit'] = lean_commit
+env.globals['docgen_commit'] = docgen_commit
 env.globals['site_root'] = site_root
 
 markdown_renderer = CustomHTMLRenderer()
