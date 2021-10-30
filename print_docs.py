@@ -709,7 +709,7 @@ def write_decl_txt(loc_map):
 def write_import_gexf():
   import_graph = env.globals['import_graph']
   # stringify the node labels
-  renamings = {import_name : f'{import_name.project}:{import_name.name}' import_name, n_data in import_graph.nodes()}
+  renamings = {import_name: f'{import_name.project}:{import_name.name}' for import_name in import_graph.nodes()}
   import_graph = nx.relabel_nodes(import_graph, renamings}
 
   with open_outfile('import.gexf') as out:
