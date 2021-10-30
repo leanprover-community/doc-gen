@@ -379,6 +379,10 @@ main h2, main h3, main h4, main h5, main h6 {
     border-top: 2px solid #f0a202;
 }
 
+.noncomputable {
+    border-left-style: dashed;  /* TODO: purple instead to match the noncomputable keyword? */
+}
+
 .fn {
     display: inline-block;
     /* border: 1px dashed red; */
