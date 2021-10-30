@@ -1,4 +1,5 @@
 {% set kind = kind_of_decl(decl) %}
+{% if decl.noncomputable_reason %}<span class="decl_noncomputable" title="This definition depends on the noncomputable `{{decl.noncomputable_reason | e}}`">noncomputable</span>{% endif %}
 {% if decl.is_meta %}<span class="decl_meta">meta</span>{% endif %}
 <span class="decl_kind">{{ kind }}</span>
 <span class="decl_name"><a class="break_within" href="{{ decl.name | link_to_decl }}">{{ decl.name | htmlify_name }}</a></span>
