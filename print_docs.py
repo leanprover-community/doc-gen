@@ -709,7 +709,7 @@ def write_decl_txt(loc_map):
 def write_import_gexf():
   import_graph = env.globals['import_graph']
   with open_outfile('import.gexf') as out:
-    nx.write_gexf(import_graph, out)
+    nx.write_gexf(import_graph, out, encoding="unicode")
 
 def mk_export_map_entry(decl_name, filename, kind, is_meta, line, args, tp):
   return {'filename': str(filename.raw_path),
