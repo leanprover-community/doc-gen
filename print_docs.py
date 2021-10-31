@@ -712,7 +712,7 @@ def write_decl_txt(loc_map):
 def write_import_gexf(file_map):
   import_graph = env.globals['import_graph'].copy()
   for node in import_graph.nodes():
-    node['decl_count'] = len(file_map[node])
+    import_graph.nodes[node]['decl_count'] = len(file_map[node])
 
   with open_outfile('import.gexf') as out:
     nx.write_gexf(import_graph, out, encoding="unicode")
