@@ -221,7 +221,7 @@ class ImportName(NamedTuple):
     return '.'.join(self.parts)
 
   def __str__(self):
-    return f'{self.proj}:{self.name}'  # primarily for networkx export
+    return f'{self.project}:{self.name}'  # primarily for networkx export
 
   @property
   def url(self):
