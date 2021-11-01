@@ -220,6 +220,9 @@ class ImportName(NamedTuple):
   def name(self):
     return '.'.join(self.parts)
 
+  def __str__(self):
+    return f'{self.project}:{self.name}'  # primarily for networkx export
+
   @property
   def url(self):
     return '/'.join(self.parts) + '.html'
@@ -706,6 +709,14 @@ def write_decl_txt(loc_map):
   with open_outfile('decl.bmp') as out:
     out.write('\n'.join(loc_map.keys()))
 
+def write_import_gexf(file_map):
+  import_graph = env.globals['import_graph'].copy()
+  for node in import_graph.nodes():
+    import_graph.nodes[node]['decl_count'] = len(file_map[node])
+
+  with open_outfile('import.gexf') as out:
+    nx.write_gexf(import_graph, out, encoding="unicode")
+
 def mk_export_map_entry(decl_name, filename, kind, is_meta, line, args, tp):
   return {'filename': str(filename.raw_path),
           'kind': kind,
@@ -737,6 +748,7 @@ def main():
   bib = parse_bib_file(f'{local_lean_root}docs/references.bib')
   file_map, loc_map, notes, mod_docs, instances, tactic_docs = load_json()
   setup_jinja_globals(file_map, loc_map, instances, bib)
+  write_import_gexf(file_map)
   write_decl_txt(loc_map)
   write_html_files(file_map, loc_map, notes, mod_docs, instances, tactic_docs, bib)
   write_redirects(loc_map, file_map)
