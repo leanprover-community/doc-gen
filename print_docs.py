@@ -246,6 +246,19 @@ library_link_roots = {
   'mathlib': mathlib_github_src_root,
 }
 
+# TODO: allow extending this for third-party projects
+canonical_roots = {
+  'core': 'https://leanprover-community.github.io/mathlib_docs',
+  'mathlib': 'https://leanprover-community.github.io/mathlib_docs',
+}
+
+def get_canonical_url(path, project='mathlib'):
+  try:
+    root = canonical_roots[project]
+  except KeyError:
+    return None
+  return root + '/' + path
+
 def library_link(filename: ImportName, line=None):
   try:
     root = library_link_roots[filename.project]
@@ -567,12 +580,14 @@ def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs
     current_filename = 'index.html'
     current_project = None
     out.write(env.get_template('index.j2').render(
+      canonical_url = get_canonical_url(current_filename),
       active_path=''))
 
   with open_outfile('404.html') as out:
     current_filename = '404.html'
     current_project = None
     out.write(env.get_template('404.j2').render(
+      canonical_url = None,
       active_path=''))
 
   kinds = [('tactic', 'tactics'), ('command', 'commands'), ('hole_command', 'hole_commands'), ('attribute', 'attributes')]
@@ -582,6 +597,7 @@ def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs
     with open_outfile(filename + '.html') as out:
       current_filename = filename + '.html'
       out.write(env.get_template(filename + '.j2').render(
+        canonical_url = get_canonical_url(current_filename),
         active_path='',
         entries = sorted(entries, key = lambda n: n['name']),
         tagset = sorted(set(t for e in entries for t in e['tags']))))
@@ -591,7 +607,9 @@ def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs
     with open_outfile(html_root + filename.url) as out:
       current_project = filename.project
       current_filename = filename.url
+
       out.write(env.get_template('module.j2').render(
+        canonical_url = get_canonical_url(current_filename, project=filename.project),
         active_path = filename.url,
         filename = filename,
         items = sorted(md + decls, key = lambda d: d['line']),
@@ -614,6 +632,7 @@ def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs
     current_project = 'docs'
     current_filename = 'notes.html'
     out.write(env.get_template('notes.j2').render(
+      canonical_url = get_canonical_url(current_filename),
       active_path='',
       notes = sorted(global_notes.items(), key = lambda n: n[0])))
 
@@ -621,6 +640,7 @@ def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs
     current_project = 'docs'
     current_filename = 'references.html'
     out.write(env.get_template('references.j2').render(
+      canonical_url = get_canonical_url(current_filename),
       active_path='',
       entries = sorted(bib.entries.items(), key = lambda e: e[1].alpha_label)))
 
