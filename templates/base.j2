@@ -8,7 +8,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="{% block metadesc %}The Lean mathematical library, mathlib, is a community-driven effort to build a unified library of mathematics formalized in the Lean proof assistant.{% endblock %}" />
-    {% if canonical_url is not None %}
+    {% if canonical_url is not none %}
     <link rel="canonical" href="{{ canonical_url }}" />
     {% endif %}
     <meta name="og:title" content="{{ self.title() }} - mathlib docs">
