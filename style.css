@@ -382,6 +382,7 @@ main h2, main h3, main h4, main h5, main h6 {
 .fn {
     display: inline-block;
     /* border: 1px dashed red; */
+    /* Strictly this should be `ch` not `ex`, but that results in the rendering bug in gh-81 */
     text-indent: -1ex;
     padding-left: 1ex;
     white-space: pre-wrap;
@@ -445,12 +446,12 @@ main h2, main h3, main h4, main h5, main h6 {
 
 .decl_header {
     /* indent everything but first line twice as much as decl_type */
-    text-indent: -8ex; padding-left: 8ex;
+    text-indent: -4ch; padding-left: 4ch;
 }
 
 .decl_type {
     margin-top: 2px;
-    margin-left: 4ex; /* extra indentation */
+    margin-left: 2ch; /* extra indentation */
 }
 
 .imports li, code, .decl_header, .attributes, .structure_field,
@@ -475,7 +476,7 @@ pre code { padding: 0 0; }
     display: block;
     padding-inline-start: 0;
     margin-top: 1ex;
-    text-indent: -2ex; padding-left: 2ex;
+    text-indent: -2ch; padding-left: 2ch;
 }
 
 .structure_field {
