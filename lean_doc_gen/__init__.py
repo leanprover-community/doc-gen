@@ -35,7 +35,7 @@ from .mistletoe_renderer import CustomHTMLRenderer
 
 root = os.getcwd()
 
-from jinja2 import Environment, FileSystemLoader, select_autoescape
+from jinja2 import Environment, PackageLoader, select_autoescape
 env = Environment(
     loader=PackageLoader('lean_doc_gen', 'utf-8'),
     autoescape=select_autoescape(['html', 'xml'])
