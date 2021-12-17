@@ -37,7 +37,7 @@ root = os.getcwd()
 
 from jinja2 import Environment, PackageLoader, select_autoescape
 env = Environment(
-    loader=PackageLoader('lean_doc_gen', 'utf-8'),
+    loader=PackageLoader('lean_doc_gen', encoding='utf-8'),
     autoescape=select_autoescape(['html', 'xml'])
 )
 env.globals['sorted'] = sorted
