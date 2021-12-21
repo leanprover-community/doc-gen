@@ -183,7 +183,7 @@ json.object [
   ("line", line),
   ("attributes", json.of_string_list attributes),
   ("noncomputable_reason", nc_reason.map to_string),
-  ("sorried", sorried)
+  ("sorried", sorried),
   ("equations", equations.map efmt.to_json),
   ("kind", kind),
   ("structure_fields", json.array $
