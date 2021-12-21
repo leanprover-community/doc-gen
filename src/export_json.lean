@@ -20,6 +20,7 @@ interface DeclInfo {
   line: int;
   attributes: string[];
   noncomputable_reason: string;
+  sorried: bool;
   equations: efmt[];
   kind: string;
   structure_fields: [string, efmt][];
@@ -317,7 +318,7 @@ do ff ← d.in_current_file | return none,
    attributes ← attributes_of decl_name,
    equations ← get_equations decl_name,
    let nc_reason := e.decl_noncomputable_reason decl_name,
-   let sorried := decl_name.contains_sorry,
+   sorried ← decl_name.contains_sorry,
    kind ← get_kind d,
    structure_fields ← mk_structure_fields decl_name e,
    constructors ← mk_constructors decl_name e,
