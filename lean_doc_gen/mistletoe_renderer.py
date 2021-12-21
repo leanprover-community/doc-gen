@@ -14,7 +14,7 @@ from pygments import highlight
 from pygments.lexers import get_lexer_by_name as get_lexer
 from pygments.formatters.html import HtmlFormatter
 
-from mathjax_editing import remove_math, replace_math
+from .mathjax_editing import remove_math, replace_math
 
 class RawUrl(span_token.SpanToken):
     """

@@ -36,4 +36,4 @@ bash "$source"scripts/mk_all.sh
 lean src/entrypoint.lean >export.json
 bash "$source"scripts/rm_all.sh
 
-python3 print_docs.py -r "$source" -w "$site_root" "${args[@]}"
+lean-doc-gen -r "$source" -w "$site_root" "${args[@]}"

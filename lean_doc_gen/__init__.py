@@ -26,17 +26,18 @@ from pathlib import Path
 from typing import NamedTuple, List, Optional
 import sys
 
-from mistletoe_renderer import CustomHTMLRenderer
 import pybtex.database
 from pybtex.style.labels.alpha import LabelStyle
 from pylatexenc.latex2text import LatexNodes2Text
 import networkx as nx
 
+from .mistletoe_renderer import CustomHTMLRenderer
+
 root = os.getcwd()
 
-from jinja2 import Environment, FileSystemLoader, select_autoescape
+from jinja2 import Environment, PackageLoader, select_autoescape
 env = Environment(
-    loader=FileSystemLoader('templates', 'utf-8'),
+    loader=PackageLoader('lean_doc_gen', encoding='utf-8'),
     autoescape=select_autoescape(['html', 'xml'])
 )
 env.globals['sorted'] = sorted
