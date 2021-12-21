@@ -342,7 +342,7 @@ def load_json():
       decls = json.load(f, strict=False)
   except json.JSONDecodeError:
     print("json file is corrupt:\n")
-    # The lean code might have echoed errors out into the json, orint it so that we can see them
+    # The lean code might have echoed errors out into the json, print it so that we can see them
     with open('export.json', 'r', encoding='utf-8') as f:
       raw = f.read()
       print(raw)
