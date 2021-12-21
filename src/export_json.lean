@@ -139,6 +139,7 @@ meta structure decl_info :=
 (line : ℕ)
 (attributes : list string) -- not all attributes, we have a hardcoded list to check
 (noncomputable_reason : option _root_.name)
+(sorried : bool)
 (equations : list efmt)
 (kind : string) -- def, theorem, constant, axiom, structure, inductive
 (structure_fields : list (string × efmt)) -- name and type of fields of a constructor
@@ -170,7 +171,7 @@ meta instance {α} [has_coe α json] : has_coe (option α) json :=
 ⟨λ o, match o with | some x := ↑x | none := json.null end⟩
 
 meta def decl_info.to_json : decl_info → json
-| ⟨name, is_meta, args, type, doc_string, filename, line, attributes, nc_reason, equations, kind, structure_fields, constructors⟩ :=
+| ⟨name, is_meta, args, type, doc_string, filename, line, attributes, nc_reason, sorried, equations, kind, structure_fields, constructors⟩ :=
 json.object [
   ("name", to_string name),
   ("is_meta", is_meta),
@@ -181,6 +182,7 @@ json.object [
   ("line", line),
   ("attributes", json.of_string_list attributes),
   ("noncomputable_reason", nc_reason.map to_string),
+  ("sorried", sorried)
   ("equations", equations.map efmt.to_json),
   ("kind", kind),
   ("structure_fields", json.array $
@@ -315,10 +317,11 @@ do ff ← d.in_current_file | return none,
    attributes ← attributes_of decl_name,
    equations ← get_equations decl_name,
    let nc_reason := e.decl_noncomputable_reason decl_name,
+   let sorried := decl_name.contains_sorry,
    kind ← get_kind d,
    structure_fields ← mk_structure_fields decl_name e,
    constructors ← mk_constructors decl_name e,
-   return $ some ⟨decl_name, !d.is_trusted, args, type, doc_string, filename, line, attributes, nc_reason, equations, kind, structure_fields, constructors⟩
+   return $ some ⟨decl_name, !d.is_trusted, args, type, doc_string, filename, line, attributes, nc_reason, sorried, equations, kind, structure_fields, constructors⟩
 
 meta def write_module_doc_pair : pos × string → json
 | (⟨line, _⟩, doc) := json.object [("line", line), ("doc", doc)]

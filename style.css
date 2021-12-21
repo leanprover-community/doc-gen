@@ -454,6 +454,22 @@ main h2, main h3, main h4, main h5, main h6 {
     margin-left: 2ch; /* extra indentation */
 }
 
+.decl.sorried {
+    background-color: #fff0f0;
+}
+
+.decl .sorry_msg {
+    background-color: #ffdada;
+    /* this pushes it flush with the colored margin */
+    margin-left: -8px;
+    margin-right: -8px;
+    padding: 8px;
+}
+
+.decl .sorry_msg > strong {
+    color: #a90000;
+}
+
 .imports li, code, .decl_header, .attributes, .structure_field,
         .constructor, .instances li, .equation, #search_results div {
     font-family: 'Source Code Pro', monospace;
