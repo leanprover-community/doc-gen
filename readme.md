@@ -19,6 +19,9 @@ Make sure that olean files are generated for mathlib in `_target`, otherwise thi
 
 ## Usage
 
+Install the python package using `pip install -e .`, which sets it up using a symlink so that
+you do not need to reinstall it after each edit.
+
 `./gen_docs` will create a directory `html` with the generated documentation.
 
 The links will point to `/` as the root of the site.
