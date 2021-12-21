@@ -337,8 +337,16 @@ def trace_deps(file_map):
   return graph
 
 def load_json():
-  with open('export.json', 'r', encoding='utf-8') as f:
-    decls = json.load(f, strict=False)
+  try:
+    with open('export.json', 'r', encoding='utf-8') as f:
+      decls = json.load(f, strict=False)
+  except json.JSONDecodeError:
+    print("json file is corrupt:\n")
+    # The lean code might have echoed errors out into the json, orint it so that we can see them
+    with open('export.json', 'r', encoding='utf-8') as f:
+      raw = f.read()
+      print(raw)
+    raise
   file_map, loc_map = separate_results(decls['decls'])
   for entry in decls['tactic_docs']:
     if len(entry['tags']) == 0:
