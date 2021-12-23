@@ -1,6 +1,6 @@
 {% set kind = kind_of_decl(decl) %}
 <div class="decl" id="{{ decl.name }}">
-<div class="{{ kind }}{{ " meta" if decl.is_meta }}{{ " noncomputable" if decl.noncomputable_reason }}">
+<div class="{{ kind }}{{ " meta" if decl.is_meta }}{{ " noncomputable" if decl.noncomputable_reason }}{{ " sorried" if decl.sorried }}">
 
 <div class="gh_link"><a href="{{ library_link(decl.filename, decl.line) }}">source</a></div>
 
@@ -54,5 +54,8 @@
     </details>
 {% endif %}
 
+{% if decl.sorried %}
+    <p class="sorry_msg"><strong>Note:</strong> this declaration is incomplete and uses <code>sorry</code>.</p>
+{% endif %}
 </div>
 </div>
