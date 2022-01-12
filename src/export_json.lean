@@ -267,13 +267,18 @@ meta def mk_const_with_params (d : declaration) : expr :=
 let lvls := d.univ_params.map level.param in
 expr.const d.to_name lvls
 
+meta def update_binders_with : list expr → list binder → list expr
+| (expr.local_const unique pretty _       type :: es) (bi :: bis) :=
+  (expr.local_const unique pretty bi.info type) :: update_binders_with es bis
+|  _ _ := []
+
 meta def get_constructor_type (type_name constructor_name : name) : tactic efmt :=
 do d ← get_decl type_name,
    (locs, _) ← infer_type (mk_const_with_params d) >>= mk_local_pis,
    env ← get_env,
    let locs := locs.take (env.inductive_num_params type_name),
    proj_tp ← mk_const constructor_name >>= infer_type,
-   do t ← pis locs (proj_tp.instantiate_pis locs), --.abstract_locals (locs.map expr.local_uniq_name),
+   do t ← pis (update_binders_with locs proj_tp.pi_binders.1) (proj_tp.instantiate_pis locs), --.abstract_locals (locs.map expr.local_uniq_name),
    efmt.pp t
 
 meta def mk_constructors (decl : name) (e : environment): tactic (list (string × efmt)) :=
