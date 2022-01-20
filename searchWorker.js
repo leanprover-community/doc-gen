@@ -1,27 +1,53 @@
-const req = new XMLHttpRequest();
-req.open('GET', 'decl.bmp', false /* blocking */);
-req.responseType = 'text';
-req.send();
+function isSep(c) {
+    return c === '.' || c === '_';
+}
 
-const declNames = req.responseText.split('\n');
+function matchCaseSensitive(declName, pat) {
+    let i = 0, j = 0, err = 0, lastMatch = 0
+    while (i < declName.length && j < pat.length) {
+        if (pat[j] === declName[i]) {
+            err += (isSep(pat[j]) ? 0.125 : 1) * (i - lastMatch);
+            lastMatch = i + 1;
+            j++;
+        } else if (isSep(declName[i])) {
+            err += 0.125 * (i + 1 - lastMatch);
+            lastMatch = i + 1;
+        }
+        i++;
+    }
+    err += 0.125 * (declName.length - lastMatch);
+    if (j === pat.length) {
+        return err;
+    }
+}
 
-// Adapted from the default tokenizer and
-// https://util.unicode.org/UnicodeJsps/list-unicodeset.jsp?a=%5Cp%7BZ%7D&abb=on&c=on&esc=on&g=&i=
-const SEPARATOR = /[._\n\r \u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]+/u
+function loadDecls(declBmpCnt) {
+    return declBmpCnt.split('\n').map(d => d.toLowerCase());
+}
 
-importScripts('https://cdn.jsdelivr.net/npm/minisearch@2.4.1/dist/umd/index.min.js');
-const miniSearch = new MiniSearch({
-    fields: ['decl'],
-    storeFields: ['decl'],
-    tokenize: text => text.split(SEPARATOR),
-});
-miniSearch.addAll(declNames.map((decl, id) => ({decl, id})));
+function getMatches(decls, pat, maxResults = 20) {
+    pat = pat.toLowerCase();
+    const results = [];
+    for (const decl of decls) {
+        const err = matchCaseSensitive(decl, pat);
+        if (err !== undefined) {
+            results.push({decl, err});
+        }
+    }
+    return results.sort(({err: a}, {err: b}) => a - b).slice(0, maxResults);
+}
 
-onconnect = ({ports: [port]}) =>
-    port.onmessage = ({data}) => {
-        const results = miniSearch.search(data.q, {
-            prefix: (term) => term.length > 3,
-            fuzzy: (term) => term.length > 3 && 0.2,
-        });
-        port.postMessage(results.slice(0, 20));
-    };
+if (typeof process === 'object') { // NodeJS
+    const declNames = loadDecls(require('fs').readFileSync('html/decl.bmp').toString());
+    console.log(getMatches(declNames, process.argv[2] || 'ltltle', 20));
+} else {
+    const req = new XMLHttpRequest();
+    req.open('GET', 'decl.bmp', false /* blocking */);
+    req.responseType = 'text';
+    req.send();
+
+    const declNames = loadDecls(req.responseText);
+
+    onconnect = ({ports: [port]}) =>
+        port.onmessage = ({data}) => port.postMessage(getMatches(declNames, data.q));
+}
