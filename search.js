@@ -29,9 +29,10 @@ function loadDecls(declBmpCnt) {
 function getMatches(decls, pat, maxResults = 20) {
     // const lowerPat = pat.toLowerCase();
     // const caseSensitive = pat !== lowerPat;
+    const patNoSpaces = pat.replace(/\s/g, '');
     const results = [];
     for (const [decl, lowerDecl] of decls) {
-        const err = matchCaseSensitive(decl, lowerDecl, pat);
+        const err = matchCaseSensitive(decl, lowerDecl, patNoSpaces);
         if (err !== undefined) {
             results.push({decl, err});
         }

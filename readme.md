@@ -21,6 +21,9 @@ Make sure that olean files are generated for mathlib in `_target`, otherwise thi
 
 `./gen_docs` will create a directory `html` with the generated documentation.
 
+If you don't have enough RAM to run `./gen_docs`, consider downloading the documentation
+from [here](https://github.com/leanprover-community/mathlib_docs) and renaming `docs` to `html`.
+
 The links will point to `/` as the root of the site.
 I typically host a server from the `html` directory with `python3 -m http.server`.
 If you intend to host the site somewhere else than the root,
