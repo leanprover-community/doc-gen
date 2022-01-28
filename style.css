@@ -1,4 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Merriweather&family=Open+Sans&family=Source+Code+Pro&family=Source+Code+Pro:wght@600&display=swap');
+@font-face {
+    font-family: STIX Two Math;
+    src: url('STIXTwoMath.woff2') format('woff2');
+}
 
 * {
     box-sizing: border-box;
@@ -472,7 +476,7 @@ main h2, main h3, main h4, main h5, main h6 {
 
 .imports li, code, .decl_header, .attributes, .structure_field,
         .constructor, .instances li, .equation, #search_results div {
-    font-family: 'Source Code Pro', monospace;
+    font-family: 'Source Code Pro', monospace, 'STIX Two Math';
 }
 
 pre {
