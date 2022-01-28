@@ -721,6 +721,8 @@ def copy_css_and_js(path, use_symlinks):
   cp('pygments.css', path+'pygments.css')
   cp('nav.js', path+'nav.js')
   cp('search.js', path+'search.js')
+  cp('STIXTwoMath.woff2', path+'STIXTwoMath.woff2')
+  cp('STIXlicense.txt', path+'STIXlicense.txt')
   write_add_commit_js(url_rewrites)
 
 def copy_yaml_bib_files(path):
