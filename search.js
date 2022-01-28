@@ -22,17 +22,22 @@ function matchCaseSensitive(declName, lowerDeclName, pat) {
     }
 }
 
-function loadDecls(declBmpCnt) {
-    return declBmpCnt.split('\n').map(d => [d, d.toLowerCase()]);
+function loadDecls(searchableDataCnt) {
+    return searchableDataCnt.map(({name, description}) => [name, name.toLowerCase(), description.toLowerCase()])
 }
 
-function getMatches(decls, pat, maxResults = 20) {
-    // const lowerPat = pat.toLowerCase();
-    // const caseSensitive = pat !== lowerPat;
+function getMatches(decls, pat, maxResults = 30) {
+    const lowerPats = pat.toLowerCase().split(/\s/g);
     const patNoSpaces = pat.replace(/\s/g, '');
     const results = [];
-    for (const [decl, lowerDecl] of decls) {
-        const err = matchCaseSensitive(decl, lowerDecl, patNoSpaces);
+    for (const [decl, lowerDecl, lowerDoc] of decls) {
+        let err = matchCaseSensitive(decl, lowerDecl, patNoSpaces);
+
+        // match all words as substrings of docstring
+        if (!(err < 3) && pat.length > 3 && lowerPats.every(l => lowerDoc.indexOf(l) != -1)) {
+            err = 3;
+        }
+
         if (err !== undefined) {
             results.push({decl, err});
         }
@@ -41,6 +46,6 @@ function getMatches(decls, pat, maxResults = 20) {
 }
 
 if (typeof process === 'object') { // NodeJS
-    const declNames = loadDecls(require('fs').readFileSync('html/decl.bmp').toString());
-    console.log(getMatches(declNames, process.argv[2] || 'ltltle', 20));
+    const data = loadDecls(JSON.parse(require('fs').readFileSync('searchable_data.bmp').toString()));
+    console.log(getMatches(data, process.argv[2] || 'ltltle'));
 }

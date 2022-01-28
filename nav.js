@@ -106,13 +106,14 @@ if (tse != null) {
 // Simple declaration search
 // -------------------------
 
-const declURL = new URL(`${siteRoot}decl.bmp`, window.location);
+const declURL = new URL(`${siteRoot}searchable_data.bmp`, window.location);
 const getDecls = (() => {
   let decls;
   return () => {
     if (!decls) decls = new Promise((resolve, reject) => {
         const req = new XMLHttpRequest();
-        req.addEventListener('load', () => resolve(loadDecls(req.responseText)));
+        req.responseType = 'json';
+        req.addEventListener('load', () => resolve(loadDecls(req.response)));
         req.addEventListener('error', () => reject());
         req.open('GET', declURL);
         req.send();
