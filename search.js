@@ -1,45 +1,41 @@
-function isSep(c) {
-    return c === '.' || c === '_';
-}
-
-function matchCaseSensitive(declName, lowerDeclName, pat) {
-    let i = 0, j = 0, err = 0, lastMatch = 0
-    while (i < declName.length && j < pat.length) {
-        if (pat[j] === declName[i] || pat[j] === lowerDeclName[i]) {
-            err += (isSep(pat[j]) ? 0.125 : 1) * (i - lastMatch);
-            if (pat[j] !== declName[i]) err += 0.5;
-            lastMatch = i + 1;
-            j++;
-        } else if (isSep(declName[i])) {
-            err += 0.125 * (i + 1 - lastMatch);
-            lastMatch = i + 1;
+// adapted from https://www.tutorialspoint.com/levenshtein-distance-in-javascript
+function editDistance(str1, str2) {
+    const matrix = Array(str2.length + 1).fill(null).map(
+        () => Array(str1.length + 1).fill(null)
+    );
+    for (let i = 0; i <= str1.length; i += 1) {
+        matrix[0][i] = i;
+    }
+    for (let j = 0; j <= str2.length; j += 1) {
+        matrix[j][0] = j;
+    }
+    for (let j = 1; j <= str2.length; j += 1) {
+        for (let i = 1; i <= str1.length; i += 1) {
+            const indicator = str1[i - 1] === str2[j - 1] ? 0 : 1;
+            matrix[j][i] = Math.min(
+                matrix[j][i - 1] + 1, // deletion
+                matrix[j - 1][i] + 1, // insertion
+                matrix[j - 1][i - 1] + indicator, // substitution
+            );
         }
-        i++;
     }
-    err += 0.125 * (declName.length - lastMatch);
-    if (j === pat.length) {
-        return err;
-    }
+    return matrix[str2.length][str1.length];
 }
 
-function loadDecls(declBmpCnt) {
-    return declBmpCnt.split('\n').map(d => [d, d.toLowerCase()]);
+function splitDecls(declBmpCnt) {
+    return declBmpCnt.trim().split('\n');
 }
 
-function getMatches(decls, pat, maxResults = 20) {
-    // const lowerPat = pat.toLowerCase();
-    // const caseSensitive = pat !== lowerPat;
+function getMatches(decls, patt, maxResults = 20) {
     const results = [];
-    for (const [decl, lowerDecl] of decls) {
-        const err = matchCaseSensitive(decl, lowerDecl, pat);
-        if (err !== undefined) {
-            results.push({decl, err});
-        }
+    for (const decl of decls) {
+        const dist = editDistance(decl.toLowerCase(), patt.toLowerCase());
+        results.push({decl, dist});
     }
-    return results.sort(({err: a}, {err: b}) => a - b).slice(0, maxResults);
+    return results.sort(({dist: a}, {dist: b}) => a - b).slice(0, maxResults);
 }
 
 if (typeof process === 'object') { // NodeJS
-    const declNames = loadDecls(require('fs').readFileSync('html/decl.bmp').toString());
+    const declNames = splitDecls(require('fs').readFileSync('html/decl.bmp').toString());
     console.log(getMatches(declNames, process.argv[2] || 'ltltle', 20));
 }
