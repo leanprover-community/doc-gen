@@ -9,10 +9,10 @@
 }
 
 body {
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Open Sans', 'STIX Two Math', sans-serif;
 }
 h1, h2, h3, h4, h5, h6 {
-    font-family: 'Merriweather', serif;
+    font-family: 'Merriweather', 'STIX Two Math', serif;
 }
 
 body { line-height: 1.5; }
@@ -476,7 +476,7 @@ main h2, main h3, main h4, main h5, main h6 {
 
 .imports li, code, .decl_header, .attributes, .structure_field,
         .constructor, .instances li, .equation, #search_results div {
-    font-family: 'Source Code Pro', monospace, 'STIX Two Math';
+    font-family: 'Source Code Pro', 'STIX Two Math', monospace;
 }
 
 pre {
