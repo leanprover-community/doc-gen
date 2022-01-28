@@ -757,9 +757,9 @@ def mk_export_map_entry(decl_name, filename, kind, is_meta, line, args, tp):
           'src_link': library_link(filename, line),
           'docs_link': f'{site_root}{filename.url}#{decl_name}'}
 
-def mk_export_db(loc_map, file_map):
+def mk_export_db(file_map):
   export_db = {}
-  for fn, decls in file_map.items():
+  for _, decls in file_map.items():
     for obj in decls:
       export_db[obj['name']] = mk_export_map_entry(obj['name'], obj['filename'], obj['kind'], obj['is_meta'], obj['line'], obj['args'], obj['type'])
       export_db[obj['name']]['decl_header_html'] = env.get_template('decl_header.j2').render(decl=obj)
@@ -774,6 +774,44 @@ def write_export_db(export_db):
   with gzip.GzipFile(html_root + 'export_db.json.gz', 'w') as zout:
     zout.write(json_str.encode('utf-8'))
 
+def mk_export_searchable_map_entry(filename_name, name, description, kind = '', attributes = []):
+  return {
+    'module': filename_name,
+    'name': name,
+    'description': description,
+    'kind': kind,
+    'attributes': attributes,
+  }
+
+def mk_export_searchable_db(file_map, tactic_docs):
+  export_searchable_db = []
+
+  for fn, decls in file_map.items():
+    filename_name = str(fn.url)
+    for obj in decls:
+      decl_entry = mk_export_searchable_map_entry(filename_name, obj['name'], obj['doc_string'], obj['kind'], obj['attributes'])
+      export_searchable_db.append(decl_entry)
+      for (cstr_name, _) in obj['constructors']:
+        cstr_entry = mk_export_searchable_map_entry(filename_name, cstr_name, obj['doc_string'], obj['kind'], obj['attributes'])
+        export_searchable_db.append(cstr_entry)
+      for (sf_name, _) in obj['structure_fields']:
+        sf_entry = mk_export_searchable_map_entry(filename_name, sf_name, obj['doc_string'], obj['kind'], obj['attributes'])
+        export_searchable_db.append(sf_entry)
+
+  for tactic in tactic_docs:
+    # category is the singular form of each docs webpage in 'General documentation'
+    # e.g. 'tactic' -> 'tactics.html'
+    tactic_entry_container_name = f"{tactic['category']}s.html"
+    tactic_entry = mk_export_searchable_map_entry(tactic_entry_container_name, tactic['name'], tactic['description'])
+    export_searchable_db.append(tactic_entry)
+
+  return export_searchable_db
+
+def write_export_searchable_db(searchable_data):
+  json_str = json.dumps(searchable_data)
+  with open_outfile('searchable_data.bmp') as out:
+    out.write(json_str)
+
 def main():
   bib = parse_bib_file(f'{local_lean_root}docs/references.bib')
   file_map, loc_map, notes, mod_docs, instances, tactic_docs = load_json()
@@ -785,7 +823,8 @@ def main():
   copy_css_and_js(html_root, use_symlinks=cl_args.l)
   copy_yaml_bib_files(html_root)
   copy_static_files(html_root)
-  write_export_db(mk_export_db(loc_map, file_map))
+  write_export_db(mk_export_db(file_map))
+  write_export_searchable_db(mk_export_searchable_db(file_map, tactic_docs))
   write_site_map(file_map)
 
 if __name__ == '__main__':
