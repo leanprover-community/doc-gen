@@ -776,11 +776,11 @@ def write_export_db(export_db):
 
 def mk_export_searchable_map_entry(filename_name, name, description, kind = '', attributes = []):
   return {
-    'module': filename_name,
+    # 'module': filename_name,
     'name': name,
     'description': description,
-    'kind': kind,
-    'attributes': attributes,
+    # 'kind': kind,
+    # 'attributes': attributes,
   }
 
 def mk_export_searchable_db(file_map, tactic_docs):
@@ -798,12 +798,12 @@ def mk_export_searchable_db(file_map, tactic_docs):
         sf_entry = mk_export_searchable_map_entry(filename_name, sf_name, obj['doc_string'], obj['kind'], obj['attributes'])
         export_searchable_db.append(sf_entry)
 
-  for tactic in tactic_docs:
-    # category is the singular form of each docs webpage in 'General documentation'
-    # e.g. 'tactic' -> 'tactics.html'
-    tactic_entry_container_name = f"{tactic['category']}s.html"
-    tactic_entry = mk_export_searchable_map_entry(tactic_entry_container_name, tactic['name'], tactic['description'])
-    export_searchable_db.append(tactic_entry)
+  # for tactic in tactic_docs:
+  #   # category is the singular form of each docs webpage in 'General documentation'
+  #   # e.g. 'tactic' -> 'tactics.html'
+  #   tactic_entry_container_name = f"{tactic['category']}s.html"
+  #   tactic_entry = mk_export_searchable_map_entry(tactic_entry_container_name, tactic['name'], tactic['description'])
+  #   export_searchable_db.append(tactic_entry)
 
   return export_searchable_db
 
