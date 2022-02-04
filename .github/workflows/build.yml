@@ -9,7 +9,7 @@ on:
 jobs:
   build:
     name: build and deploy docs
-    runs-on: ubuntu-latest
+    runs-on: doc-gen
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
@@ -25,10 +25,15 @@ jobs:
           ~/.elan/bin/lean --version
           echo "$HOME/.elan/bin" >> $GITHUB_PATH
 
-      - name: install Python
-        uses: actions/setup-python@v1
-        with:
-          python-version: 3.8
+      # - name: install Python
+      #   uses: actions/setup-python@v1
+      #   with:
+      #     python-version: 3.8
+
+      - name: setup python venv
+        run: |
+          python3 -m venv .venv
+          echo "$PWD/.venv/bin" >> $GITHUB_PATH
 
       - name: install Python dependencies
         run: |
@@ -57,3 +62,7 @@ jobs:
         uses: actions/upload-artifact@v2.2.4
         with:
           path: export.json
+
+      - name: clean up working directory and elan
+        if: always()
+        run: rm -rf * $HOME/.elan
