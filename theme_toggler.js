@@ -14,5 +14,14 @@ function switchTheme(e) {
     toggled = !toggled;
 }
 
-//listener for changing themes
 toggleSwitch.addEventListener('click', switchTheme, false);
+
+// also check to see if the user changes their theme settings while the page is loaded.
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+    if (event.matches) {
+     document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+     document.documentElement.setAttribute("data-theme", "light");
+    }
+})
+
