@@ -53,8 +53,8 @@ nav { line-height: normal; }
 }
 
 [data-theme="dark"] {
-    --header-bg: #181717;
-    --body-bg: #333;
+    --header-bg: #111010;
+    --body-bg: #171717;
     --code-bg: #363333;
     --text-color: #eee;
     --link-color: #58a6ff;
