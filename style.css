@@ -17,7 +17,7 @@ body {
 
 /* custom */
 a {
-   color: var(--text-alt-color); 
+   color: var(--link-color); 
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -34,7 +34,7 @@ nav { line-height: normal; }
     --body-bg: white;
     --code-bg: #f3f3f3;
     --text-color: black;
-    --text-alt-color: hsl(210, 100%, 30%);
+    --link-color: hsl(210, 100%, 30%);
 
     --implicit-arg-text-color: var(--text-color);
     
@@ -57,7 +57,7 @@ nav { line-height: normal; }
     --body-bg: #333;
     --code-bg: #363333;
     --text-color: #eee;
-    --text-alt-color: #58a6ff;
+    --link-color: #58a6ff;
 
     --implicit-arg-text-color: var(--text-color);
     
@@ -572,7 +572,7 @@ pre code { padding: 0 0; }
 /** Don't show underline on types, to prevent the ≤ vs < confusion. **/
 a:link, a:visited, a:active {
     /* custom */
-    color: var(--text-alt-color);
+    color: var(--link-color);
     text-decoration: none;
 }
 
