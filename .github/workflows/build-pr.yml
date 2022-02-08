@@ -7,7 +7,7 @@ on:
 jobs:
   deploy:
     name: Deploy
-    runs-on: ubuntu-latest
+    runs-on: doc-gen
     if: (toJSON(github.event.issue.pull_request) != 'null') && (startsWith(github.event.comment.body, '#deploy') || contains(toJSON(github.event.comment.body), '\r\n#deploy'))
     steps:
       - uses: octokit/request-action@v2.x
@@ -91,11 +91,17 @@ jobs:
           ~/.elan/bin/lean --version
           echo "$HOME/.elan/bin" >> $GITHUB_PATH
 
-      - name: install Python
+      # - name: install Python
+      #   if: (steps.parse_user.outputs.permission == 'admin')
+      #   uses: actions/setup-python@v1
+      #   with:
+      #     python-version: 3.8
+
+      - name: setup python venv
         if: (steps.parse_user.outputs.permission == 'admin')
-        uses: actions/setup-python@v1
-        with:
-          python-version: 3.8
+        run: |
+          python3 -m venv .venv
+          echo "$PWD/.venv/bin" >> $GITHUB_PATH
 
       - name: install Python dependencies
         if: (steps.parse_user.outputs.permission == 'admin')
@@ -131,3 +137,7 @@ jobs:
             -H "Content-Type: application/json" \
             -H "Authorization: token $GITHUB_TOKEN" \
             --data '{ "body": "This PR has been successfully deployed at <http://leanprover-community.github.io/mathlib_docs_demo>!" }'
+
+      - name: clean up working directory and elan
+        if: always()
+        run: rm -rf * $HOME/.elan
