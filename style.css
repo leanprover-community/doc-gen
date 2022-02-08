@@ -10,7 +10,16 @@
 
 body {
     font-family: 'Open Sans', 'STIX Two Math', sans-serif;
+    color: var(--text-color);
+    /* custom */
+    background: var(--body-bg);
 }
+
+/* custom */
+a {
+   color: var(--text-alt-color); 
+}
+
 h1, h2, h3, h4, h5, h6 {
     font-family: 'Merriweather', 'STIX Two Math', serif;
 }
@@ -20,10 +29,49 @@ nav { line-height: normal; }
 
 :root {
     --header-height: 3em;
+    /* custom */
     --header-bg: #f8f8f8;
+    --body-bg: white;
+    --code-bg: #f3f3f3;
+    --text-color: black;
+    --text-alt-color: hsl(210, 100%, 30%);
+
+    --implicit-arg-text-color: var(--text-color);
+    
+    --def-color: #92dce5;
+    --def-color-hsl-angle: 187;
+    --theorem-color: #8fe388;
+    --theorem-color-hsl-angle: 115;
+    --axiom-and-constant-color: #f44708;
+    --axiom-and-constant-color-hsl-angle: 16;
+    --structure-and-inductive-color: #f0a202;
+    --structure-and-inductive-color-hsl-angle: 40;
+    --starting-percentage: 100;
+    
     --fragment-offset: calc(var(--header-height) + 1em);
     --content-width: 55vw;
 }
+
+[data-theme="dark"] {
+    --header-bg: #181717;
+    --body-bg: #333;
+    --code-bg: #363333;
+    --text-color: #eee;
+    --text-alt-color: #58a6ff;
+
+    --implicit-arg-text-color: var(--text-color);
+    
+    --def-color: #1F497F;
+    --def-color-hsl-angle: 214;
+    --theorem-color: #134E2D;
+    --theorem-color-hsl-angle: 146;
+    --axiom-and-constant-color: #6B1B1A;
+    --axiom-and-constant-color-hsl-angle: 1;
+    --structure-and-inductive-color: #73461C;
+    --structure-and-inductive-color-hsl-angle: 29;
+    --starting-percentage: 30;
+}
+
 @supports (width: min(10px, 5vw)) {
     :root {
         --content-width: clamp(20em, 55vw, 60em);
@@ -364,23 +412,23 @@ main h2, main h3, main h4, main h5, main h6 {
 }
 
 .def {
-    border-left: 10px solid #92dce5;
-    border-top: 2px solid #92dce5;
+    border-left: 10px solid var(--def-color);
+    border-top: 2px solid var(--def-color);
 }
 
 .theorem {
-    border-left: 10px solid #8fe388;
-    border-top: 2px solid #8fe388;
+    border-left: 10px solid var(--theorem-color);
+    border-top: 2px solid var(--theorem-color);
 }
 
 .axiom, .constant {
-    border-left: 10px solid #f44708;
-    border-top: 2px solid #f44708;
+    border-left: 10px solid var(--axiom-and-constant-color);
+    border-top: 2px solid var(--axiom-and-constant-color);
 }
 
 .structure, .inductive {
-    border-left: 10px solid #f0a202;
-    border-top: 2px solid #f0a202;
+    border-left: 10px solid var(--structure-and-inductive-color);
+    border-top: 2px solid var(--structure-and-inductive-color);
 }
 
 .fn {
@@ -406,23 +454,24 @@ main h2, main h3, main h4, main h5, main h6 {
 }
 
 .def .fn:hover {
-    background-color: hsla(187, 61%, calc(100% - 5%*var(--fn)));
-    box-shadow: 0 0 0 1px hsla(187, 61%, calc(100% - 5%*(var(--fn) + 1)));
+    /* custom */
+    background-color: hsla(var(--def-color-hsl-angle), 61%, calc(var(--starting-percentage) * 1% - 3%*var(--fn)));
+    box-shadow: 0 0 0 1px hsla(var(--def-color-hsl-angle), 61%, calc(var(--starting-percentage) * 1% - 3%*(var(--fn) + 1)));
     border-radius: 5px;
 }
 .theorem .fn:hover {
-    background-color: hsla(115, 62%, calc(100% - 5%*var(--fn)));
-    box-shadow: 0 0 0 1px hsla(115, 62%, calc(100% - 5%*(var(--fn) + 1)));
+    background-color: hsla(var(--theorem-color-hsl-angle), 62%, calc(var(--starting-percentage) * 1% - 3%*var(--fn)));
+    box-shadow: 0 0 0 1px hsla(var(--theorem-color-hsl-angle), 62%, calc(var(--starting-percentage) * 1% - 3%*(var(--fn) + 1)));
     border-radius: 5px;
 }
 .axiom .fn:hover, .constant .fn:hover {
-    background-color: hsla(16, 94%, calc(100% - 5%*var(--fn)));
-    box-shadow: 0 0 0 1px hsla(16, 94%, calc(100% - 5%*(var(--fn) + 1)));
+    background-color: hsla(var(--axiom-and-constant-color-hsl-angle), 94%, calc(var(--starting-percentage) * 1% - 3%*var(--fn)));
+    box-shadow: 0 0 0 1px hsla(var(--axiom-and-constant-color-hsl-angle), 94%, calc(var(--starting-percentage) * 1% - 3%*(var(--fn) + 1)));
     border-radius: 5px;
 }
 .structure .fn:hover, .inductive .fn:hover {
-    background-color: hsla(40, 98%, calc(100% - 5%*var(--fn)));
-    box-shadow: 0 0 0 1px hsla(40, 98%, calc(100% - 5%*(var(--fn) + 1)));
+    background-color: hsla(var(--structure-and-inductive-color-hsl-angle), 98%, calc(var(--starting-percentage) * 1% - 3%*var(--fn)));
+    box-shadow: 0 0 0 1px hsla(var(--structure-and-inductive-color-hsl-angle), 98%, calc(var(--starting-percentage) * 1% - 3%*(var(--fn) + 1)));
     border-radius: 5px;
 }
 
@@ -431,7 +480,8 @@ main h2, main h3, main h4, main h5, main h6 {
 }
 
 .implicits, .impl_arg {
-    color: black;
+    /* custom */
+    color: var(--implicit-arg-text-color);
     white-space: nowrap;
 }
 
@@ -483,7 +533,7 @@ pre {
     white-space: break-spaces;
 }
 
-code, pre { background: #f3f3f3; }
+code, pre { background: var(--code-bg); }
 code, pre { border-radius: 5px; }
 code { padding: 1px 3px; }
 pre { padding: 1ex; }
@@ -521,7 +571,8 @@ pre code { padding: 0 0; }
 
 /** Don't show underline on types, to prevent the ≤ vs < confusion. **/
 a:link, a:visited, a:active {
-    color:hsl(210, 100%, 30%);
+    /* custom */
+    color: var(--text-alt-color);
     text-decoration: none;
 }
 

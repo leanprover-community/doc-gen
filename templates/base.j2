@@ -20,6 +20,7 @@
     <meta name="twitter:title" content="{{ self.title() }} - mathlib docs">
     <meta name="twitter:description" content="{{ self.metadesc() }}">
     <meta name="twitter:image" content="{{ site_root }}meta-twitter.png">
+    <script src="{{ site_root }}detect_color_scheme.js"></script>
 </head>
 
 <body>
@@ -34,6 +35,7 @@
         <input type="hidden" name="sitesearch" value="https://leanprover-community.github.io/mathlib_docs">
         <input type="text" name="q" autocomplete="off">
         <button>Google site search</button>
+        <button type="button" id="theme_toggler">toggle theme</button>
     </form>
 </header>
 
@@ -77,6 +79,7 @@ MathJax = {
 
 siteRoot = "{{ site_root }}";
 </script>
+<script src="{{ site_root }}theme_toggler.js"></script>
 <script src="{{ site_root }}add_commit.js"></script>
 <script src="{{ site_root }}search.js"></script>
 <script src="{{ site_root }}nav.js"></script>
