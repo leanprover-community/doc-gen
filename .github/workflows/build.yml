@@ -65,4 +65,4 @@ jobs:
 
       - name: clean up working directory and elan
         if: always()
-        run: rm -rf * $HOME/.elan
+        run: rm -rf * $HOME/.elan $HOME/.mathlib
