@@ -24,4 +24,3 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', eve
     var newTheme = event.matches ? "dark" : "light";
     setTheme(newTheme);
 })
-

@@ -48,6 +48,9 @@ nav { line-height: normal; }
     --structure-and-inductive-color-hsl-angle: 40;
     --starting-percentage: 100;
     
+    --hamburger-bg-color: #eee
+    --hamburger-border-color: #ccc
+    
     --fragment-offset: calc(var(--header-height) + 1em);
     --content-width: 55vw;
 }
@@ -72,6 +75,9 @@ nav { line-height: normal; }
     --structure-and-inductive-color: #73461C;
     --structure-and-inductive-color-hsl-angle: 29;
     --starting-percentage: 30;
+
+    --hamburger-bg-color: #2d2c2c;
+    --hamburger-border-color: #717171;
 }
 
 @supports (width: min(10px, 5vw)) {
@@ -148,10 +154,10 @@ header {
     label[for="nav_toggle"] {
         display: inline-block;
         margin-right: 1em;
-        border: 1px solid #ccc;
+        border: 1px solid var(--hamburger-border-color);
         padding: 0.5ex 1ex;
         cursor: pointer;
-        background: #eee;
+        background: var(--hamburger-bg-color);
     }
     #nav_toggle:checked ~ * label[for="nav_toggle"] {
         background: white;
