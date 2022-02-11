@@ -719,6 +719,7 @@ def copy_css_and_js(path, use_symlinks):
 
   cp('style.css', path+'style.css')
   cp('pygments.css', path+'pygments.css')
+  cp('pygments-dark.css', path+'pygments-dark.css')
   cp('nav.js', path+'nav.js')
   cp('search.js', path+'search.js')
   cp('detect_color_scheme.js', path+'detect_color_scheme.js')
