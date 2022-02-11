@@ -635,7 +635,7 @@ a:hover {
 .hide { display: none; }
 
 .tactic, .note {
-    border-top: 3px solid #0479c7;
+    border-top: 3px solid var(--link-color);
     padding-top: 2em;
     margin-top: 2em;
     margin-bottom: 2em;
