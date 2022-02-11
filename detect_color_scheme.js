@@ -12,5 +12,5 @@ if (storedTheme) {
 
 // this changes the value of the css varaibles to make it dark
 if (theme=="dark") {
-     document.documentElement.setAttribute("data-theme", "dark");
+    document.documentElement.setAttribute("data-theme", "dark");
 }
