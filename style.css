@@ -51,6 +51,8 @@ nav { line-height: normal; }
     --hamburger-bg-color: #eee
     --hamburger-border-color: #ccc
     
+    --tags-bg-color: #555;
+    
     --fragment-offset: calc(var(--header-height) + 1em);
     --content-width: 55vw;
 }
@@ -78,6 +80,8 @@ nav { line-height: normal; }
 
     --hamburger-bg-color: #2d2c2c;
     --hamburger-border-color: #717171;
+
+    --tags-bg-color: #AAA;
 }
 
 @supports (width: min(10px, 5vw)) {
@@ -623,7 +627,7 @@ a:hover {
 }
 
 .tags li {
-    border: 1px solid #555;
+    border: 1px solid var(--tags-bg-color);
     border-radius: 4px;
     list-style-type: none;
     padding: 1px 3px;
