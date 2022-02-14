@@ -614,7 +614,7 @@ a:hover {
 }
 
 .docfile h2 a {
-    color: black;
+    color: var(--text-color);
 }
 
 .tags {
