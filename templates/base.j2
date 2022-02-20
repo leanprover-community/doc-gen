@@ -29,6 +29,7 @@
 <input id="nav_toggle" type="checkbox">
 
 <header>
+    <div></div>
     <h1><label for="nav_toggle"></label><a href="https://leanprover-community.github.io">mathlib</a>
         <span>documentation</span></h1>
     <p class="header_filename break_within">{% block doctitle %}{{ self.title() }}{% endblock %}</p>
@@ -38,6 +39,7 @@
         <button>Google site search</button>
         <button type="button" id="theme_toggler">toggle theme</button>
     </form>
+    <button id="theme_toggler">🌓</button>
 </header>
 
 <nav class="internal_nav">{% block internal_nav %}{% endblock %}</nav>
