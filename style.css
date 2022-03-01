@@ -56,6 +56,10 @@ nav { line-height: normal; }
     
     --fragment-offset: calc(var(--header-height) + 1em);
     --content-width: 55vw;
+
+    --sorry-bg: #fff0f0;
+    --sorry-msg-bg: #ffdada;
+    --sorry-msg: #a90000;
 }
 
 [data-theme="dark"] {
@@ -84,6 +88,10 @@ nav { line-height: normal; }
     --hamburger-border-color: #717171;
 
     --tags-border-color: #AAA;
+
+    --sorry-bg: #271717;
+    --sorry-msg-bg: #3D1717;
+    --sorry-msg: #eea9a9;
 }
 
 @supports (width: min(10px, 5vw)) {
@@ -523,11 +531,11 @@ main h2, main h3, main h4, main h5, main h6 {
 }
 
 .decl.sorried {
-    background-color: #fff0f0;
+    background-color: var(--sorry-bg);
 }
 
 .decl .sorry_msg {
-    background-color: #ffdada;
+    background-color: var(--sorry-msg-bg);
     /* this pushes it flush with the colored margin */
     margin-left: -8px;
     margin-right: -8px;
@@ -535,7 +543,7 @@ main h2, main h3, main h4, main h5, main h6 {
 }
 
 .decl .sorry_msg > strong {
-    color: #a90000;
+    color: var(--sorry-msg);
 }
 
 .imports li, code, .decl_header, .attributes, .structure_field,
