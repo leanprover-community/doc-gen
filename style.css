@@ -141,7 +141,10 @@ header {
     body .nav {
         width: 100vw;
         max-width: 100vw;
-        margin-left: 1em;
+        padding-left: 2ex;
+        padding-right: 2ex;
+        padding-bottom: 2ex;
+        left: 0;
         z-index: 1;
     }
 
@@ -312,6 +315,8 @@ nav {
     --dist-to-edge: 1ex;
     width: var(--content-width);
     max-width: var(--column-width);
+    padding-bottom: 2ex;
+    padding-right: 2ex;
 }
 @supports (width: min(10px, 5vw)) {
     .nav { --desired-column-width: 20em; }
@@ -363,6 +368,13 @@ nav {
 
 .nav h4 {
     margin-bottom: 1ex;
+}
+
+.nav .radio-container {
+    display: flex;
+    justify-content: space-between;
+    padding-left: 2ex;
+    flex-flow: row wrap;
 }
 
 /* People use way too long declaration names. */
