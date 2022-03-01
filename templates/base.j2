@@ -3,6 +3,7 @@
 <head>
     <link rel="stylesheet" href="{{ site_root }}style.css">
     <link rel="stylesheet" href="{{ site_root }}pygments.css">
+    <link rel="stylesheet" href="{{ site_root }}pygments-dark.css">
     <link rel="shortcut icon" href="{{ site_root }}favicon.ico">
     <title>{% block title %}{% endblock %} - mathlib docs</title>
     <meta charset="UTF-8">
@@ -20,6 +21,7 @@
     <meta name="twitter:title" content="{{ self.title() }} - mathlib docs">
     <meta name="twitter:description" content="{{ self.metadesc() }}">
     <meta name="twitter:image" content="{{ site_root }}meta-twitter.png">
+    <script src="{{ site_root }}detect_color_scheme.js"></script>
 </head>
 
 <body>
@@ -27,6 +29,7 @@
 <input id="nav_toggle" type="checkbox">
 
 <header>
+    <div></div>
     <h1><label for="nav_toggle"></label><a href="https://leanprover-community.github.io">mathlib</a>
         <span>documentation</span></h1>
     <p class="header_filename break_within">{% block doctitle %}{{ self.title() }}{% endblock %}</p>
@@ -35,6 +38,7 @@
         <input type="text" name="q" autocomplete="off">
         <button>Google site search</button>
     </form>
+    <button type="button" id="theme_toggler">🌓</button>
 </header>
 
 <nav class="internal_nav">{% block internal_nav %}{% endblock %}</nav>
@@ -77,6 +81,7 @@ MathJax = {
 
 siteRoot = "{{ site_root }}";
 </script>
+<script src="{{ site_root }}theme_toggler.js"></script>
 <script src="{{ site_root }}add_commit.js"></script>
 <script src="{{ site_root }}search.js"></script>
 <script src="{{ site_root }}nav.js"></script>
