@@ -33,3 +33,13 @@
         </div>
     {%- endif %}
 {%- endfor %}
+<h3>Settings</h3>
+<h4>Color scheme:</h4>
+<div class="btn-group" id="theme_toggler">
+    <input type="radio" name="color_theme" id="color_theme_dark" value="dark" autocomplete="off">
+    <label class="btn" for="color_theme_dark">dark 🌒</label>
+    <input type="radio" name="color_theme" id="color_theme_system" value="system" autocomplete="off" checked>
+    <label class="btn" for="color_theme_system">system</label>
+    <input type="radio" name="color_theme" id="color_theme_light" value="light" autocomplete="off">
+    <label class="btn" for="color_theme_light">🌔 light</label>
+</div>

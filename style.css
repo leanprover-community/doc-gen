@@ -48,8 +48,9 @@ nav { line-height: normal; }
     --structure-and-inductive-color-hsl-angle: 40;
     --starting-percentage: 100;
     
-    --hamburger-bg-color: #eee
-    --hamburger-border-color: #ccc
+    --hamburger-bg-color: #eee;
+    --hamburger-active-color: white;
+    --hamburger-border-color: #ccc;
     
     --tags-border-color: #555;
     
@@ -79,6 +80,7 @@ nav { line-height: normal; }
     --starting-percentage: 30;
 
     --hamburger-bg-color: #2d2c2c;
+    --hamburger-active-color: black;
     --hamburger-border-color: #717171;
 
     --tags-border-color: #AAA;
@@ -164,7 +166,7 @@ header {
         background: var(--hamburger-bg-color);
     }
     #nav_toggle:checked ~ * label[for="nav_toggle"] {
-        background: white;
+        background: var(--hamburger-active-color);
     }
 
     body header h1 {
