@@ -33,13 +33,17 @@
         </div>
     {%- endif %}
 {%- endfor %}
-<h3>Settings</h3>
-<h4>Color scheme:</h4>
-<div class="radio-container">
-    <label for="color_theme_dark">
-        <input type="radio" name="color_theme" id="color_theme_dark" value="dark" autocomplete="off">dark</label>
-    <label for="color_theme_system" title="Match system theme settings">
-        <input type="radio" name="color_theme" id="color_theme_system" value="system" autocomplete="off">system</label>
-    <label for="color_theme_light">
-        <input type="radio" name="color_theme" id="color_theme_light" value="light" autocomplete="off">light</label>
+
+<div id="settings">
+
+<h3>Color scheme</h3>
+<form id="color-theme-switcher">
+    <label for="color-theme-dark">
+        <input type="radio" name="color_theme" id="color-theme-dark" value="dark" autocomplete="off">dark</label>
+    <label for="color-theme-system" title="Match system theme settings">
+        <input type="radio" name="color_theme" id="color-theme-system" value="system" autocomplete="off">system</label>
+    <label for="color-theme-light">
+        <input type="radio" name="color_theme" id="color-theme-light" value="light" autocomplete="off">light</label>
+</form>
+
 </div>

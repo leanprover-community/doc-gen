@@ -13,7 +13,7 @@ function setTheme(themeName) {
 setTheme(getTheme())
 
 document.addEventListener("DOMContentLoaded", function() {
-    document.querySelectorAll("input[name='color_theme']").forEach((input) => {
+    document.querySelectorAll("#color-theme-switcher input").forEach((input) => {
         if (input.value == getTheme()) {
             input.checked = true;
         }

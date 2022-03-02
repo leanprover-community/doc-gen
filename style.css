@@ -17,7 +17,7 @@ body {
 
 /* custom */
 a {
-   color: var(--link-color); 
+   color: var(--link-color);
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -37,7 +37,7 @@ nav { line-height: normal; }
     --link-color: hsl(210, 100%, 30%);
 
     --implicit-arg-text-color: var(--text-color);
-    
+
     --def-color: #92dce5;
     --def-color-hsl-angle: 187;
     --theorem-color: #8fe388;
@@ -47,13 +47,13 @@ nav { line-height: normal; }
     --structure-and-inductive-color: #f0a202;
     --structure-and-inductive-color-hsl-angle: 40;
     --starting-percentage: 100;
-    
+
     --hamburger-bg-color: #eee;
     --hamburger-active-color: white;
     --hamburger-border-color: #ccc;
-    
+
     --tags-border-color: #555;
-    
+
     --fragment-offset: calc(var(--header-height) + 1em);
     --content-width: 55vw;
 
@@ -72,7 +72,7 @@ nav { line-height: normal; }
     --link-color: #58a6ff;
 
     --implicit-arg-text-color: var(--text-color);
-    
+
     --def-color: #1F497F;
     --def-color-hsl-angle: 214;
     --theorem-color: #134E2D;
@@ -370,15 +370,22 @@ nav {
     margin-bottom: 1ex;
 }
 
-.nav .radio-container {
+#settings {
+    margin-top: 5em;
+}
+#settings h3 {
+    font-size: inherit;
+}
+
+#color-theme-switcher {
     display: flex;
     justify-content: space-between;
-    padding-left: 2ex;
+    padding: 0 2ex;
     flex-flow: row wrap;
 }
 
 /* custom radio buttons for dark/light switch */
-.radio-container input[name='color_theme'] {
+#color-theme-switcher input {
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
@@ -392,17 +399,13 @@ nav {
     margin-bottom: -4px;
     border-radius: 50%;
 }
-.radio-container input[name='color_theme'][value='dark'] {
-    background-color: #444;
-}
-.radio-container input[name='color_theme'][value='light'] {
-    background-color: #ccc;
-}
-.radio-container input[name='color_theme'][value='system'] {
+#color-theme-dark { background-color: #444; }
+#color-theme-light { background-color: #ccc; }
+#color-theme-system {
     background-image: linear-gradient(60deg, #444, #444 50%, #CCC 50%, #CCC);
 }
-.radio-container input[name="color_theme"]:checked {
-  border-color: var(--text-color);
+#color-theme-switcher input:checked {
+    border-color: var(--text-color);
 }
 
 /* People use way too long declaration names. */
