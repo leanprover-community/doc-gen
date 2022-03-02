@@ -377,6 +377,34 @@ nav {
     flex-flow: row wrap;
 }
 
+/* custom radio buttons for dark/light switch */
+.radio-container input[name='color_theme'] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    display: inline-block;
+    box-sizing: content-box;
+    height: 1em;
+    width: 1em;
+    background-clip: content-box;
+    padding: 2px;
+    border: 2px solid transparent;
+    margin-bottom: -4px;
+    border-radius: 50%;
+}
+.radio-container input[name='color_theme'][value='dark'] {
+    background-color: #444;
+}
+.radio-container input[name='color_theme'][value='light'] {
+    background-color: #ccc;
+}
+.radio-container input[name='color_theme'][value='system'] {
+    background-image: linear-gradient(60deg, #444, #444 50%, #CCC 50%, #CCC);
+}
+.radio-container input[name="color_theme"]:checked {
+  border-color: var(--text-color);
+}
+
 /* People use way too long declaration names. */
 .internal_nav, .decl_name {
     overflow-wrap: break-word;
