@@ -14,6 +14,9 @@ setTheme(getTheme())
 
 document.addEventListener("DOMContentLoaded", function() {
     document.querySelectorAll("input[name='color_theme']").forEach((input) => {
+        if (input.value == getTheme()) {
+            input.checked = true;
+        }
         input.addEventListener('change', e => setTheme(e.target.value));
     });
 
