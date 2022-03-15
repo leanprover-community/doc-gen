@@ -665,9 +665,8 @@ def write_site_map(partition):
       out.write(site_root + filename + '.html\n')
 
 def write_docs_redirect(decl_name, decl_loc):
-  url = site_root + decl_loc.url
   with open_outfile(f'find/{decl_name}/index.html') as out:
-    out.write(f'<meta http-equiv="refresh" content="0;url={url}#{quote(decl_name)}">')
+    out.write(env.get_template('find.j2').render(decl_name=decl_name, decl_loc=decl_loc))
 
 def write_src_redirect(decl_name, decl_loc, file_map):
   url = library_link_from_decl_name(decl_name, decl_loc, file_map)
