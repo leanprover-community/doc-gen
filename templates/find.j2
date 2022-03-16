@@ -1,9 +1,9 @@
 <meta http-equiv="refresh" content="0;url={{site_root}}{{decl_loc.url}}#{{decl_name | urlencode}}">
 <meta name="og:title" content="{{decl_name}} - mathlib docs">
 <meta name="og:site_name" content="mathlib for Lean - API documentation">
-<meta name="og:description" content="{{ decl.doc_string | plaintext_summary }}">
+<meta name="og:description" content="{{ decl.doc_string | default("") | plaintext_summary }}">
 <meta name="og:image" content="https://leanprover-community.github.io/mathlib_docs/meta-og.png">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="{{decl_name}} - mathlib docs">
-<meta name="twitter:description" content="{{ decl.doc_string | plaintext_summary }}">
+<meta name="twitter:description" content="{{ decl.doc_string | default("") | plaintext_summary }}">
 <meta name="twitter:image" content="https://leanprover-community.github.io/mathlib_docs/meta-twitter.png">
