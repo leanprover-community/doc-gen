@@ -664,10 +664,10 @@ def write_site_map(partition):
     for (filename, _, _, _) in extra_doc_files:
       out.write(site_root + filename + '.html\n')
 
-def write_docs_redirect(decl_name, decl_loc):
-  url = site_root + decl_loc.url
+def write_docs_redirect(decl_name, decl_loc, file_map):
+  decl = next((d for d in file_map[decl_loc] if d['name'] == decl_name), None)
   with open_outfile(f'find/{decl_name}/index.html') as out:
-    out.write(f'<meta http-equiv="refresh" content="0;url={url}#{quote(decl_name)}">')
+    out.write(env.get_template('find.j2').render(decl_name=decl_name, decl_loc=decl_loc, decl=decl))
 
 def write_src_redirect(decl_name, decl_loc, file_map):
   url = library_link_from_decl_name(decl_name, decl_loc, file_map)
@@ -701,7 +701,7 @@ def write_redirects(loc_map, file_map):
   for decl_name in loc_map:
     if (decl_name == 'con' or decl_name.startswith('con.')) and sys.platform == 'win32':
       continue  # can't write these files on windows
-    write_docs_redirect(decl_name, loc_map[decl_name])
+    write_docs_redirect(decl_name, loc_map[decl_name], file_map)
     write_src_redirect(decl_name, loc_map[decl_name], file_map)
 
 def copy_css_and_js(path, use_symlinks):
