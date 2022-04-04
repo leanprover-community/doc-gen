@@ -54,6 +54,17 @@
     </details>
 {% endif %}
 
+{% if decl.name in instances_for %}
+    <details class="instances-for">
+        <summary>Available typeclasses</summary>
+        <ul>
+            {% for inst in instances_for[decl.name] %}
+                <li>{{ inst | linkify }}</li>
+            {% endfor %}
+        </ul>
+    </details>
+{% endif %}
+
 {% if decl.sorried %}
     <p class="sorry_msg"><strong>Note:</strong> this declaration is incomplete and uses <code>sorry</code>.</p>
 {% endif %}
