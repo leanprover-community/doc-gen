@@ -340,20 +340,52 @@ do docs ← olean_doc_strings,
      (filename, json.array $ l.map write_module_doc_pair) :: rest
    end) [])
 
-meta def get_instances : tactic (rb_lmap string string) :=
+/-- Extract `[foo, bar]` from `has_pow foo bar`.
+
+The result is a map containing the type names as keys.  -/
+meta def find_instance_types (e : expr) : tactic (rb_map string unit) :=
+list.mfoldl (λ m e, do
+  e ← dunfold [`decidable_rel, `decidable_pred] e {fail_if_unchanged := ff},
+  e ← whnf e transparency.reducible,
+  t ← infer_type e,
+  -- only look at arguments which are types or propositions
+  expr.sort l ← whnf t transparency.reducible | pure m,
+  some s ← match e.get_app_fn with
+  | expr.const type_name l   := pure (some type_name.to_string)
+  | expr.pi _ _ _ _          := pure (some "pi")
+  | expr.sort level.zero     := pure (some "Prop")
+  | expr.sort (level.succ l) := pure (some "Type")
+  | expr.sort l              := pure (some "Sort")
+  | expr.local_const _ _ _ _ := pure none
+  | expr.macro _ _           := pure none -- TODO: unfold macros?
+  | expr.lam _ _ _ _         := fail ("lam, not a constant: " ++ to_string e)
+  | expr.var i               := fail ("var, not a constant: " ++ to_string e)
+  | expr.mvar _ _ _          := fail ("mvar, not a constant: " ++ to_string e)
+  | expr.app _ _             := fail ("app, not a constant: " ++ to_string e)
+  | expr.elet _ _ _ _        := fail ("elet, not a constant: " ++ to_string e)
+  end | pure m,
+  pure (m.insert s ())
+) mk_rb_map e.get_app_args 
+
+meta def get_instances : tactic (rb_lmap string string × rb_lmap string string) :=
 attribute.get_instances `instance >>= list.mfoldl
-  (λ map inst_nm,
+  (λ ⟨map, rev_map⟩ inst_nm,
    do ty ← mk_const inst_nm >>= infer_type,
-      (_, e) ← open_pis_whnf ty transparency.reducible,
+      (binders, e) ← open_pis_whnf ty transparency.reducible,
       e ← whnf e transparency.reducible,
       expr.const class_nm _ ← pure e.get_app_fn |
         fail ("not a constant: " ++ to_string e),
-      return $ map.insert class_nm.to_string inst_nm.to_string)
-  mk_rb_map
+      types ← find_instance_types e,
+      let new_rev_map :=
+        types.fold rev_map (λ arg _ rev_map,  rev_map.insert arg inst_nm.to_string),
+      return $ (map.insert class_nm.to_string inst_nm.to_string, new_rev_map))
+  (mk_rb_map, mk_rb_map)
 
-meta def format_instance_list : tactic json :=
-do map ← get_instances,
-   pure $ json.object $ map.to_list.map (λ ⟨n, l⟩, (n, json.of_string_list l))
+meta def format_instance_list : tactic (json × json) :=
+do ⟨map, rev_map⟩ ← get_instances,
+   pure (
+     json.object $ map.to_list.map (λ ⟨n, l⟩, (n, json.of_string_list l)),
+     json.object $ rev_map.to_list.map (λ ⟨n, l⟩, (n, json.of_string_list l)))
 
 meta def format_notes : tactic json :=
 do l ← get_library_notes,
@@ -395,13 +427,14 @@ end,
 mod_docs ← write_olean_docs,
 notes ← format_notes,
 tactic_docs ← format_tactic_docs,
-instl ← format_instance_list,
+⟨instl, rev_instl⟩ ← format_instance_list,
 pure $ json.object [
   ("decls", decls),
   ("mod_docs", json.object mod_docs),
   ("notes", notes),
   ("tactic_docs", tactic_docs),
-  ("instances", instl)
+  ("instances", instl),
+  ("instances_for", rev_instl)
 ]
 
 open lean.parser
