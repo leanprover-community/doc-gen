@@ -359,7 +359,7 @@ def load_json():
       continue  # this is doc-gen itself
     file_map[i_name]
 
-  return file_map, loc_map, decls['notes'], mod_docs, decls['instances'], decls['tactic_docs']
+  return file_map, loc_map, decls['notes'], mod_docs, decls['instances'], decls['instances_for'], decls['tactic_docs']
 
 def linkify_core(decl_name, text, loc_map):
   if decl_name in loc_map:
@@ -561,10 +561,11 @@ def mk_site_tree_core(filenames, path=[]):
 
   return entries
 
-def setup_jinja_globals(file_map, loc_map, instances, bib):
+def setup_jinja_globals(file_map, loc_map, instances, instances_for, bib):
   env.globals['import_graph'] = trace_deps(file_map)
   env.globals['site_tree'] = mk_site_tree(file_map)
   env.globals['instances'] = instances
+  env.globals['instances_for'] = instances_for
   env.globals['import_options'] = lambda d, i: import_options(loc_map, d, i)
   env.filters['linkify'] = lambda x: linkify(x, loc_map)
   env.filters['linkify_efmt'] = lambda x: linkify_efmt(x, loc_map)
@@ -579,7 +580,7 @@ current_filename: Optional[str] = None
 current_project: Optional[str] = None
 global_notes = {}
 GlobalNote = namedtuple('GlobalNote', ['md', 'backrefs'])
-def write_html_files(partition, loc_map, notes, mod_docs, instances, tactic_docs, bib):
+def write_html_files(partition, loc_map, notes, mod_docs, instances, instances_for, tactic_docs, bib):
   global current_filename, current_project
   for note_name, note_markdown in notes:
     global_notes[note_name] = GlobalNote(note_markdown, [])
@@ -816,11 +817,11 @@ def write_export_searchable_db(searchable_data):
 
 def main():
   bib = parse_bib_file(f'{local_lean_root}docs/references.bib')
-  file_map, loc_map, notes, mod_docs, instances, tactic_docs = load_json()
-  setup_jinja_globals(file_map, loc_map, instances, bib)
+  file_map, loc_map, notes, mod_docs, instances, instances_for, tactic_docs = load_json()
+  setup_jinja_globals(file_map, loc_map, instances, instances_for, bib)
   write_import_gexf(file_map)
   write_decl_txt(loc_map)
-  write_html_files(file_map, loc_map, notes, mod_docs, instances, tactic_docs, bib)
+  write_html_files(file_map, loc_map, notes, mod_docs, instances, instances_for, tactic_docs, bib)
   write_redirects(loc_map, file_map)
   copy_css_and_js(html_root, use_symlinks=cl_args.l)
   copy_yaml_bib_files(html_root)
