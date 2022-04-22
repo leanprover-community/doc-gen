@@ -56,7 +56,7 @@
 
 {% if decl.name in instances_for %}
     <details class="instances-for">
-        <summary>Available typeclasses</summary>
+        <summary>Available instances</summary>
         <ul>
             {% for inst in instances_for[decl.name] %}
                 <li>{{ inst | linkify }}</li>
