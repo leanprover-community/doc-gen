@@ -1,7 +1,7 @@
 mistletoe>=0.7.2
 toml
 mathlibtools
-pygments >= 2.7.1
+pygments >= 2.7.1, < 2.12
 jinja2
 networkx
 pybtex>=0.22.2
