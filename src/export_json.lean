@@ -343,9 +343,9 @@ do docs ← olean_doc_strings,
 /-- Extract `[foo, bar]` from `has_pow foo bar`.
 
 The result is a map containing the type names as keys.  -/
-meta def find_instance_types (e : expr) : tactic (rb_map string unit) :=
+meta def find_instance_types (e : expr) : tactic (rb_set string) :=
 list.mfoldl (λ m e, do
-  e ← dunfold [`decidable_rel, `decidable_pred] e {fail_if_unchanged := ff},
+  -- e ← dunfold [`decidable_rel, `decidable_pred] e {fail_if_unchanged := ff},
   e ← whnf e transparency.reducible,
   t ← infer_type e,
   -- only look at arguments which are types or propositions
@@ -364,8 +364,8 @@ list.mfoldl (λ m e, do
   | expr.app _ _             := fail ("app, not a constant: " ++ to_string e)
   | expr.elet _ _ _ _        := fail ("elet, not a constant: " ++ to_string e)
   end | pure m,
-  pure (m.insert s ())
-) mk_rb_map e.get_app_args 
+  pure (m.insert s)
+) mk_rb_set e.get_app_args 
 
 meta def get_instances : tactic (rb_lmap string string × rb_lmap string string) :=
 attribute.get_instances `instance >>= list.mfoldl
@@ -377,7 +377,7 @@ attribute.get_instances `instance >>= list.mfoldl
         fail ("not a constant: " ++ to_string e),
       types ← find_instance_types e,
       let new_rev_map :=
-        types.fold rev_map (λ arg _ rev_map,  rev_map.insert arg inst_nm.to_string),
+        types.fold rev_map (λ arg rev_map, rev_map.insert arg inst_nm.to_string),
       return $ (map.insert class_nm.to_string inst_nm.to_string, new_rev_map))
   (mk_rb_map, mk_rb_map)
 
