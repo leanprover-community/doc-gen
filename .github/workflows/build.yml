@@ -40,6 +40,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: run tests
+        # note this runs tests against the pinned copy of mathlib, to make them less likely to break
+        # the cronjob build.
+        run: |
+          leanproject get-mathlib-cache
+          lean --make test
+
       - name: run leanproject
         run: |
           cd mathlib

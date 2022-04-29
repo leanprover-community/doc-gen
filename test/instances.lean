@@ -1,8 +1,5 @@
-/-
-A short example to test the behavior of `get_instances`.
-To actually test this, paste this code above the `HACK` lines in `export_json.lean`, as after those
-lines notation becomes badly broken.
--/
+/- A short example to test the behavior of `get_instances`. -/
+import export_json
 
 class tc_explicit (x : Type*) (v : x).
 class tc_implicit {x : Type*} (v : x).

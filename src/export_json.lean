@@ -436,6 +436,8 @@ pure $ json.object [
 ]
 
 open lean.parser
+
+/-- Open all locales (to turn on notation, and also install some notation hacks). -/
 @[user_command]
 meta def open_all_locales (_ : interactive.parse (tk "open_all_locales")): lean.parser unit :=
 do m ← of_tactic localized_attr.get_cache,
@@ -443,13 +445,12 @@ do m ← of_tactic localized_attr.get_cache,
    cmds.mmap' $ λ m,
     when (¬ ∃ tok ∈ m.split_on '`', by exact
         (tok.length = 1 ∧ tok.front.is_alphanum) ∨ tok ∈ ["ε", "φ", "ψ", "W_", "σ", "ζ", "μ", "π"]) $
-    lean.parser.emit_code_here m <|> skip
+    lean.parser.emit_code_here m <|> skip,
+   -- HACK: print gadgets with less fluff
+   lean.parser.emit_code_here "notation x ` := `:10 y := opt_param x y",
+   -- HACKIER: print last component of name as string (because we can't do any better...)
+   lean.parser.emit_code_here "notation x ` . `:10 y := auto_param x (name.mk_string y _)"
 
 meta def main : io unit := do
 json ← run_tactic (trace_error "export_json failed:" mk_export_json),
 put_str json.unparse
-
--- HACK: print gadgets with less fluff
-notation x ` := `:10 y := opt_param x y
--- HACKIER: print last component of name as string (because we can't do any better...)
-notation x ` . `:10 y := auto_param x (name.mk_string y _)
