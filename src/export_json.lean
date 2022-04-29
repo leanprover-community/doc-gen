@@ -344,8 +344,7 @@ do docs ← olean_doc_strings,
 
 The result is a map containing the type names as keys.  -/
 meta def find_instance_types (e : expr) : tactic (rb_set string) :=
-list.mfoldl (λ m e, do
-  -- e ← dunfold [`decidable_rel, `decidable_pred] e {fail_if_unchanged := ff},
+fold_explicit_args e mk_rb_set $ λ m e, do
   e ← whnf e transparency.reducible,
   t ← infer_type e,
   -- only look at arguments which are types or propositions
@@ -365,7 +364,6 @@ list.mfoldl (λ m e, do
   | expr.elet _ _ _ _        := fail ("elet, not a constant: " ++ to_string e)
   end | pure m,
   pure (m.insert s)
-) mk_rb_set e.get_app_args 
 
 meta def get_instances : tactic (rb_lmap string string × rb_lmap string string) :=
 attribute.get_instances `instance >>= list.mfoldl
