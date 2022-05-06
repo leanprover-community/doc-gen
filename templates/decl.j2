@@ -45,7 +45,7 @@
 
 {% if decl.name in instances %}
     <details class="instances">
-        <summary>Instances</summary>
+        <summary>Instances of this typeclass</summary>
         <ul>
             {% for inst in instances[decl.name] %}
                 <li>{{ inst | linkify }}</li>
@@ -56,7 +56,11 @@
 
 {% if decl.name in instances_for %}
     <details class="instances-for">
-        <summary>Available instances</summary>
+        {% if decl.name in instances %}
+            <summary>Instances of other typeclasses for <code>{{ decl.name | htmlify_name }}</code></summary>
+        {% else %}
+            <summary>Instances for <code>{{ decl.name | htmlify_name }}</code></summary>
+        {% endif %}
         <ul>
             {% for inst in instances_for[decl.name] %}
                 <li>{{ inst | linkify }}</li>
