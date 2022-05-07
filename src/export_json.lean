@@ -340,10 +340,8 @@ do docs ← olean_doc_strings,
      (filename, json.array $ l.map write_module_doc_pair) :: rest
    end) [])
 
-#check @has_coe_to_sort.coe
-
 /--
-Three types of failure:
+The return type is to indicate three types of failure:
 * tactic failure (bug)
 * heuristic failure `exceptional.exception`
 * no name available `none`
