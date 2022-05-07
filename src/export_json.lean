@@ -340,30 +340,52 @@ do docs ← olean_doc_strings,
      (filename, json.array $ l.map write_module_doc_pair) :: rest
    end) [])
 
+#check @has_coe_to_sort.coe
+
+/--
+Three types of failure:
+* tactic failure (bug)
+* heuristic failure `exceptional.exception`
+* no name available `none`
+-/
+meta def extract_name : expr → tactic (exceptional (option string))
+| e := do
+  e ← whnf e transparency.reducible,
+  -- t ← infer_type e,
+  -- t ← whnf t transparency.reducible,
+  -- expr.sort l ← pure t | pure (pure none),
+  match e.get_app_fn with
+  | expr.const type_name l   :=
+    match e with
+    | `(@has_coe_to_sort.coe _ _ _ %%a) := do
+      s ← extract_name a,
+      pure $ match s with
+      | exceptional.success (some n) := pure $ some ("↥"++ n)
+      | x := x
+      end
+    | _ := pure $ pure $ some type_name.to_string
+    end
+  | expr.pi _ _ _ _          := pure $ pure $ some "pi"
+  | expr.sort level.zero     := pure $ pure $ some "Prop"
+  | expr.sort (level.succ l) := pure $ pure $ some "Type"
+  | expr.sort l              := pure $ pure $ some "Sort"
+  | expr.local_const _ _ _ _ := pure $ pure $ none
+  | expr.macro _ _           := pure $ pure $ none -- TODO: unfold macros?
+  | expr.lam _ _ _ body      := mk_fresh_name >>= extract_name ∘ body.instantiate_var ∘ mk_local
+  | expr.var i               := pure $ exceptional.fail format!"is a var, not a constant"
+  | expr.mvar _ _ _          := pure $ exceptional.fail format!"is a mvar, not a constant"
+  | expr.app _ _             := pure $ exceptional.fail format!"is a app, not a constant"
+  | expr.elet _ _ _ _        := pure $ exceptional.fail format!"is a elet, not a constant"
+  end
+
+
 /-- Extract `[foo, bar]` from `has_pow foo bar`.
 
 The result is a map containing the type names as keys, and a map of any unparseable arguments
 paired with an explanation of why they can't be parsed.  -/
 meta def find_instance_types (e : expr) : tactic (rb_set string × rb_map expr format) :=
 fold_explicit_args e (mk_rb_set, mk_rb_map) $ λ ⟨m, errs⟩ e, do
-  e ← whnf e transparency.reducible,
-  t ← infer_type e,
-  -- only look at arguments which are types or propositions
-  expr.sort l ← whnf t transparency.reducible | pure (m, errs),
-  let s : exceptional (option string) := match e.get_app_fn with
-  | expr.const type_name l   := pure $ some type_name.to_string
-  | expr.pi _ _ _ _          := pure $ some "pi"
-  | expr.sort level.zero     := pure $ some "Prop"
-  | expr.sort (level.succ l) := pure $ some "Type"
-  | expr.sort l              := pure $ some "Sort"
-  | expr.local_const _ _ _ _ := pure $ none
-  | expr.macro _ _           := pure $ none -- TODO: unfold macros?
-  | expr.lam _ _ _ _         := exceptional.fail format!"`{e}` is a lam, not a constant"
-  | expr.var i               := exceptional.fail format!"`{e}` is a var, not a constant"
-  | expr.mvar _ _ _          := exceptional.fail format!"`{e}` is a mvar, not a constant"
-  | expr.app _ _             := exceptional.fail format!"`{e}` is a app, not a constant"
-  | expr.elet _ _ _ _        := exceptional.fail format!"`{e}` is a elet, not a constant"
-  end,
+  s ← extract_name e | pure (m, errs),
   match s with
   | exceptional.success none := pure (m, errs)
   | exceptional.success (some n) := pure (m.insert n, errs)
@@ -383,7 +405,7 @@ attribute.get_instances `instance >>= list.mfoldl
       -- trace any errors
       if 0 < errs.size then do
         tactic.trace $ format!"Problems parsing arguments of `{inst_nm}`:" ++
-          (errs.fold format!"" $ λ e msg f, f ++ msg.indent 2)
+          (errs.fold format!"" $ λ e msg f, f ++ (format!"{e}: " ++ msg).indent 2)
       else skip,
       -- update the list of instances with everything that didn't fail
       let new_rev_map :=
