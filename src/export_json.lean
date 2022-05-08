@@ -340,20 +340,82 @@ do docs ← olean_doc_strings,
      (filename, json.array $ l.map write_module_doc_pair) :: rest
    end) [])
 
-meta def get_instances : tactic (rb_lmap string string) :=
-attribute.get_instances `instance >>= list.mfoldl
-  (λ map inst_nm,
-   do ty ← mk_const inst_nm >>= infer_type,
-      (_, e) ← open_pis_whnf ty transparency.reducible,
-      e ← whnf e transparency.reducible,
-      expr.const class_nm _ ← pure e.get_app_fn |
-        fail ("not a constant: " ++ to_string e),
-      return $ map.insert class_nm.to_string inst_nm.to_string)
-  mk_rb_map
+/--
+The return type is to indicate three types of failure:
+* tactic failure (bug)
+* heuristic failure `exceptional.exception`
+* no name available `none`
+-/
+meta def extract_name : expr → tactic (exceptional (option string))
+| e := do
+  e ← whnf e transparency.reducible,
+  -- t ← infer_type e,
+  -- t ← whnf t transparency.reducible,
+  -- expr.sort l ← pure t | pure (pure none),
+  match e.get_app_fn with
+  | expr.const type_name l   :=
+    match e with
+    | `(@has_coe_to_sort.coe _ _ _ %%a) := do
+      s ← extract_name a,
+      pure $ match s with
+      | exceptional.success (some n) := pure $ some ("↥"++ n)
+      | x := x
+      end
+    | _ := pure $ pure $ some type_name.to_string
+    end
+  | expr.pi _ _ _ _          := pure $ pure $ some "pi"
+  | expr.sort level.zero     := pure $ pure $ some "Prop"
+  | expr.sort (level.succ l) := pure $ pure $ some "Type"
+  | expr.sort l              := pure $ pure $ some "Sort"
+  | expr.local_const _ _ _ _ := pure $ pure $ none
+  | expr.macro _ _           := pure $ pure $ none -- TODO: unfold macros?
+  | expr.lam _ _ _ body      := mk_fresh_name >>= extract_name ∘ body.instantiate_var ∘ mk_local
+  | expr.var i               := pure $ exceptional.fail format!"is a var, not a constant"
+  | expr.mvar _ _ _          := pure $ exceptional.fail format!"is a mvar, not a constant"
+  | expr.app _ _             := pure $ exceptional.fail format!"is a app, not a constant"
+  | expr.elet _ _ _ _        := pure $ exceptional.fail format!"is a elet, not a constant"
+  end
 
-meta def format_instance_list : tactic json :=
-do map ← get_instances,
-   pure $ json.object $ map.to_list.map (λ ⟨n, l⟩, (n, json.of_string_list l))
+
+/-- Extract `[foo, bar]` from `has_pow foo bar`.
+
+The result is a map containing the type names as keys, and a map of any unparseable arguments
+paired with an explanation of why they can't be parsed.  -/
+meta def find_instance_types (e : expr) : tactic (rb_set string × rb_map expr format) :=
+fold_explicit_args e (mk_rb_set, mk_rb_map) $ λ ⟨m, errs⟩ e, do
+  s ← extract_name e | pure (m, errs),
+  match s with
+  | exceptional.success none := pure (m, errs)
+  | exceptional.success (some n) := pure (m.insert n, errs)
+  | exceptional.exception msg := pure (m, errs.insert e $ msg options.mk)
+  end
+
+meta def get_instances : tactic (rb_lmap string string × rb_lmap string string) :=
+attribute.get_instances `instance >>= list.mfoldl
+  (λ ⟨map, rev_map⟩ inst_nm,
+   do ty ← mk_const inst_nm >>= infer_type,
+      (binders, e) ← open_pis_whnf ty transparency.reducible,
+      e ← whnf e transparency.reducible,
+      expr.const class_nm _ ← pure e.get_app_fn | do {
+        tactic.trace $ format!"Problems parsing `{inst_nm}`: `{e}` is not a constant",
+        return (map, rev_map) },
+      (types, errs) ← find_instance_types e,
+      -- trace any errors
+      if 0 < errs.size then do
+        tactic.trace $ format!"Problems parsing arguments of `{inst_nm}`:" ++
+          (errs.fold format!"" $ λ e msg f, f ++ (format!"{e}: " ++ msg).indent 2)
+      else skip,
+      -- update the list of instances with everything that didn't fail
+      let new_rev_map :=
+        types.fold rev_map (λ arg rev_map, rev_map.insert arg inst_nm.to_string),
+      return $ (map.insert class_nm.to_string inst_nm.to_string, new_rev_map))
+  (mk_rb_map, mk_rb_map)
+
+meta def format_instance_list : tactic (json × json) :=
+do ⟨map, rev_map⟩ ← get_instances,
+   pure (
+     json.object $ map.to_list.map (λ ⟨n, l⟩, (n, json.of_string_list l)),
+     json.object $ rev_map.to_list.map (λ ⟨n, l⟩, (n, json.of_string_list l)))
 
 meta def format_notes : tactic json :=
 do l ← get_library_notes,
@@ -395,16 +457,19 @@ end,
 mod_docs ← write_olean_docs,
 notes ← format_notes,
 tactic_docs ← format_tactic_docs,
-instl ← format_instance_list,
+⟨instl, rev_instl⟩ ← format_instance_list,
 pure $ json.object [
   ("decls", decls),
   ("mod_docs", json.object mod_docs),
   ("notes", notes),
   ("tactic_docs", tactic_docs),
-  ("instances", instl)
+  ("instances", instl),
+  ("instances_for", rev_instl)
 ]
 
 open lean.parser
+
+/-- Open all locales (to turn on notation, and also install some notation hacks). -/
 @[user_command]
 meta def open_all_locales (_ : interactive.parse (tk "open_all_locales")): lean.parser unit :=
 do m ← of_tactic localized_attr.get_cache,
@@ -412,13 +477,12 @@ do m ← of_tactic localized_attr.get_cache,
    cmds.mmap' $ λ m,
     when (¬ ∃ tok ∈ m.split_on '`', by exact
         (tok.length = 1 ∧ tok.front.is_alphanum) ∨ tok ∈ ["ε", "φ", "ψ", "W_", "σ", "ζ", "μ", "π"]) $
-    lean.parser.emit_code_here m <|> skip
+    lean.parser.emit_code_here m <|> skip,
+   -- HACK: print gadgets with less fluff
+   lean.parser.emit_code_here "notation x ` := `:10 y := opt_param x y",
+   -- HACKIER: print last component of name as string (because we can't do any better...)
+   lean.parser.emit_code_here "notation x ` . `:10 y := auto_param x (name.mk_string y _)"
 
 meta def main : io unit := do
 json ← run_tactic (trace_error "export_json failed:" mk_export_json),
 put_str json.unparse
-
--- HACK: print gadgets with less fluff
-notation x ` := `:10 y := opt_param x y
--- HACKIER: print last component of name as string (because we can't do any better...)
-notation x ` . `:10 y := auto_param x (name.mk_string y _)
