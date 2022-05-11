@@ -9,7 +9,7 @@ Extra features include:
 """
 import re
 
-from mistletoe import Document, HTMLRenderer, span_token
+from mistletoe import Document, HTMLRenderer, BaseRenderer, span_token
 from pygments import highlight
 from pygments.lexers import get_lexer_by_name as get_lexer
 from pygments.formatters.html import HtmlFormatter
@@ -114,3 +114,71 @@ class CustomHTMLRenderer(HTMLRenderer):
         Linkify raw URLs.
         """
         return f'<a href="{token.url}">{token.url}</a>'
+
+
+class PlaintextSummaryRenderer(BaseRenderer):
+    """ A renderer for single-line plaintext summaries, such as those used in social previews """
+
+    render_strong = BaseRenderer.render_inner
+    render_emphasis = BaseRenderer.render_inner
+
+    def render_inline_code(self, token):
+        return f"`{self.render_inner(token)}`"
+
+    def render_raw_text(self, token):
+        return token.content
+
+    render_strikethrough = BaseRenderer.render_inner
+    render_strikethrough = BaseRenderer.render_inner
+
+    def render_image(self, token):
+        return "<image>"
+
+    render_link = BaseRenderer.render_inner
+
+    def render_auto_link(self, token):
+        return "<link>"
+
+    render_escape_sequence = BaseRenderer.render_inner
+
+    def render_heading(self, token):
+        return f"{self.render_inner(token)}: "
+
+    def render_quote(self, token):
+        return f'“{self.render_inner(token)}”'
+
+    def render_paragraph(self, token):
+        return f"{self.render_inner(token)} "
+
+    def render_code_fence(self, token):
+        return "<code>"
+
+    def render_block_code(self, token):
+        return "<code>"
+
+    render_list = BaseRenderer.render_inner
+
+    def render_list_item(self, token):
+        s = f"{self.render_inner(token)}".rstrip()
+        if not s.endswith(tuple('.,;')):
+            s = s + '; '
+        else:
+            s = s + ' '
+        return s
+
+    def render_table(self, token):
+        return "<table>"
+
+    def render_thematic_break(self, token):
+        return " // "
+
+    def render_line_break(self, token):
+        return " "
+
+    render_document = BaseRenderer.render_inner
+
+    def render_link_definition(self, token):
+        return ""
+
+    def render_footnote(self, token):
+        return ""

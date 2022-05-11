@@ -26,7 +26,8 @@ from pathlib import Path
 from typing import NamedTuple, List, Optional
 import sys
 
-from mistletoe_renderer import CustomHTMLRenderer
+import mistletoe
+from mistletoe_renderer import CustomHTMLRenderer, PlaintextSummaryRenderer
 import pybtex.database
 from pybtex.style.labels.alpha import LabelStyle
 from pylatexenc.latex2text import LatexNodes2Text
@@ -445,30 +446,7 @@ def linkify_markdown(string: str, loc_map, bib) -> str:
   return string
 
 def plaintext_summary(markdown, max_chars = 200):
-  # collapse lines
-  text = re.compile(r'([a-zA-Z`(),;\$\-]) *\n *([a-zA-Z`()\$])').sub(r'\1 \2', markdown)
-
-  # adapted from https://github.com/writeas/go-strip-markdown/blob/master/strip.go
-  remove_keep_contents_patterns = [
-    r'(?m)^([\s\t]*)([\*\-\+]|\d\.)\s+',
-    r'\*\*([^*]+)\*\*',
-    r'\*([^*]+)\*',
-    r'(?m)^\#{1,6}\s*([^#]+)\s*(\#{1,6})?$',
-    r'__([^_]+)__',
-    r'_([^_]+)_',
-    r'\!\[(.*?)\]\s?[\[\(].*?[\]\)]',
-    r'\[(.*?)\][\[\(].*?[\]\)]'
-  ]
-  remove_patterns = [
-    r'^\s{0,3}>\s?', r'^={2,}', r'`{3}.*$', r'~~', r'^[=\-]{2,}\s*$',
-    r'^-{3,}\s*$', r'^\s*']
-
-  text = reduce(lambda text, p: re.compile(p, re.MULTILINE).sub(r'\1', text), remove_keep_contents_patterns, text)
-  text = reduce(lambda text, p: re.compile(p, re.MULTILINE).sub('', text), remove_patterns, text)
-
-  # collapse lines again
-  text = re.compile(r'\s*\.?\n').sub('. ', text)
-
+  text = PlaintextSummaryRenderer().render(mistletoe.Document(markdown))
   return textwrap.shorten(text, width = max_chars, placeholder="…")
 
 def link_to_decl(decl_name, loc_map):
