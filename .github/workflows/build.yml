@@ -39,6 +39,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install pytest
 
       - name: run tests
         # note this runs tests against the pinned copy of mathlib, to make them less likely to break
@@ -46,6 +47,7 @@ jobs:
         run: |
           leanproject get-mathlib-cache
           lean --make test
+          pytest test/
 
       - name: run leanproject
         run: |

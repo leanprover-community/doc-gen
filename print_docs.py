@@ -46,7 +46,7 @@ parser.add_argument('-w', help = 'Specify site root URL')
 parser.add_argument('-l', help = 'Symlink CSS and JS instead of copying', action = "store_true")
 parser.add_argument('-r', help = 'relative path to mathlib root directory')
 parser.add_argument('-t', help = 'relative path to html output directory')
-cl_args = parser.parse_args()
+
 
 # extra doc files to include in generation
 # the content has moved to the community website,
@@ -68,18 +68,6 @@ env.globals['extra_doc_files'] = extra_doc_files
 # format: (filename_root, display_name, source relative to cwd)
 test_doc_files = [('latex', 'latex tests', 'test/latex.md')]
 env.globals['test_doc_files'] = test_doc_files
-
-# path to put generated html
-html_root = os.path.join(root, cl_args.t if cl_args.t else 'html') + '/'
-
-# TODO: make sure nothing is left in html_root
-
-# root of the site, for display purposes.
-# override this setting with the `-w` flag.
-site_root = "/"
-
-# root directory of mathlib.
-local_lean_root = os.path.join(root, cl_args.r if cl_args.r else '_target/deps/mathlib') + '/'
 
 latexnodes2text = LatexNodes2Text()
 def clean_tex(src: str) -> str:
@@ -153,9 +141,6 @@ with open('leanpkg.toml') as f:
 ml_data = parsed_toml['dependencies']['mathlib']
 mathlib_commit = ml_data['rev']
 mathlib_github_root = ml_data['git'].strip('/')
-
-if cl_args.w:
-  site_root = cl_args.w
 
 # contains an array of [prefix, replacement] strings to be rewritten by nav.js
 url_rewrites = []
@@ -233,7 +218,6 @@ env.globals['mathlib_github_root'] = mathlib_github_root
 env.globals['mathlib_commit'] = mathlib_commit
 env.globals['lean_commit'] = lean_commit
 env.globals['docgen_commit'] = docgen_commit
-env.globals['site_root'] = site_root
 
 markdown_renderer = CustomHTMLRenderer()
 
@@ -816,6 +800,23 @@ def write_export_searchable_db(searchable_data):
     out.write(json_str)
 
 def main():
+  global html_root, local_lean_root, site_root
+  cl_args = parser.parse_args()
+
+  # path to put generated html
+  html_root = os.path.join(root, cl_args.t if cl_args.t else 'html') + '/'
+
+  # TODO: make sure nothing is left in html_root
+
+  # root of the site, for display purposes.
+  # override this setting with the `-w` flag.
+  site_root = cl_args.w if cl_args.w else '/'
+
+  # root directory of mathlib.
+  local_lean_root = os.path.join(root, cl_args.r if cl_args.r else '_target/deps/mathlib') + '/'
+
+  env.globals['site_root'] = site_root
+
   bib = parse_bib_file(f'{local_lean_root}docs/references.bib')
   file_map, loc_map, notes, mod_docs, instances, instances_for, tactic_docs = load_json()
   setup_jinja_globals(file_map, loc_map, instances, instances_for, bib)
