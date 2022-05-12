@@ -445,8 +445,9 @@ def linkify_markdown(string: str, loc_map, bib) -> str:
     lambda p: linkify_standalone_ref(p.group(0), p.group(1)), string)
   return string
 
+summary_renderer = PlaintextSummaryRenderer()
 def plaintext_summary(markdown, max_chars = 200):
-  text = PlaintextSummaryRenderer().render(mistletoe.Document(markdown))
+  text = summary_renderer.render(mistletoe.Document(markdown))
   return textwrap.shorten(text, width = max_chars, placeholder="…")
 
 def link_to_decl(decl_name, loc_map):

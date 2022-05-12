@@ -9,7 +9,7 @@ Extra features include:
 """
 import re
 
-from mistletoe import Document, HTMLRenderer, BaseRenderer, span_token
+from mistletoe import Document, HTMLRenderer, BaseRenderer, span_token, block_token
 from pygments import highlight
 from pygments.lexers import get_lexer_by_name as get_lexer
 from pygments.formatters.html import HtmlFormatter
@@ -120,7 +120,7 @@ class PlaintextSummaryRenderer(BaseRenderer):
     """ A renderer for single-line plaintext summaries, such as those used in social previews """
 
     def __init__(self):
-        super().__init__(RawUrl)
+        super().__init__(RawUrl, block_token.HTMLBlock, span_token.HTMLSpan)
 
     render_strong = BaseRenderer.render_inner
     render_emphasis = BaseRenderer.render_inner
@@ -187,3 +187,6 @@ class PlaintextSummaryRenderer(BaseRenderer):
 
     def render_raw_url(self, token):
         return "<link>"
+
+    def render_html_span(self, token):
+        return token.content
