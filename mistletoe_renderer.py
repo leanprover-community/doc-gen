@@ -119,6 +119,9 @@ class CustomHTMLRenderer(HTMLRenderer):
 class PlaintextSummaryRenderer(BaseRenderer):
     """ A renderer for single-line plaintext summaries, such as those used in social previews """
 
+    def __init__(self):
+        super().__init__(RawUrl)
+
     render_strong = BaseRenderer.render_inner
     render_emphasis = BaseRenderer.render_inner
 
@@ -128,7 +131,6 @@ class PlaintextSummaryRenderer(BaseRenderer):
     def render_raw_text(self, token):
         return token.content
 
-    render_strikethrough = BaseRenderer.render_inner
     render_strikethrough = BaseRenderer.render_inner
 
     def render_image(self, token):
@@ -182,3 +184,6 @@ class PlaintextSummaryRenderer(BaseRenderer):
 
     def render_footnote(self, token):
         return ""
+
+    def render_raw_url(self, token):
+        return "<link>"
