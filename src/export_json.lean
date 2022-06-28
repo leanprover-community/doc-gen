@@ -236,7 +236,11 @@ do intron $ count_named_intros e,
 end
 
 /-- The attributes we check for -/
-meta def attribute_list := [`simp, `norm_cast, `nolint, `ext, `instance, `class, `continuity]
+meta def attribute_list :=
+[`simp, `norm_cast, `nolint, `ext, `instance, `class, `priority,
+ `refl, `symm, `trans,
+ `continuity, `measurability,
+ `reducible, `irreducible]
 
 meta def attributes_of (n : name) : tactic (list string) := 
 do l ← list.map to_string <$> attribute_list.mfilter (λ attr, succeeds $ has_attribute attr n),
