@@ -32,6 +32,29 @@
 
 {{ decl.doc_string | convert_markdown }}
 
+{% if decl.informal_statement %}
+
+<details open>
+    <summary>Informal translation</summary>
+
+    <div class="informal_statement">
+        <div class="statement">
+            {{ decl.informal_statement }}
+        </div>
+        
+        <div class="translation_qs">
+            This translation to informal mathematics is automatically generated and should NOT be trusted!
+            The translation is a <a href="">beta feature powered by OpenAI's Codex API</a>.
+            <br>
+            Does this translation look correct? <a href="">Yes</a> | <a href = "">No</a> 
+        </div>
+    </div>
+
+
+</details> 
+
+{% endif %}
+
 {% if decl.equations | length %}
     <details>
         <summary>Equations</summary>

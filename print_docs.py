@@ -321,6 +321,16 @@ def trace_deps(file_map):
   print(f"trace_deps: Processed {n_ok} / {n} dependency links")
   return graph
 
+def add_informal_statements_to_decls(informal, file_map):
+  for file in file_map:
+    for decl in file_map[file]:
+      informal_statement = ""
+      if decl['kind'] == 'theorem':
+        informal_decl = informal.get(decl['name'], None)
+        if informal_decl is not None and decl['args'] == informal_decl['args'] and decl['type'] == informal_decl['type']:
+          informal_statement = informal_decl['informal_statement']
+      decl['informal_statement'] = informal_statement
+
 def load_json():
   try:
     with open('export.json', 'r', encoding='utf-8') as f:
@@ -333,6 +343,9 @@ def load_json():
       print(raw)
     raise
   file_map, loc_map = separate_results(decls['decls'])
+  with gzip.open('tagged_nl2.json.gz') as tagged_nl:
+    translations = json.load(tagged_nl)
+  add_informal_statements_to_decls(translations, file_map)
   for entry in decls['tactic_docs']:
     if len(entry['tags']) == 0:
       entry['tags'] = ['untagged']
