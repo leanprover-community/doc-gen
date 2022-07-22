@@ -702,24 +702,6 @@ a:hover {
     margin-top: 1em;
 }
 
-.informal_statement .explain {
-    color:var(--link-color);
-}
-
-.informal_statement .explain .tooltiptext {
-    visibility: hidden;
-    width: 120px;
-    background-color: black;
-    color: #fff;
-    text-align: center;
-    padding: 5px 0;
-    border-radius: 6px;   
-    
-    /* Position the tooltip text - see examples below! */
-    top: -5px;
-    left: 105%;
-
-}
 
 .informal_statement .statement, .informal_statement .translation_qs {
     margin-left: 2ch;
@@ -729,7 +711,3 @@ a:hover {
     color:gray;
 }
   
-/* Show the tooltip text when you mouse over the tooltip container */
-.informal_statement .explain:hover .tooltiptext {
-    visibility: visible;
-}
