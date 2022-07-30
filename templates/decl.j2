@@ -41,17 +41,19 @@
         <div class="statement">
             {{ decl.informal_statement | convert_markdown }}
         </div>
-        
+
         <div class="translation_qs">
             This translation to informal mathematics is automatically generated and should NOT be trusted!
             The translation is a <a href="">beta feature powered by OpenAI's Codex API</a>.
             <br>
-            Does this translation look correct? <a href="">Yes</a> | <a href = "">No</a> 
+            Does this translation look correct?
+            <form action="https://lean-chat.deno.dev/doc-gen?digest={{decl.informal_statement_digest}}" method="post">
+              <button type="submit" name="rate" value="yes">Yes</button>
+              <button type="submit" name="rate" value="no">No</button>
+            </form>
         </div>
     </div>
-
-
-</details> 
+</details>
 
 {% endif %}
 
