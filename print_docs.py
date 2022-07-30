@@ -25,6 +25,7 @@ from collections import Counter, defaultdict, namedtuple
 from pathlib import Path
 from typing import NamedTuple, List, Optional
 import sys
+import hashlib
 
 import mistletoe
 from mistletoe_renderer import CustomHTMLRenderer, PlaintextSummaryRenderer
@@ -321,6 +322,7 @@ def trace_deps(file_map):
   print(f"trace_deps: Processed {n_ok} / {n} dependency links")
   return graph
 
+
 def add_informal_statements_to_decls(informal, file_map):
   for file in file_map:
     for decl in file_map[file]:
@@ -330,6 +332,12 @@ def add_informal_statements_to_decls(informal, file_map):
         if informal_decl is not None and decl['args'] == informal_decl['args'] and decl['type'] == informal_decl['type']:
           informal_statement = informal_decl['informal_statement']
       decl['informal_statement'] = informal_statement
+      # create a hash of the given informal statement string
+      # there is no need for it to be a cryptographic hash, better to use xxhash but requires dependency
+      # we can't use builtin `hash` because not stable across executions.
+      m = hashlib.md5()
+      m.update(informal_statement.encode())
+      decl['informal_statement_digest'] = m.hexdigest()
 
 def load_json():
   try:
