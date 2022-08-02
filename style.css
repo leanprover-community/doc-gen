@@ -719,6 +719,12 @@ a:hover {
     background: none!important;
     border: none;
     padding: 0!important;
-    color: inherit;
+    font-family: inherit;
+    font-size: inherit;
+    color: var(--link-color);
     cursor: pointer;
+}
+
+.informal_statement form button:hover {
+  text-decoration: underline
 }
