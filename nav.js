@@ -246,3 +246,30 @@ for (const elem of document.getElementsByClassName('gh_link')) {
     }
   }
 }
+
+// Informal Statement feedback form handler
+// -------
+
+window.addEventListener('load', event => {
+  const forms = document.querySelectorAll('form.informal_statement_form')
+  for (const form of forms) {
+    const url = new URL(form.getAttribute('action'))
+    form.addEventListener('submit', event => {
+      event.preventDefault()
+      const name = event.submitter.getAttribute('name')
+      const value = event.submitter.getAttribute('value')
+      url.searchParams.set(name, value)
+      form.textContent = "Sending..."
+      fetch(url, {method: 'POST'}).then(response => {
+        if (response.ok) {
+          form.textContent = "Thanks for your feedback!"
+          // [todo] in future we can get server to return stats on how many other people found this correct etc.
+        } else {
+          form.textContent = "There was a server error."
+        }
+      }).catch(err => {
+        form.textContent = `Error: ${err.message}`
+      })
+    })
+  }
+})

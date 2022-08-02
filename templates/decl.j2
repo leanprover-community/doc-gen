@@ -46,8 +46,8 @@
             This translation to informal mathematics is automatically generated and should NOT be trusted!
             The translation is a <a href="">beta feature powered by OpenAI's Codex API</a>.
             <br>
-            Does this translation look correct?
-            <form action="https://lean-chat.deno.dev/doc-gen?digest={{decl.informal_statement_digest}}" method="post">
+            <form class="informal_statement_form" action="https://lean-chat-server.deno.dev/doc-gen?digest={{decl.informal_statement_digest}}" method="post">
+              <span>Does this translation look correct?</span>
               <button type="submit" name="rate" value="yes">Yes</button>
               <button type="submit" name="rate" value="no">No</button>
             </form>
