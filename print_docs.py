@@ -331,6 +331,8 @@ def add_informal_statements_to_decls(informal, file_map):
         informal_decl = informal.get(decl['name'], None)
         if informal_decl is not None and decl['args'] == informal_decl['args'] and decl['type'] == informal_decl['type']:
           informal_statement = informal_decl['informal_statement']
+      # a hack to avoid `$a<b$`` being interpreted as html
+      informal_statement = informal_statement.replace('<', '< ')
       decl['informal_statement'] = informal_statement
       # create a hash of the given informal statement string
       # there is no need for it to be a cryptographic hash, better to use xxhash but requires dependency
