@@ -42,14 +42,18 @@
             {{ decl.informal_statement | convert_markdown }}
         </div>
 
-        <div class="translation_qs">
+        <div class="translation_qs" data-decl="{{decl.name}}">
             This translation to informal mathematics is automatically generated and should NOT be trusted!
             The translation is a <a href="">beta feature powered by OpenAI's Codex API</a>.
             <br>
-            <form class="informal_statement_form" action="https://lean-chat-server.deno.dev/doc-gen?digest={{decl.informal_statement_digest}}" method="post">
-              <span>Does this translation look correct?</span>
+            <form class="informal_statement_feedback" action="https://lean-chat-server.deno.dev/doc-gen?digest={{decl.informal_statement_digest}}" method="post">
+              <span class="status" >Does this translation look correct?</span>
               <button type="submit" name="rate" value="yes">Yes</button>
               <button type="submit" name="rate" value="no">No</button>
+            </form>
+            <form class="informal_statement_edit" style="display: none;" action="#">
+                <textarea name="statement" rows="6">{{decl.informal_statement}}</textarea>
+                <button type="submit">Submit</button>
             </form>
         </div>
     </div>

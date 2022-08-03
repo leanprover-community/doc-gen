@@ -250,26 +250,48 @@ for (const elem of document.getElementsByClassName('gh_link')) {
 // Informal Statement feedback form handler
 // -------
 
-window.addEventListener('load', event => {
-  const forms = document.querySelectorAll('form.informal_statement_form')
-  for (const form of forms) {
-    const url = new URL(form.getAttribute('action'))
-    form.addEventListener('submit', event => {
+window.addEventListener('load', _ => {
+  for (const translationDiv of document.querySelectorAll('.translation_qs')) {
+    const declName = translationDiv.getAttribute('data-decl')
+    if (!declName) {
+      console.error('no data-decl on translation_qs')
+    }
+    const feedbackForm = translationDiv.querySelector('.informal_statement_feedback')
+    const editForm = translationDiv.querySelector('.informal_statement_edit')
+    const ta = editForm.querySelector('textarea')
+    const url = new URL(feedbackForm.getAttribute('action'));
+    url.searchParams.set('decl', declName)
+    url.searchParams.set('statement', ta.value)
+    feedbackForm.addEventListener('submit', async event => {
       event.preventDefault()
-      const name = event.submitter.getAttribute('name')
-      const value = event.submitter.getAttribute('value')
-      url.searchParams.set(name, value)
-      form.textContent = "Sending..."
-      fetch(url, {method: 'POST'}).then(response => {
-        if (response.ok) {
-          form.textContent = "Thanks for your feedback!"
-          // [todo] in future we can get server to return stats on how many other people found this correct etc.
-        } else {
-          form.textContent = "There was a server error."
+      try {
+        const name = event.submitter.getAttribute('name')
+        const value = event.submitter.getAttribute('value')
+        url.searchParams.set(name, value)
+        if (value === 'no') {
+          feedbackForm.textContent = "Please correct the text below:"
+          editForm.removeAttribute('style')
+          const edit = await new Promise((resolve, reject) => {
+            editForm.addEventListener('submit', event => {
+              event.preventDefault()
+              resolve(ta.value)
+            })
+          });
+          url.searchParams.set('edit', edit)
+          editForm.remove()
         }
-      }).catch(err => {
-        form.textContent = `Error: ${err.message}`
-      })
+        feedbackForm.textContent = "Sending..."
+
+        const response = await fetch(url, { method: 'POST' })
+        if (response.ok) {
+          feedbackForm.textContent = "Thanks for your feedback!"
+        } else {
+          const txt = await response.text()
+          throw new Error(`Bad response: ${txt}`)
+        }
+      } catch (err) {
+        feedbackForm.textContent = `Error: ${err.message}`
+      }
     })
   }
 })

@@ -711,11 +711,11 @@ a:hover {
     color:gray;
 }
 
-.informal_statement form {
+.informal_statement_feedback {
   display: inline;
 }
 
-.informal_statement form button {
+.informal_statement_feedback button {
     background: none!important;
     border: none;
     padding: 0!important;
@@ -725,6 +725,11 @@ a:hover {
     cursor: pointer;
 }
 
-.informal_statement form button:hover {
+.informal_statement_feedback button:hover {
   text-decoration: underline
+}
+
+.informal_statement_edit textarea {
+    font-size: 1rem;
+    width: 100%;
 }
