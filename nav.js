@@ -250,6 +250,15 @@ for (const elem of document.getElementsByClassName('gh_link')) {
 // Informal Statement feedback form handler
 // -------
 
+/** Same as `fetch` but throws an error if it's a bad response. */
+async function fetchGood(...args) {
+  const response = await fetch(...args);
+  if (!response.ok)  {
+    const txt = await response.text()
+    throw new Error(`Bad response: ${txt}`)
+  }
+}
+
 window.addEventListener('load', _ => {
   for (const translationDiv of document.querySelectorAll('.translation_qs')) {
     const declName = translationDiv.getAttribute('data-decl')
@@ -268,8 +277,10 @@ window.addEventListener('load', _ => {
         const name = event.submitter.getAttribute('name')
         const value = event.submitter.getAttribute('value')
         url.searchParams.set(name, value)
+        feedbackForm.textContent = "Sending..."
+        await fetchGood(url, { method: 'POST' });
         if (value === 'no') {
-          feedbackForm.textContent = "Please correct the text below:"
+          feedbackForm.textContent = "Thanks for your feedback! Optionally, please help us out by submitting a corrected statement: "
           editForm.removeAttribute('style')
           const edit = await new Promise((resolve, reject) => {
             editForm.addEventListener('submit', event => {
@@ -279,16 +290,10 @@ window.addEventListener('load', _ => {
           });
           url.searchParams.set('edit', edit)
           editForm.remove()
+          feedbackForm.textContent = "Sending...";
+          await fetchGood(url, { method: 'POST' });
         }
-        feedbackForm.textContent = "Sending..."
-
-        const response = await fetch(url, { method: 'POST' })
-        if (response.ok) {
-          feedbackForm.textContent = "Thanks for your feedback!"
-        } else {
-          const txt = await response.text()
-          throw new Error(`Bad response: ${txt}`)
-        }
+        feedbackForm.textContent = "Thanks for your feedback!"
       } catch (err) {
         feedbackForm.textContent = `Error: ${err.message}`
       }
