@@ -274,9 +274,8 @@ window.addEventListener('load', _ => {
     feedbackForm.addEventListener('submit', async event => {
       event.preventDefault()
       try {
-        const name = event.submitter.getAttribute('name')
         const value = event.submitter.getAttribute('value')
-        url.searchParams.set(name, value)
+        url.searchParams.set('rate', value)
         feedbackForm.textContent = "Sending..."
         await fetchGood(url, { method: 'POST' });
         if (value === 'no') {
@@ -288,6 +287,7 @@ window.addEventListener('load', _ => {
               resolve(ta.value)
             })
           });
+          url.searchParams.delete('rate') // don't double-count the rating.
           url.searchParams.set('edit', edit)
           editForm.remove()
           feedbackForm.textContent = "Sending...";
