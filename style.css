@@ -377,11 +377,16 @@ nav {
     font-size: inherit;
 }
 
-#color-theme-switcher {
+#settings form {
     display: flex;
     justify-content: space-between;
     padding: 0 2ex;
     flex-flow: row wrap;
+}
+
+#settings input[type="checkbox"] {
+    margin-left: 5px;
+    margin-top: 5px;
 }
 
 /* custom radio buttons for dark/light switch */

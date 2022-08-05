@@ -259,6 +259,7 @@ async function fetchGood(...args) {
   }
 }
 
+/** Handler for clicking feedback buttons in informal statements. */
 window.addEventListener('load', _ => {
   for (const translationDiv of document.querySelectorAll('.translation_qs')) {
     const declName = translationDiv.getAttribute('data-decl')
@@ -299,4 +300,31 @@ window.addEventListener('load', _ => {
       }
     })
   }
+})
+
+const INFORMAL_OPEN_ID = 'informal_statement_open';
+function updateInformalOpen(state) {
+  if (state !== undefined) {
+    localStorage.setItem(INFORMAL_OPEN_ID, state);
+  } else {
+    state = localStorage.getItem(INFORMAL_OPEN_ID) ?? true;
+  }
+  const details = document.querySelectorAll('.informal_statement_details');
+  for (const detail of details) {
+    if (state) {
+      detail.setAttribute('open', '');
+    } else {
+      detail.removeAttribute('open');
+    }
+  }
+}
+
+window.addEventListener('load', _ => {
+  updateInformalOpen();
+  const checkbox = document.querySelector('#informal-open');
+  checkbox.checked = localStorage.getItem(INFORMAL_OPEN_ID) ?? true
+  checkbox.addEventListener('change', e => {
+    const value = checkbox.checked
+    updateInformalOpen(value)
+  })
 })
