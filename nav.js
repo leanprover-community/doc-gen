@@ -305,11 +305,11 @@ window.addEventListener('load', _ => {
 const INFORMAL_OPEN_ID = 'informal_statement_open';
 
 function getInformalOpen() {
-  const item = localStorage.getItem(INFORMAL_OPEN_ID)
+  const item = localStorage.getItem(INFORMAL_OPEN_ID);
   if (!item) {
-    return false // default is closed
+    return false; // default is closed
   } else {
-    return JSON.parse(item)
+    return JSON.parse(item);
   }
 }
 
