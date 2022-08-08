@@ -307,7 +307,7 @@ const INFORMAL_OPEN_ID = 'informal_statement_open';
 function getInformalOpen() {
   const item = localStorage.getItem(INFORMAL_OPEN_ID)
   if (!item) {
-    return true // default is open
+    return false // default is closed
   } else {
     return JSON.parse(item)
   }
