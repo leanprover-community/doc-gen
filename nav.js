@@ -262,35 +262,35 @@ async function fetchGood(...args) {
 /** Handler for clicking feedback buttons in informal statements. */
 window.addEventListener('load', _ => {
   for (const translationDiv of document.querySelectorAll('.translation_qs')) {
-    const declName = translationDiv.getAttribute('data-decl')
+    const declName = translationDiv.getAttribute('data-decl');
     if (!declName) {
-      console.error('no data-decl on translation_qs')
+      console.error('no data-decl on translation_qs');
     }
-    const feedbackForm = translationDiv.querySelector('.informal_statement_feedback')
-    const editForm = translationDiv.querySelector('.informal_statement_edit')
-    const ta = editForm.querySelector('textarea')
+    const feedbackForm = translationDiv.querySelector('.informal_statement_feedback');
+    const editForm = translationDiv.querySelector('.informal_statement_edit');
+    const ta = editForm.querySelector('textarea');
     const url = new URL(feedbackForm.getAttribute('action'));
-    url.searchParams.set('decl', declName)
-    url.searchParams.set('statement', ta.value)
+    url.searchParams.set('decl', declName);
+    url.searchParams.set('statement', ta.value);
     feedbackForm.addEventListener('submit', async event => {
-      event.preventDefault()
+      event.preventDefault();
       try {
-        const value = event.submitter.getAttribute('value')
-        url.searchParams.set('rate', value)
-        feedbackForm.textContent = "Sending..."
+        const value = event.submitter.getAttribute('value');
+        url.searchParams.set('rate', value);
+        feedbackForm.textContent = "Sending...";
         await fetchGood(url, { method: 'POST' });
         if (value === 'no') {
-          feedbackForm.textContent = "Thanks for your feedback! Optionally, please help us out by submitting a corrected statement: "
-          editForm.removeAttribute('style')
+          feedbackForm.textContent = "Thanks for your feedback! Optionally, please help us out by submitting a corrected statement: ";
+          editForm.removeAttribute('style');
           const edit = await new Promise((resolve, reject) => {
             editForm.addEventListener('submit', event => {
-              event.preventDefault()
-              resolve(ta.value)
-            })
+              event.preventDefault();
+              resolve(ta.value);
+            });
           });
-          url.searchParams.delete('rate') // don't double-count the rating.
-          url.searchParams.set('edit', edit)
-          editForm.remove()
+          url.searchParams.delete('rate'); // don't double-count the rating.
+          url.searchParams.set('edit', edit);
+          editForm.remove();
           feedbackForm.textContent = "Sending...";
           await fetchGood(url, { method: 'POST' });
         }
@@ -333,4 +333,4 @@ window.addEventListener('load', _ => {
     const value = checkbox.checked;
     updateInformalOpen(value);
   });
-})
+});
