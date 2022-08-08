@@ -296,39 +296,41 @@ window.addEventListener('load', _ => {
         }
         feedbackForm.textContent = "Thanks for your feedback!"
       } catch (err) {
-        feedbackForm.textContent = `Error: ${err.message}`
+        feedbackForm.textContent = `Error: ${err.message}`;
       }
     })
   }
 })
 
 const INFORMAL_OPEN_ID = 'informal_statement_open';
+
 function getInformalOpen() {
-  let x = localStorage.getItem(INFORMAL_OPEN_ID) ?? 'true';
-  return x === 'true';
+  const item = localStorage.getItem(INFORMAL_OPEN_ID)
+  if (!item) {
+    return true // default is open
+  } else {
+    return JSON.parse(item)
+  }
 }
+
 function updateInformalOpen(state) {
   if (state !== undefined) {
-    localStorage.setItem(INFORMAL_OPEN_ID, state);
+    localStorage.setItem(INFORMAL_OPEN_ID, JSON.stringify(state));
   } else {
     state = getInformalOpen();
   }
   const details = document.querySelectorAll('.informal_statement_details');
   for (const detail of details) {
-    if (state) {
-      detail.setAttribute('open', '');
-    } else {
-      detail.removeAttribute('open');
-    }
+    detail.open = state;
   }
 }
 
 window.addEventListener('load', _ => {
   updateInformalOpen();
   const checkbox = document.querySelector('#informal-open');
-  checkbox.checked = getInformalOpen()
+  checkbox.checked = getInformalOpen();
   checkbox.addEventListener('change', e => {
-    const value = checkbox.checked
-    updateInformalOpen(value)
-  })
+    const value = checkbox.checked;
+    updateInformalOpen(value);
+  });
 })
