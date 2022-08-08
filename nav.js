@@ -304,14 +304,14 @@ window.addEventListener('load', _ => {
 
 const INFORMAL_OPEN_ID = 'informal_statement_open';
 function getInformalOpen() {
-  let x = localStorage.getItem(INFORMAL_OPEN_ID) ?? 'true'
-  return x === 'true' ? true : false
+  let x = localStorage.getItem(INFORMAL_OPEN_ID) ?? 'true';
+  return x === 'true';
 }
 function updateInformalOpen(state) {
   if (state !== undefined) {
     localStorage.setItem(INFORMAL_OPEN_ID, state);
   } else {
-    state = getInformalOpen()
+    state = getInformalOpen();
   }
   const details = document.querySelectorAll('.informal_statement_details');
   for (const detail of details) {
