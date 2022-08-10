@@ -156,16 +156,16 @@ set_option old_structure_cmd true
 
 structure ext_tactic_doc_entry extends tactic_doc_entry :=
 (imported : string)
+(description : string)
 
-meta def ext_tactic_doc_entry.to_json : ext_tactic_doc_entry → json
-| ⟨name, category, decl_names, tags, description, _, imported⟩ :=
+meta def ext_tactic_doc_entry.to_json (e : ext_tactic_doc_entry) : json :=
 json.object [
-  ("name", name),
-  ("category", category.to_string),
-  ("decl_names", json.of_string_list (decl_names.map to_string)),
-  ("tags", json.of_string_list tags),
-  ("description", description),
-  ("import", imported)]
+  ("name", e.name),
+  ("category", e.category.to_string),
+  ("decl_names", json.of_string_list (e.decl_names.map to_string)),
+  ("tags", json.of_string_list e.tags),
+  ("description", e.description),
+  ("import", e.imported)]
 end
 
 meta instance {α} [has_coe α json] : has_coe (option α) json :=
@@ -437,14 +437,17 @@ meta def name.imported_always (decl_name : name) : bool :=
 let env := environment.from_imported_module_name `system.random in
 env.contains decl_name
 
-meta def tactic_doc_entry.add_import : tactic_doc_entry → ext_tactic_doc_entry
-| ⟨name, category, [], tags, description, idf⟩ := ⟨name, category, [], tags, description, idf, ""⟩
-| ⟨name, category, rel_decls@(decl_name::_), tags, description, idf⟩ :=
-  let imported := if decl_name.imported_always then "always imported"
-                  else if decl_name.imported_by_tactic_basic then "tactic.basic"
-                  else if decl_name.imported_by_tactic_default then "tactic"
-                  else "" in
-  ⟨name, category, rel_decls, tags, description, idf, imported⟩
+meta def tactic_doc_entry.add_import : tactic_doc_entry × string → ext_tactic_doc_entry | (e, desc) :=
+let imported :=
+  match e.decl_names with
+  | decl_name::_ :=
+    if decl_name.imported_always then "always imported"
+    else if decl_name.imported_by_tactic_basic then "tactic.basic"
+    else if decl_name.imported_by_tactic_default then "tactic"
+    else ""
+  | [] := ""
+  end in
+{ e with imported := imported, description := desc }
 
 meta def format_tactic_docs : tactic json :=
 do l ← list.map tactic_doc_entry.add_import <$> get_tactic_doc_entries,

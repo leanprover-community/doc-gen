@@ -136,7 +136,7 @@ jobs:
             $URL \
             -H "Content-Type: application/json" \
             -H "Authorization: token $GITHUB_TOKEN" \
-            --data '{ "body": "This PR has been successfully deployed at <http://leanprover-community.github.io/mathlib_docs_demo>!" }'
+            --data '{ "body": "This PR has been successfully deployed! You can find it at <http://leanprover-community.github.io/mathlib_docs_demo> in around 10 minutes, or watch the deployment progress by going to <http://github.com/leanprover-community/mathlib_docs_demo>" }'
 
       - name: clean up working directory and elan
         if: always()
