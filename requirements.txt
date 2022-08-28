@@ -1,4 +1,4 @@
-mistletoe>=0.7.2
+mistletoe >= 0.7.2, < 0.9
 toml
 mathlibtools
 pygments >= 2.7.1, < 2.12
