@@ -4,27 +4,30 @@
 {% block content %}
 <h1>Lean Chemical Theories</h1>
 
-<p>This web page is a collection of lean documentation created for the paper, <b>Formalizing Chemical Theory using the Lean Theorem Prover</b> 
+<p>This web page is a collection of lean documentation, with a semi-interactive viewer, for the paper 
+<b>Formalizing Chemical Theory using the Lean Theorem Prover</b> 
 by <a target="_blank" href ="https://atomslab.github.io/"> ATOMS Lab </a> 
 at the University of Maryland Baltimore County.</p>
 
 
-
 <h2>GitHub repository</h2>
 <p>We have a <a target ="_blank" href = "https://github.com/ATOMSLab/LeanChemicalTheories/tree/Static-Branch-from-8/28/2022">
-static branch of our repository</a> where all the proofs are in state as it was on 2022/08/28, to align with the code referenced in the paper. 
-It compiles with Lean version 3.45.0 and mathlib <a target="_blank"  
+static branch </a> of our repository where all the proofs are in state as it was on 2022/08/28, to align with the code referenced in the paper. 
+It compiles with Lean version 3.45.0 and mathlib commit <a target="_blank"  
 href= "https://github.com/leanprover-community/mathlib/tree/c59720b460605812986068342d81f50d3740fd8e"> 
-commit `c59720b460605812986068342d81f50d3740fd8e` </a></p>
+`c59720b460605812986068342d81f50d3740fd8e` </a></p>
 
-<p>The most up-to-date version of our proofs can be found in the main repository which is also deployed in this website.</p>
+<p>The codes will likely evolve to keep up with updates to Lean and mathlib versions. 
+The most up-to-date version can be found in the main branch which is also deployed 
+in this website.</p>
+
+
+<p>On the left menu, the "General" section provide links with extra
+information about mathlib and Lean. The "Library" section contains 
+dropdown subsections according to mathlib's tree structure.</p>
 
 <p>
 The instructions to install Lean, mathlib, and supporting tools are on the official 
 <a target="_blank" href ="https://leanprover-community.github.io/get_started.html"> Lean website</a>.
 </p>
-
-<p>On the left menu, the "General" section provide links with extra
-information about mathlib and related topics about Lean theorem prover. 
-The "Library" section contains dropdown/expandable subsections according to mathlib's tree structure.</p>
 {% endblock %}
