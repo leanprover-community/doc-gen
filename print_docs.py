@@ -574,6 +574,12 @@ def write_html_files(partition, loc_map, notes, mod_docs, instances, instances_f
         entries = sorted(entries, key = lambda n: n['name']),
         tagset = sorted(set(t for e in entries for t in e['tags']))))
 
+  with open_outfile('foundational_types.html') as out:
+      out.write(env.get_template('foundational_types.html',
+        canonical_url = get_canonical_url(current_filename),
+        active_path='',
+        instances_for=instances_for))
+
   for filename, decls in partition.items():
     md = mod_docs.get(filename, [])
     with open_outfile(html_root + filename.url) as out:

@@ -1,0 +1,82 @@
+{% extends "base.j2" %}
+{% block title %}foundational types{% endblock %}
+
+{% block content %}
+
+{% filter convert_markdown %}
+Some of Lean's types are so primitive that they are available even in the `prelude`, and are not
+defined in any lean source files. This page provides some basic documentation on those types.
+
+
+For a more in depth explanation of Lean's type theory, refer to
+[TPiL](https://leanprover.github.io/theorem_proving_in_lean/dependent_type_theory.html).
+
+{%endfilter%}
+
+{% filter convert_markdown %}
+## `Sort u`
+
+`Sort u` is the type of types in Lean, and `Sort u : Sort (u + 1)`.
+{% endfilter %}
+
+<details class="instances-for">
+    <summary>Instances for <code>{{ 'Sort' | htmlify_name }}</code></summary>
+    <ul>
+        {% for inst in instances_for['Sort'] %}
+            <li>{{ inst | linkify }}</li>
+        {% endfor %}
+    </ul>
+</details>
+
+{% filter convert_markdown %}
+## `Type u`
+
+`Type u` is notation for `Sort (u + 1)`.
+{% endfilter %}
+
+<details class="instances-for">
+    <summary>Instances for <code>{{ 'Type' | htmlify_name }}</code></summary>
+    <ul>
+        {% for inst in instances_for['Type'] %}
+            <li>{{ inst | linkify }}</li>
+        {% endfor %}
+    </ul>
+</details>
+
+{% filter convert_markdown %}
+## `Prop`
+
+`Prop` is notation for `Sort 0`.
+{% endfilter %}
+
+<details class="instances-for">
+    <summary>Instances for <code>{{ 'Prop' | htmlify_name }}</code></summary>
+    <ul>
+        {% for inst in instances_for['Prop'] %}
+            <li>{{ inst | linkify }}</li>
+        {% endfor %}
+    </ul>
+</details>
+
+
+{% filter convert_markdown %}
+## Pi types (`Π a : α, β a` or `Pi a : α, β a` or `α → β`)
+
+Pi types are the type of dependent functions. Note that function types are simply a special case
+of this.
+{% endfilter %}
+
+<details class="instances-for">
+    <summary>Instances for <code>{{ 'pi' | htmlify_name }}</code></summary>
+    <ul>
+        {% for inst in instances_for['pi'] %}
+            <li>{{ inst | linkify }}</li>
+        {% endfor %}
+    </ul>
+</details>
+
+{% endblock %}
+
+{% block internal_nav %}
+<h3><a href="#top">{{ self.title() }}</a></h3>
+{% endblock %}
