@@ -4,11 +4,9 @@
 {% block content %}
 
 {% filter convert_markdown %}
-Some of Lean's types are so primitive that they are available even in the `prelude`, and are not
-defined in any lean source files. This page provides some basic documentation on those types.
+Some of Lean's types are not defined in any Lean source files (even the `prelude`) since they come from its foundational type theory. This page provides basic documentation for these types.
 
-
-For a more in depth explanation of Lean's type theory, refer to
+For a more in-depth explanation of Lean's type theory, refer to
 [TPiL](https://leanprover.github.io/theorem_proving_in_lean/dependent_type_theory.html).
 
 {%endfilter%}
@@ -62,8 +60,7 @@ For a more in depth explanation of Lean's type theory, refer to
 {% filter convert_markdown %}
 ## Pi types (`Π a : α, β a` or `Pi a : α, β a` or `α → β`)
 
-Pi types are the type of dependent functions. Note that function types are simply a special case
-of this.
+The type of dependent functions is known as a pi type. Non-dependent functions are a special case.
 {% endfilter %}
 
 <details class="instances-for">
