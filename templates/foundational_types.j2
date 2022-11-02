@@ -18,7 +18,7 @@ For a more in-depth explanation of Lean's type theory, refer to
 {% endfilter %}
 
 <details class="instances-for">
-    <summary>Instances for <code>{{ 'Sort' | htmlify_name }}</code></summary>
+    <summary>Instances for <code>{{ 'Sort u' | htmlify_name }}</code></summary>
     <ul>
         {% for inst in instances_for['Sort'] %}
             <li>{{ inst | linkify }}</li>
@@ -33,7 +33,7 @@ For a more in-depth explanation of Lean's type theory, refer to
 {% endfilter %}
 
 <details class="instances-for">
-    <summary>Instances for <code>{{ 'Type' | htmlify_name }}</code></summary>
+    <summary>Instances for <code>{{ 'Type u' | htmlify_name }}</code></summary>
     <ul>
         {% for inst in instances_for['Type'] %}
             <li>{{ inst | linkify }}</li>
@@ -58,13 +58,26 @@ For a more in-depth explanation of Lean's type theory, refer to
 
 
 {% filter convert_markdown %}
-## Pi types (`Π a : α, β a` or `Pi a : α, β a` or `∀ a : α, β a` or `α → β`)
+## Pi types, `Π a : α, β a`
 
-The type of dependent functions is known as a pi type. Non-dependent functions are a special case.
+The type of dependent functions is known as a pi type.
+Non-dependent functions and implications are a special case.
+
+Note that these can also be written with the alternative notations:
+
+* `∀ a : α, β a`, conventionally used where `β a : Prop`.
+* `α → γ`, possible only if `β a = γ` for all `a`.
+
+Lean also permits ASCII-only spellings of the three variants:
+
+* `Pi a : A, B a` for `Π a : α, β a`
+* `forall a : A, B a` for `∀ a : α, β a`
+* `A -> B`, for `α → β`
+
 {% endfilter %}
 
 <details class="instances-for">
-    <summary>Instances for <code>{{ 'pi' | htmlify_name }}</code></summary>
+    <summary>Instances for <code>{{ 'Π a : α, β a' | htmlify_name }}</code></summary>
     <ul>
         {% for inst in instances_for['pi'] %}
             <li>{{ inst | linkify }}</li>
