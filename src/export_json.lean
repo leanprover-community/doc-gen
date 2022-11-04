@@ -368,7 +368,7 @@ meta def extract_name : expr → tactic (exceptional (option string))
     | _ := pure $ pure $ some type_name.to_string
     end
   | e@(expr.pi name bi var_type body) := do
-      is_p ← is_prop e,
+      is_p ← is_prop e <|> (tactic.fail format!"Could not analyze {e}"),
       match is_p, body.has_var with
       | ff, ff := pure $ pure $ some "function"
       | ff, tt := pure $ pure $ some "pi"
@@ -386,6 +386,8 @@ meta def extract_name : expr → tactic (exceptional (option string))
   | expr.app _ _             := pure $ exceptional.fail format!"is a app, not a constant"
   | expr.elet _ _ _ _        := pure $ exceptional.fail format!"is a elet, not a constant"
   end
+
+#eval is_prop `(Pi x : ℕ, ℕ) >>= tactic.trace
 
 /-- Extract `[foo, bar]` from `has_pow foo bar`.
 
