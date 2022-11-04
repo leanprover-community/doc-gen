@@ -380,14 +380,13 @@ meta def extract_name : expr → tactic (exceptional (option string))
   | expr.sort l              := pure $ pure $ some "Sort"
   | expr.local_const _ _ _ _ := pure $ pure $ none
   | expr.macro _ _           := pure $ pure $ none -- TODO: unfold macros?
-  | expr.lam _ _ _ body      := mk_fresh_name >>= extract_name ∘ body.instantiate_var ∘ mk_local
+  | expr.lam name bi var_type body :=
+      mk_local' name bi var_type >>= extract_name ∘ body.instantiate_var
   | expr.var i               := pure $ exceptional.fail format!"is a var, not a constant"
   | expr.mvar _ _ _          := pure $ exceptional.fail format!"is a mvar, not a constant"
   | expr.app _ _             := pure $ exceptional.fail format!"is a app, not a constant"
   | expr.elet _ _ _ _        := pure $ exceptional.fail format!"is a elet, not a constant"
   end
-
-#eval is_prop `(Pi x : ℕ, ℕ) >>= tactic.trace
 
 /-- Extract `[foo, bar]` from `has_pow foo bar`.
 
