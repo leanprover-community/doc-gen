@@ -347,7 +347,25 @@ def load_json():
   return file_map, loc_map, decls['notes'], mod_docs, decls['instances'], decls['instances_for'], decls['tactic_docs']
 
 def linkify_core(decl_name, text, loc_map):
-  if decl_name in loc_map:
+  if decl_name.startswith("\ue003"):
+    # new in Lean 3.49.0
+    builtin_name = decl_name[1:]
+
+    builtins_page = site_root + "foundational_types.html"
+    # These correspond to the heading `id`s in `foundational_types.j2`. They are currently generated
+    # by mistletoe and are therefore ugly!
+    anchor_for = dict(
+      Sort="codesort-ucode",
+      Prop="codepropcode",
+      Type="codetype-ucode",
+      pi="pi-types-codeπ-a--α-β-acode",
+      forall="pi-types-codeπ-a--α-β-acode",
+      implies="pi-types-codeπ-a--α-β-acode",
+    )
+    anchor = anchor_for[builtin_name]
+    tooltip = f' title="{builtin_name}"' if text != builtin_name else ''
+    return f'<a href="{builtins_page}#{anchor}"{tooltip}>{text}</a>'
+  elif decl_name in loc_map:
     tooltip = ' title="{}"'.format(decl_name) if text != decl_name else ''
     return '<a href="{0}#{1}"{3}>{2}</a>'.format(
       site_root + loc_map[decl_name].url, decl_name, text, tooltip)
