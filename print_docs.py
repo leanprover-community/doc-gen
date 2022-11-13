@@ -360,6 +360,7 @@ def linkify_core(decl_name, text, loc_map):
       Type="codetype-ucode",
       pi="pi-types-codeπ-a--α-β-acode",
       forall="pi-types-codeπ-a--α-β-acode",
+      function="pi-types-codeπ-a--α-β-acode",
       implies="pi-types-codeπ-a--α-β-acode",
     )
     anchor = anchor_for[builtin_name]
