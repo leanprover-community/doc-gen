@@ -2,6 +2,9 @@
 {% block title %}foundational types{% endblock %}
 
 {% block content %}
+<div class="docfile">
+
+<h1>{{ self.title() }}</h1>
 
 {% filter convert_markdown %}
 Some of Lean's types are not defined in any Lean source files (even the `prelude`) since they come from its foundational type theory. This page provides basic documentation for these types.
@@ -74,6 +77,9 @@ Lean also permits ASCII-only spellings of the three variants:
 * `forall a : A, B a` for `∀ a : α, β a`
 * `A -> B`, for `α → β`
 
+Note that despite not itself being a function, `(→)` is available as infix notation for
+`λ α β, α → β`.
+
 {% endfilter %}
 
 <details class="instances-for">
@@ -85,6 +91,34 @@ Lean also permits ASCII-only spellings of the three variants:
     </ul>
 </details>
 
+<details class="instances-for">
+    <summary>Instances for <code>{{ '∀ a : α, β a' | htmlify_name }}</code></summary>
+    <ul>
+        {% for inst in instances_for['forall'] %}
+            <li>{{ inst | linkify }}</li>
+        {% endfor %}
+    </ul>
+</details>
+
+<details class="instances-for">
+    <summary>Instances for <code>{{ 'α → β' | htmlify_name }}</code></summary>
+    <ul>
+        {% for inst in instances_for['function'] %}
+            <li>{{ inst | linkify }}</li>
+        {% endfor %}
+    </ul>
+</details>
+
+<details class="instances-for">
+    <summary>Instances for <code>{{ 'P → Q' | htmlify_name }}</code></summary>
+    <ul>
+        {% for inst in instances_for['implies'] %}
+            <li>{{ inst | linkify }}</li>
+        {% endfor %}
+    </ul>
+</details>
+
+</div>
 {% endblock %}
 
 {% block internal_nav %}
