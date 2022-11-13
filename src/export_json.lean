@@ -367,19 +367,26 @@ meta def extract_name : expr → tactic (exceptional (option string))
       end
     | _ := pure $ pure $ some type_name.to_string
     end
-  | expr.pi _ _ _ _          := pure $ pure $ some "pi"
+  | e@(expr.pi name bi var_type body) := do
+      is_p ← is_prop e <|> (tactic.fail format!"Could not analyze {e}"),
+      match is_p, body.has_var with
+      | ff, ff := pure $ pure $ some "function"
+      | ff, tt := pure $ pure $ some "pi"
+      | tt, ff := pure $ pure $ some "implies"
+      | tt, tt := pure $ pure $ some "forall"
+      end
   | expr.sort level.zero     := pure $ pure $ some "Prop"
   | expr.sort (level.succ l) := pure $ pure $ some "Type"
   | expr.sort l              := pure $ pure $ some "Sort"
   | expr.local_const _ _ _ _ := pure $ pure $ none
   | expr.macro _ _           := pure $ pure $ none -- TODO: unfold macros?
-  | expr.lam _ _ _ body      := mk_fresh_name >>= extract_name ∘ body.instantiate_var ∘ mk_local
+  | expr.lam name bi var_type body :=
+      mk_local' name bi var_type >>= extract_name ∘ body.instantiate_var
   | expr.var i               := pure $ exceptional.fail format!"is a var, not a constant"
   | expr.mvar _ _ _          := pure $ exceptional.fail format!"is a mvar, not a constant"
   | expr.app _ _             := pure $ exceptional.fail format!"is a app, not a constant"
   | expr.elet _ _ _ _        := pure $ exceptional.fail format!"is a elet, not a constant"
   end
-
 
 /-- Extract `[foo, bar]` from `has_pow foo bar`.
 
