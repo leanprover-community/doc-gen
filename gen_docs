@@ -42,11 +42,8 @@ echo "import counterexamples_all" >> "$source/all.lean"
 echo "import archive_all" >> "$source/all.lean"
 
 # ensure the archive is on the lean path
-lean --path
-leanpkg configure
 echo "path $source/archive" >> leanpkg.path
 echo "path $source/counterexamples" >> leanpkg.path
-lean --path
 lean --run src/entrypoint.lean >export.json
 
 python3 print_docs.py -r "$source" -w "$site_root" "${args[@]}"
