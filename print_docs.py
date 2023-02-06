@@ -150,6 +150,14 @@ mathlib_github_src_root_with_commit = f"{mathlib_github_root}/blob/{mathlib_comm
 mathlib_github_src_root = f"{mathlib_github_root}/blob/master/src/"
 url_rewrites.append([mathlib_github_src_root, mathlib_github_src_root_with_commit])
 
+mathlib_github_archive_root_with_commit = f"{mathlib_github_root}/blob/{mathlib_commit}/archive/"
+mathlib_github_archive_root = f"{mathlib_github_root}/blob/master/archive/"
+url_rewrites.append([mathlib_github_archive_root, mathlib_github_archive_root_with_commit])
+
+mathlib_github_counterexamples_root_with_commit = f"{mathlib_github_root}/blob/{mathlib_commit}/counterexamples/"
+mathlib_github_counterexamples_root = f"{mathlib_github_root}/blob/master/counterexamples/"
+url_rewrites.append([mathlib_github_counterexamples_root, mathlib_github_counterexamples_root_with_commit])
+
 # The Lean version changes infrequently enough that we don't need to rewrite it
 lean_commit = subprocess.check_output(['lean', '--run', 'src/lean_commit.lean']).decode()
 lean_root = f'https://github.com/leanprover-community/lean/blob/{lean_commit}/library/'
@@ -164,6 +172,17 @@ def get_name_from_leanpkg_path(p: Path) -> str:
 
   # try the toml
   p_leanpkg = p / '..' / 'leanpkg.toml'
+  try:
+    f = p_leanpkg.open()
+  except FileNotFoundError:
+    pass
+  else:
+    with f:
+      parsed_toml = toml.loads(f.read())
+    return parsed_toml['package']['name']
+
+  # try the toml (no src folder)
+  p_leanpkg = p / 'leanpkg.toml'
   try:
     f = p_leanpkg.open()
   except FileNotFoundError:
@@ -229,12 +248,16 @@ def convert_markdown(ds):
 library_link_roots = {
   'core': lean_root,
   'mathlib': mathlib_github_src_root,
+  'mathlib-archive': mathlib_github_archive_root,
+  'mathlib-counterexamples': mathlib_github_counterexamples_root,
 }
 
 # TODO: allow extending this for third-party projects
 canonical_roots = {
   'core': 'https://leanprover-community.github.io/mathlib_docs',
   'mathlib': 'https://leanprover-community.github.io/mathlib_docs',
+  'mathlib-archive': 'https://leanprover-community.github.io/mathlib_docs',
+  'mathlib-counterexamples': 'https://leanprover-community.github.io/mathlib_docs',
 }
 
 def get_canonical_url(path, project='mathlib'):

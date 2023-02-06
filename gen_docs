@@ -32,8 +32,17 @@ if [ "$link" -eq "1" ]; then
   args+=('-l')
 fi
 
-bash "$source"scripts/mk_all.sh
+# build the file lists for mathlib and the archives
+(cd "$source" && leanproject mk-all)
+(cd "$source/archive" && leanproject mk-all && mv all.lean archive_all.lean)
+(cd "$source/counterexamples" && leanproject mk-all && mv all.lean counterexamples_all.lean)
+echo "import counterexamples_all" >> all.lean
+echo "import archive_all" >> all.lean
+
+# ensure the archive is on the lean path
+leanpkg configure
+echo "path ./archive" >> leanpkg.path
+echo "path ./counterexamples" >> leanpkg.path
 lean --run src/entrypoint.lean >export.json
-bash "$source"scripts/rm_all.sh
 
 python3 print_docs.py -r "$source" -w "$site_root" "${args[@]}"
