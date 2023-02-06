@@ -43,8 +43,8 @@ echo "import archive_all" >> "$source/all.lean"
 
 # ensure the archive is on the lean path
 leanpkg configure
-echo "path ./archive" >> leanpkg.path
-echo "path ./counterexamples" >> leanpkg.path
+echo "path $source/archive" >> leanpkg.path
+echo "path $source/counterexamples" >> leanpkg.path
 lean --path
 lean --run src/entrypoint.lean >export.json
 
