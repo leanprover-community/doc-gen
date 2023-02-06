@@ -32,6 +32,8 @@ if [ "$link" -eq "1" ]; then
   args+=('-l')
 fi
 
+(cd "$source" && git checkout eric-wieser/archive-counterexample-tomls)
+
 # build the file lists for mathlib and the archives
 (cd "$source" && leanproject mk-all)
 (cd "$source/archive" && leanproject mk-all && mv all.lean archive_all.lean)
