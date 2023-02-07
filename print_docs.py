@@ -170,8 +170,8 @@ def get_name_from_leanpkg_path(p: Path) -> str:
   if p.parts[-3:] == Path('bin/../library').parts:
     return "core"
 
-  # try the toml
-  p_leanpkg = p / '..' / 'leanpkg.toml'
+  # try the toml (no src folder)
+  p_leanpkg = p / 'leanpkg.toml'
   try:
     f = p_leanpkg.open()
   except FileNotFoundError:
@@ -181,8 +181,8 @@ def get_name_from_leanpkg_path(p: Path) -> str:
       parsed_toml = toml.loads(f.read())
     return parsed_toml['package']['name']
 
-  # try the toml (no src folder)
-  p_leanpkg = p / 'leanpkg.toml'
+  # try the toml
+  p_leanpkg = p / '..' / 'leanpkg.toml'
   try:
     f = p_leanpkg.open()
   except FileNotFoundError:
