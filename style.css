@@ -277,6 +277,7 @@ header header_filename {
 #search_results a > span {
     opacity: 0.5;
     font-size: 75%;
+    float: right;
 }
 
 #search_results .selected {
