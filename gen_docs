@@ -40,7 +40,7 @@ echo "import counterexamples_all" >> "$source/all.lean"
 echo "import archive_all" >> "$source/all.lean"
 
 echo "# counterexamples_all.lean contains"
-cat $source/counterexample/counterexamples_all.lean
+cat $source/counterexamples/counterexamples_all.lean
 
 # ensure the archive is on the lean path
 echo "path $source/archive" >> leanpkg.path
