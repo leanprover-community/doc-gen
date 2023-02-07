@@ -188,9 +188,11 @@ searchInput.addEventListener('input', async (ev) => {
 
   const oldSR = document.getElementById('search_results');
   const sr = oldSR.cloneNode(false);
-  for (const {decl} of result) {
+  for (const {decl, proj} of result) {
     const d = sr.appendChild(document.createElement('a'));
-    d.innerText = decl;
+    const note = document.createElement("span");
+    note.innerText = proj;
+    d.append(decl, note);
     d.title = decl;
     d.href = `${siteRoot}find/${decl}`;
   }

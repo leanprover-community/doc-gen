@@ -788,11 +788,12 @@ def write_export_db(export_db):
   with gzip.GzipFile(html_root + 'export_db.json.gz', 'w') as zout:
     zout.write(json_str.encode('utf-8'))
 
-def mk_export_searchable_map_entry(filename_name, name, description, kind = '', attributes = []):
+def mk_export_searchable_map_entry(proj, filename_name, name, description, kind = '', attributes = []):
   return {
     # 'module': filename_name,
     'name': name,
     'description': description,
+    'p': proj,
     # 'kind': kind,
     # 'attributes': attributes,
   }
@@ -803,13 +804,13 @@ def mk_export_searchable_db(file_map, tactic_docs):
   for fn, decls in file_map.items():
     filename_name = str(fn.url)
     for obj in decls:
-      decl_entry = mk_export_searchable_map_entry(filename_name, obj['name'], obj['doc_string'], obj['kind'], obj['attributes'])
+      decl_entry = mk_export_searchable_map_entry(fn.project, filename_name, obj['name'], obj['doc_string'], obj['kind'], obj['attributes'])
       export_searchable_db.append(decl_entry)
       for (cstr_name, _) in obj['constructors']:
-        cstr_entry = mk_export_searchable_map_entry(filename_name, cstr_name, obj['doc_string'], obj['kind'], obj['attributes'])
+        cstr_entry = mk_export_searchable_map_entry(fn.project, filename_name, cstr_name, obj['doc_string'], obj['kind'], obj['attributes'])
         export_searchable_db.append(cstr_entry)
       for (sf_name, _) in obj['structure_fields']:
-        sf_entry = mk_export_searchable_map_entry(filename_name, sf_name, obj['doc_string'], obj['kind'], obj['attributes'])
+        sf_entry = mk_export_searchable_map_entry(fn.project, filename_name, sf_name, obj['doc_string'], obj['kind'], obj['attributes'])
         export_searchable_db.append(sf_entry)
 
   # for tactic in tactic_docs:
