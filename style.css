@@ -274,6 +274,12 @@ header header_filename {
     padding-left: 0.5ex;
     cursor: pointer;
 }
+#search_results a > span {
+    opacity: 0.5;
+    font-size: 75%;
+    float: right;
+}
+
 #search_results .selected {
     background: white;
     border-color: #f0a202;

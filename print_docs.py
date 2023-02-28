@@ -150,6 +150,14 @@ mathlib_github_src_root_with_commit = f"{mathlib_github_root}/blob/{mathlib_comm
 mathlib_github_src_root = f"{mathlib_github_root}/blob/master/src/"
 url_rewrites.append([mathlib_github_src_root, mathlib_github_src_root_with_commit])
 
+mathlib_github_archive_root_with_commit = f"{mathlib_github_root}/blob/{mathlib_commit}/archive/"
+mathlib_github_archive_root = f"{mathlib_github_root}/blob/master/archive/"
+url_rewrites.append([mathlib_github_archive_root, mathlib_github_archive_root_with_commit])
+
+mathlib_github_counterexamples_root_with_commit = f"{mathlib_github_root}/blob/{mathlib_commit}/counterexamples/"
+mathlib_github_counterexamples_root = f"{mathlib_github_root}/blob/master/counterexamples/"
+url_rewrites.append([mathlib_github_counterexamples_root, mathlib_github_counterexamples_root_with_commit])
+
 # The Lean version changes infrequently enough that we don't need to rewrite it
 lean_commit = subprocess.check_output(['lean', '--run', 'src/lean_commit.lean']).decode()
 lean_root = f'https://github.com/leanprover-community/lean/blob/{lean_commit}/library/'
@@ -161,6 +169,17 @@ def get_name_from_leanpkg_path(p: Path) -> str:
     return "core"
   if p.parts[-3:] == Path('bin/../library').parts:
     return "core"
+
+  # try the toml (no src folder)
+  p_leanpkg = p / 'leanpkg.toml'
+  try:
+    f = p_leanpkg.open()
+  except FileNotFoundError:
+    pass
+  else:
+    with f:
+      parsed_toml = toml.loads(f.read())
+    return parsed_toml['package']['name']
 
   # try the toml
   p_leanpkg = p / '..' / 'leanpkg.toml'
@@ -229,12 +248,16 @@ def convert_markdown(ds):
 library_link_roots = {
   'core': lean_root,
   'mathlib': mathlib_github_src_root,
+  'mathlib-archive': mathlib_github_archive_root,
+  'mathlib-counterexamples': mathlib_github_counterexamples_root,
 }
 
 # TODO: allow extending this for third-party projects
 canonical_roots = {
   'core': 'https://leanprover-community.github.io/mathlib_docs',
   'mathlib': 'https://leanprover-community.github.io/mathlib_docs',
+  'mathlib-archive': 'https://leanprover-community.github.io/mathlib_docs',
+  'mathlib-counterexamples': 'https://leanprover-community.github.io/mathlib_docs',
 }
 
 def get_canonical_url(path, project='mathlib'):
@@ -765,11 +788,12 @@ def write_export_db(export_db):
   with gzip.GzipFile(html_root + 'export_db.json.gz', 'w') as zout:
     zout.write(json_str.encode('utf-8'))
 
-def mk_export_searchable_map_entry(filename_name, name, description, kind = '', attributes = []):
+def mk_export_searchable_map_entry(proj, filename_name, name, description, kind = '', attributes = []):
   return {
     # 'module': filename_name,
     'name': name,
     'description': description,
+    'p': proj,
     # 'kind': kind,
     # 'attributes': attributes,
   }
@@ -780,13 +804,13 @@ def mk_export_searchable_db(file_map, tactic_docs):
   for fn, decls in file_map.items():
     filename_name = str(fn.url)
     for obj in decls:
-      decl_entry = mk_export_searchable_map_entry(filename_name, obj['name'], obj['doc_string'], obj['kind'], obj['attributes'])
+      decl_entry = mk_export_searchable_map_entry(fn.project, filename_name, obj['name'], obj['doc_string'], obj['kind'], obj['attributes'])
       export_searchable_db.append(decl_entry)
       for (cstr_name, _) in obj['constructors']:
-        cstr_entry = mk_export_searchable_map_entry(filename_name, cstr_name, obj['doc_string'], obj['kind'], obj['attributes'])
+        cstr_entry = mk_export_searchable_map_entry(fn.project, filename_name, cstr_name, obj['doc_string'], obj['kind'], obj['attributes'])
         export_searchable_db.append(cstr_entry)
       for (sf_name, _) in obj['structure_fields']:
-        sf_entry = mk_export_searchable_map_entry(filename_name, sf_name, obj['doc_string'], obj['kind'], obj['attributes'])
+        sf_entry = mk_export_searchable_map_entry(fn.project, filename_name, sf_name, obj['doc_string'], obj['kind'], obj['attributes'])
         export_searchable_db.append(sf_entry)
 
   # for tactic in tactic_docs:

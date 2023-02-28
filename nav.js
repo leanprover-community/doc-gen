@@ -188,9 +188,11 @@ searchInput.addEventListener('input', async (ev) => {
 
   const oldSR = document.getElementById('search_results');
   const sr = oldSR.cloneNode(false);
-  for (const {decl} of result) {
+  for (const {decl, proj} of result) {
     const d = sr.appendChild(document.createElement('a'));
-    d.innerText = decl;
+    const note = document.createElement("span");
+    note.innerText = proj;
+    d.append(decl, note);
     d.title = decl;
     d.href = `${siteRoot}find/${decl}`;
   }
@@ -219,11 +221,13 @@ if (howabout) {
   declSearch(query).then((results) => {
       howabout.innerText = 'How about one of these instead:';
       const ul = howabout.appendChild(document.createElement('ul'));
-      for (const {decl} of results) {
+      for (const {decl, proj} of results) {
           const li = ul.appendChild(document.createElement('li'));
           const a = li.appendChild(document.createElement('a'));
           a.href = `${siteRoot}find/${decl}`;
           a.appendChild(document.createElement('code')).innerText = decl;
+          li.append(" ");
+          li.appendChild(document.createElement('small')).innerText = "(" + proj + ")";
       }
   });
 }
