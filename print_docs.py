@@ -53,15 +53,15 @@ parser.add_argument('-t', help = 'relative path to html output directory')
 # the content has moved to the community website,
 # but we still build them to avoid broken links
 # format: (filename_root, display_name, source relative to local_lean_root, community_site_url)
-extra_doc_files = [('overview', 'mathlib overview', 'docs/mathlib-overview.md', 'mathlib-overview'),
-                   ('tactic_writing', 'tactic writing', 'docs/extras/tactic_writing.md', 'extras/tactic_writing'),
-                   ('calc', 'calc mode', 'docs/extras/calc.md', 'extras/calc'),
-                   ('conv', 'conv mode', 'docs/extras/conv.md', 'extras/conv'),
-                   ('simp', 'simplification', 'docs/extras/simp.md', 'extras/simp'),
-                   ('well_founded_recursion', 'well founded recursion', 'docs/extras/well_founded_recursion.md','extras/well_founded_recursion'),
-                   ('style', 'style guide', 'docs/contribute/style.md','contribute/style'),
-                   ('doc_style', 'documentation style guide', 'docs/contribute/doc.md','contribute/doc'),
-                   ('naming', 'naming conventions', 'docs/contribute/naming.md','contribute/naming')]
+extra_doc_files = [('overview', 'mathlib overview', 'docs/mathlib-overview.md', 'lean3/mathlib-overview'),
+                   ('tactic_writing', 'tactic writing', 'docs/extras/tactic_writing.md', 'lean3/extras/tactic_writing'),
+                   ('calc', 'calc mode', 'docs/extras/calc.md', 'lean3/extras/calc'),
+                   ('conv', 'conv mode', 'docs/extras/conv.md', 'lean3/extras/conv'),
+                   ('simp', 'simplification', 'docs/extras/simp.md', 'lean3/extras/simp'),
+                   ('well_founded_recursion', 'well founded recursion', 'docs/extras/well_founded_recursion.md','lean3/extras/well_founded_recursion'),
+                   ('style', 'style guide', 'docs/contribute/style.md','lean3/contribute/style'),
+                   ('doc_style', 'documentation style guide', 'docs/contribute/doc.md','lean3/contribute/doc'),
+                   ('naming', 'naming conventions', 'docs/contribute/naming.md','lean3/contribute/naming')]
 env.globals['extra_doc_files'] = extra_doc_files
 
 # test doc files to include in generation
