@@ -667,6 +667,9 @@ def write_html_files(partition, loc_map, notes, mod_docs, instances, instances_f
   current_project = None
   current_filename = None
 
+  with open_outfile('opensearch.xml') as out:
+    out.write(env.get_template('opensearch.xml.j2').render())
+
 def write_site_map(partition):
   with open_outfile('sitemap.txt') as out:
     for filename in partition:
