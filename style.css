@@ -383,11 +383,16 @@ nav {
     font-size: inherit;
 }
 
-#color-theme-switcher {
+#settings form {
     display: flex;
     justify-content: space-between;
     padding: 0 2ex;
     flex-flow: row wrap;
+}
+
+#settings input[type="checkbox"] {
+    margin-left: 5px;
+    margin-top: 5px;
 }
 
 /* custom radio buttons for dark/light switch */
@@ -702,4 +707,40 @@ a:hover {
     padding-top: 2em;
     margin-top: 2em;
     margin-bottom: 2em;
+}
+
+.informal_statement {
+    margin-top: 1em;
+}
+
+
+.informal_statement .statement, .informal_statement .translation_qs {
+    margin-left: 2ch;
+}
+
+.informal_statement .translation_qs {
+    color:gray;
+}
+
+.informal_statement_feedback {
+  display: inline;
+}
+
+.informal_statement_feedback button {
+    background: none!important;
+    border: none;
+    padding: 0!important;
+    font-family: inherit;
+    font-size: inherit;
+    color: var(--link-color);
+    cursor: pointer;
+}
+
+.informal_statement_feedback button:hover {
+  text-decoration: underline
+}
+
+.informal_statement_edit textarea {
+    font-size: 1rem;
+    width: 100%;
 }
