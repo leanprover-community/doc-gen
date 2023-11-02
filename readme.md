@@ -15,7 +15,8 @@ rm -rf _target
 leanproject up
 ```
 
-Make sure that olean files are generated for mathlib in `_target`, otherwise this will be extremely slow.
+Make sure that [`.olean` files](https://github.com/leanprover/tutorial/blob/master/05_Interacting_with_Lean.org#projects)
+are generated for mathlib in `_target`, otherwise this will be extremely slow.
 
 ## Usage
 
