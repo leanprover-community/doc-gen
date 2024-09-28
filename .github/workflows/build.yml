@@ -68,7 +68,7 @@ jobs:
           github_event: ${{ github.event_name }}
           github_ref: ${{ github.ref }}
       - name: Upload export.json
-        uses: actions/upload-artifact@v2.2.4
+        uses: actions/upload-artifact@v4
         with:
           path: export.json
 
