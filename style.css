@@ -110,19 +110,12 @@ label[for="nav_toggle"] {
 
 .deprecated_banner {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: var(--banner-height);
+    top: 0; left: 0; right: 0;
+    min-height: var(--banner-height);
+    padding: 0.4em 1em;
     background: #b00020;
     color: white;
-    font-size: 0.95em;
-    line-height: 1.3;
     text-align: center;
-    padding: 0 1em;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     z-index: 2;
 }
 .deprecated_banner a {
