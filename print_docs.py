@@ -252,20 +252,13 @@ library_link_roots = {
   'mathlib-counterexamples': mathlib_github_counterexamples_root,
 }
 
-# TODO: allow extending this for third-party projects
-canonical_roots = {
-  'core': 'https://leanprover-community.github.io/mathlib_docs',
-  'mathlib': 'https://leanprover-community.github.io/mathlib_docs',
-  'mathlib-archive': 'https://leanprover-community.github.io/mathlib_docs',
-  'mathlib-counterexamples': 'https://leanprover-community.github.io/mathlib_docs',
-}
+# mathlib3 is deprecated. Every page declares the mathlib4 docs root as
+# its canonical URL, to redirect search-engine ranking onto the
+# maintained library.
+MATHLIB4_DOCS_ROOT = 'https://leanprover-community.github.io/mathlib4_docs/'
 
 def get_canonical_url(path, project='mathlib'):
-  try:
-    root = canonical_roots[project]
-  except KeyError:
-    return None
-  return root + '/' + path
+  return MATHLIB4_DOCS_ROOT
 
 def library_link(filename: ImportName, line=None):
   try:
