@@ -252,13 +252,38 @@ library_link_roots = {
   'mathlib-counterexamples': mathlib_github_counterexamples_root,
 }
 
-# mathlib3 is deprecated. Every page declares the mathlib4 docs root as
-# its canonical URL, to redirect search-engine ranking onto the
-# maintained library.
+# TODO: allow extending this for third-party projects
+canonical_roots = {
+  'core': 'https://leanprover-community.github.io/mathlib_docs',
+  'mathlib': 'https://leanprover-community.github.io/mathlib_docs',
+  'mathlib-archive': 'https://leanprover-community.github.io/mathlib_docs',
+  'mathlib-counterexamples': 'https://leanprover-community.github.io/mathlib_docs',
+}
+
+# mathlib3 is deprecated. For each mathlib3 module we know the mathlib4
+# successor of, declare it as the canonical URL so search engines transfer
+# ranking to the maintained library. Modules without a mapping fall back
+# to the existing self-canonical behavior — we explicitly avoid pointing
+# every page at the mathlib4 docs root, which is the many-to-one canonical
+# anti-pattern Google rejects.
 MATHLIB4_DOCS_ROOT = 'https://leanprover-community.github.io/mathlib4_docs/'
+import yaml as _yaml
+try:
+  with open(os.path.join(os.path.dirname(__file__), 'mathlib4_canonical_map.yaml')) as _f:
+    _mathlib4_map = _yaml.safe_load(_f) or {}
+except FileNotFoundError:
+  _mathlib4_map = {}
 
 def get_canonical_url(path, project='mathlib'):
-  return MATHLIB4_DOCS_ROOT
+  if project == 'mathlib' and path.endswith('.html'):
+    target = _mathlib4_map.get(path[:-5].replace('/', '.'))
+    if target:
+      return MATHLIB4_DOCS_ROOT + target + '.html'
+  try:
+    root = canonical_roots[project]
+  except KeyError:
+    return None
+  return root + '/' + path
 
 def library_link(filename: ImportName, line=None):
   try:
