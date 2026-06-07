@@ -9,9 +9,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="{% block metadesc %}The Lean 3 mathematical library, mathlib, is a community-driven effort to build a unified library of mathematics formalized in the Lean proof assistant.{% endblock %}" />
-    {% if canonical_url is not none %}
     <link rel="canonical" href="{{ canonical_url }}" />
-    {% endif %}
     <meta property="og:title" content="{{ self.title() }} - mathlib3 docs">
     <meta property="og:site_name" content="mathlib for Lean 3 - API documentation">
     <meta property="og:description" content="{{ self.metadesc() }}">
@@ -24,7 +22,7 @@
 
 <aside class="deprecated_banner" role="alert">
     <strong>mathlib3 is no longer maintained</strong> &mdash; see the
-    <a href="https://leanprover-community.github.io/mathlib4_docs/">mathlib4 docs</a>
+    <a href="{{ canonical_url }}">mathlib4 docs</a>
     for the current library.
 </aside>
 

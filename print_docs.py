@@ -252,20 +252,11 @@ library_link_roots = {
   'mathlib-counterexamples': mathlib_github_counterexamples_root,
 }
 
-# TODO: allow extending this for third-party projects
-canonical_roots = {
-  'core': 'https://leanprover-community.github.io/mathlib_docs',
-  'mathlib': 'https://leanprover-community.github.io/mathlib_docs',
-  'mathlib-archive': 'https://leanprover-community.github.io/mathlib_docs',
-  'mathlib-counterexamples': 'https://leanprover-community.github.io/mathlib_docs',
-}
-
 # mathlib3 is deprecated. For each mathlib3 module we know the mathlib4
 # successor of, declare it as the canonical URL so search engines transfer
 # ranking to the maintained library. Modules without a mapping fall back
-# to the existing self-canonical behavior — we explicitly avoid pointing
-# every page at the mathlib4 docs root, which is the many-to-one canonical
-# anti-pattern Google rejects.
+# to point at the mathlib4 docs root. These canonical URLs should boost
+# the ranking of the new docs in search engines.
 MATHLIB4_DOCS_ROOT = 'https://leanprover-community.github.io/mathlib4_docs/'
 import yaml as _yaml
 try:
@@ -279,11 +270,7 @@ def get_canonical_url(path, project='mathlib'):
     target = _mathlib4_map.get(path[:-5].replace('/', '.'))
     if target:
       return MATHLIB4_DOCS_ROOT + target + '.html'
-  try:
-    root = canonical_roots[project]
-  except KeyError:
-    return None
-  return root + '/' + path
+  return MATHLIB4_DOCS_ROOT
 
 def library_link(filename: ImportName, line=None):
   try:
@@ -619,7 +606,7 @@ def write_html_files(partition, loc_map, notes, mod_docs, instances, instances_f
     current_filename = '404.html'
     current_project = None
     out.write(env.get_template('404.j2').render(
-      canonical_url = None,
+      canonical_url = MATHLIB4_DOCS_ROOT,
       active_path=''))
 
   kinds = [('tactic', 'tactics'), ('command', 'commands'), ('hole_command', 'hole_commands'), ('attribute', 'attributes')]
