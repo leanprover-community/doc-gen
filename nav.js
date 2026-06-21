@@ -250,3 +250,91 @@ for (const elem of document.getElementsByClassName('gh_link')) {
     }
   }
 }
+
+// Informal Statement feedback form handler
+// -------
+
+/** Same as `fetch` but throws an error if it's a bad response. */
+async function fetchGood(...args) {
+  const response = await fetch(...args);
+  if (!response.ok)  {
+    const txt = await response.text()
+    throw new Error(`Bad response: ${txt}`)
+  }
+}
+
+/** Handler for clicking feedback buttons in informal statements. */
+window.addEventListener('load', _ => {
+  for (const translationDiv of document.querySelectorAll('.translation_qs')) {
+    const declName = translationDiv.getAttribute('data-decl');
+    if (!declName) {
+      console.error('no data-decl on translation_qs');
+    }
+    const feedbackForm = translationDiv.querySelector('.informal_statement_feedback');
+    const editForm = translationDiv.querySelector('.informal_statement_edit');
+    const ta = editForm.querySelector('textarea');
+    const url = new URL(feedbackForm.getAttribute('action'));
+    url.searchParams.set('decl', declName);
+    url.searchParams.set('statement', ta.value);
+    feedbackForm.addEventListener('submit', async event => {
+      event.preventDefault();
+      try {
+        const value = event.submitter.getAttribute('value');
+        url.searchParams.set('rate', value);
+        feedbackForm.textContent = "Sending...";
+        await fetchGood(url, { method: 'POST' });
+        if (value === 'no') {
+          feedbackForm.textContent = "Thanks for your feedback! Optionally, please help us out by submitting a corrected statement: ";
+          editForm.removeAttribute('style');
+          const edit = await new Promise((resolve, reject) => {
+            editForm.addEventListener('submit', event => {
+              event.preventDefault();
+              resolve(ta.value);
+            });
+          });
+          url.searchParams.delete('rate'); // don't double-count the rating.
+          url.searchParams.set('edit', edit);
+          editForm.remove();
+          feedbackForm.textContent = "Sending...";
+          await fetchGood(url, { method: 'POST' });
+        }
+        feedbackForm.textContent = "Thanks for your feedback!"
+      } catch (err) {
+        feedbackForm.textContent = `Error: ${err.message}`;
+      }
+    })
+  }
+})
+
+const INFORMAL_OPEN_ID = 'informal_statement_open';
+
+function getInformalOpen() {
+  const item = localStorage.getItem(INFORMAL_OPEN_ID);
+  if (!item) {
+    return false; // default is closed
+  } else {
+    return JSON.parse(item);
+  }
+}
+
+function updateInformalOpen(state) {
+  if (state !== undefined) {
+    localStorage.setItem(INFORMAL_OPEN_ID, JSON.stringify(state));
+  } else {
+    state = getInformalOpen();
+  }
+  const details = document.querySelectorAll('.informal_statement_details');
+  for (const detail of details) {
+    detail.open = state;
+  }
+}
+
+window.addEventListener('load', _ => {
+  updateInformalOpen();
+  const checkbox = document.querySelector('#informal-open');
+  checkbox.checked = getInformalOpen();
+  checkbox.addEventListener('change', e => {
+    const value = checkbox.checked;
+    updateInformalOpen(value);
+  });
+});
