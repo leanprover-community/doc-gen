@@ -10,7 +10,7 @@ jobs:
     runs-on: doc-gen
     if: (toJSON(github.event.issue.pull_request) != 'null') && (startsWith(github.event.comment.body, '#deploy') || contains(toJSON(github.event.comment.body), '\r\n#deploy'))
     steps:
-      - uses: octokit/request-action@v2.x
+      - uses: octokit/request-action@02f5e7c637a73a3b12ed81015fa7fb5f11cc5d7d # v2.x
         name: Get PR head
         id: get_pr_head
         with:
@@ -23,12 +23,12 @@ jobs:
       # Parse steps.get_pr_head.outputs.data, since it is a string
       - id: parse_pr_head
         name: Parse PR head
-        uses: gr2m/get-json-paths-action@v1.x
+        uses: gr2m/get-json-paths-action@0970b3763cf0e5c030517f5adb212a26c213f504 # v1.x
         with:
           json: ${{ steps.get_pr_head.outputs.data }}
           head_user: 'head.user.login'
 
-      - uses: octokit/request-action@v2.x
+      - uses: octokit/request-action@02f5e7c637a73a3b12ed81015fa7fb5f11cc5d7d # v2.x
         name: Get comment author
         id: get_user
         with:
@@ -41,21 +41,21 @@ jobs:
       # Parse steps.get_user.outputs.data, since it is a string
       - id: parse_user
         name: Parse comment author permission
-        uses: gr2m/get-json-paths-action@v1.x
+        uses: gr2m/get-json-paths-action@0970b3763cf0e5c030517f5adb212a26c213f504 # v1.x
         with:
           json: ${{ steps.get_user.outputs.data }}
           permission: 'permission'
 
       - name: Add reaction
         if: (steps.parse_user.outputs.permission == 'admin')
-        uses: peter-evans/create-or-update-comment@v1
+        uses: peter-evans/create-or-update-comment@a35cf36e5301d70b76f316e867e7788a55a31dae # v1
         with:
           comment-id: ${{ github.event.comment.id }}
           reactions: rocket
 
       # this step is needed to get the PR ref from an issue comment
       # https://github.com/actions/checkout/issues/331
-      - uses: actions/github-script@v3
+      - uses: actions/github-script@ffc2c79a5b2490bd33e0a41c1de74b877714d736 # v3
         if: (steps.parse_user.outputs.permission == 'admin')
         id: get-pr
         with:
@@ -72,7 +72,7 @@ jobs:
             } catch (err) {
               core.setFailed(`Request failed with error ${err}`)
             }
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@0717577d45739eb3c851188b29f50ed6c0b2194e # v2
         if: (steps.parse_user.outputs.permission == 'admin')
         with:
           repository: ${{ fromJSON(steps.get-pr.outputs.result).head.repo.full_name }}
