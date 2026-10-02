@@ -10,7 +10,7 @@ jobs:
     runs-on: doc-gen
     if: (toJSON(github.event.issue.pull_request) != 'null') && (startsWith(github.event.comment.body, '#deploy') || contains(toJSON(github.event.comment.body), '\r\n#deploy'))
     steps:
-      - uses: octokit/request-action@02f5e7c637a73a3b12ed81015fa7fb5f11cc5d7d # v2.x
+      - uses: octokit/request-action@02f5e7c637a73a3b12ed81015fa7fb5f11cc5d7d # v2.x as of 2026-09-28
         name: Get PR head
         id: get_pr_head
         with:
@@ -23,12 +23,12 @@ jobs:
       # Parse steps.get_pr_head.outputs.data, since it is a string
       - id: parse_pr_head
         name: Parse PR head
-        uses: gr2m/get-json-paths-action@0970b3763cf0e5c030517f5adb212a26c213f504 # v1.x
+        uses: gr2m/get-json-paths-action@0970b3763cf0e5c030517f5adb212a26c213f504 # v1.x as of 2026-09-28
         with:
           json: ${{ steps.get_pr_head.outputs.data }}
           head_user: 'head.user.login'
 
-      - uses: octokit/request-action@02f5e7c637a73a3b12ed81015fa7fb5f11cc5d7d # v2.x
+      - uses: octokit/request-action@02f5e7c637a73a3b12ed81015fa7fb5f11cc5d7d # v2.x as of 2026-09-28
         name: Get comment author
         id: get_user
         with:
@@ -41,7 +41,7 @@ jobs:
       # Parse steps.get_user.outputs.data, since it is a string
       - id: parse_user
         name: Parse comment author permission
-        uses: gr2m/get-json-paths-action@0970b3763cf0e5c030517f5adb212a26c213f504 # v1.x
+        uses: gr2m/get-json-paths-action@0970b3763cf0e5c030517f5adb212a26c213f504 # v1.x as of 2026-09-28
         with:
           json: ${{ steps.get_user.outputs.data }}
           permission: 'permission'
